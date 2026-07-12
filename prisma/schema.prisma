@@ -22,6 +22,7 @@ model User {
   passwordHash  String
   role          Role     @default(EMPLOYEE)
   isSuperAdmin  Boolean  @default(false) // compte protégé, non supprimable par personne
+  hourlyRate    Float    @default(0) // taux horaire en € pour le calcul de la paye
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

@@ -13,6 +13,7 @@ const CreateUserSchema = z.object({
   name: z.string().trim().min(1),
   password: z.string().min(4, { error: "8 caractères minimum recommandés." }),
   role: z.enum(Role),
+  hourlyRate: z.coerce.number().min(0).default(0),
 });
 
 export async function createUser(
@@ -26,6 +27,7 @@ export async function createUser(
     name: formData.get("name"),
     password: formData.get("password"),
     role: formData.get("role"),
+    hourlyRate: formData.get("hourlyRate") || 0,
   });
 
   if (!parsed.success) {
@@ -46,11 +48,41 @@ export async function createUser(
       identifier: parsed.data.identifier,
       name: parsed.data.name,
       role: parsed.data.role,
+      hourlyRate: parsed.data.hourlyRate,
       passwordHash,
     },
   });
 
   revalidatePath("/employees");
+}
+
+const HourlyRateSchema = z.object({
+  hourlyRate: z.coerce.number().min(0),
+});
+
+export async function updateHourlyRate(
+  userId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const parsed = HourlyRateSchema.safeParse({
+    hourlyRate: formData.get("hourlyRate"),
+  });
+
+  if (!parsed.success) {
+    return { error: "Taux invalide." };
+  }
+
+  await db.user.update({
+    where: { id: userId },
+    data: { hourlyRate: parsed.data.hourlyRate },
+  });
+
+  revalidatePath("/employees");
+  revalidatePath("/comptabilite");
+  return undefined;
 }
 
 export async function deleteUser(userId: string) {
