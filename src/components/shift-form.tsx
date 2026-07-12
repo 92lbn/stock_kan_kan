@@ -7,7 +7,13 @@ import { Input, Label, Select } from "@/components/ui/input";
 
 type Employee = { id: string; name: string };
 
-export function ShiftForm({ employees }: { employees: Employee[] }) {
+export function ShiftForm({
+  employees,
+  defaultDate,
+}: {
+  employees: Employee[];
+  defaultDate?: string;
+}) {
   const [state, formAction, pending] = useActionState(createShift, undefined);
 
   return (
@@ -24,7 +30,7 @@ export function ShiftForm({ employees }: { employees: Employee[] }) {
       </div>
       <div className="sm:col-span-1">
         <Label htmlFor="date">Date</Label>
-        <Input id="date" name="date" type="date" required />
+        <Input key={defaultDate} id="date" name="date" type="date" defaultValue={defaultDate} required />
       </div>
       <div className="sm:col-span-1">
         <Label htmlFor="startTime">Début</Label>

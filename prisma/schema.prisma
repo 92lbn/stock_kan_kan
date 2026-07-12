@@ -16,19 +16,21 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  identifier   String   @unique // identifiant unique de connexion (employé ou admin)
-  name         String
-  passwordHash String
-  role         Role     @default(EMPLOYEE)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  identifier    String   @unique // identifiant unique de connexion (employé ou admin)
+  name          String
+  passwordHash  String
+  role          Role     @default(EMPLOYEE)
+  isSuperAdmin  Boolean  @default(false) // compte protégé, non supprimable par personne
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   shifts       Shift[]
   timeEntries  TimeEntry[]
   stockAlertsAck StockMovement[]
   ideas        ContentIdea[]     @relation("IdeaAuthor")
   mediaUploads MediaAsset[]      @relation("MediaUploader")
+  ledgerEntries LedgerEntry[]
 
   @@map("users")
 }
@@ -183,4 +185,26 @@ model ScheduledPost {
 
   @@index([scheduledAt])
   @@map("scheduled_posts")
+}
+
+// ---------- Suivi recettes / dépenses (comptabilité légère) ----------
+
+enum LedgerEntryType {
+  REVENUE
+  EXPENSE
+}
+
+model LedgerEntry {
+  id          String          @id @default(cuid())
+  date        DateTime        @db.Date
+  type        LedgerEntryType
+  amount      Float
+  category    String?
+  note        String?
+  createdBy   User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  createdAt   DateTime        @default(now())
+
+  @@index([date])
+  @@map("ledger_entries")
 }
