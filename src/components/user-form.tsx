@@ -9,7 +9,7 @@ export function UserForm() {
   const [state, formAction, pending] = useActionState(createUser, undefined);
 
   return (
-    <form action={formAction} className="grid gap-3 sm:grid-cols-5">
+    <form action={formAction} className="grid gap-3 sm:grid-cols-6">
       <div className="sm:col-span-1">
         <Label htmlFor="identifier">Identifiant</Label>
         <Input id="identifier" name="identifier" required />
@@ -29,14 +29,18 @@ export function UserForm() {
           <option value="ADMIN">Responsable</option>
         </Select>
       </div>
+      <div className="sm:col-span-1">
+        <Label htmlFor="hourlyRate">Taux horaire (€)</Label>
+        <Input id="hourlyRate" name="hourlyRate" type="number" step="0.01" min="0" defaultValue="0" />
+      </div>
       <div className="sm:col-span-1 flex items-end">
         <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Création..." : "Créer le compte"}
+          {pending ? "Création..." : "Créer"}
         </Button>
       </div>
 
       {state?.error && (
-        <p className="sm:col-span-5 text-sm text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="sm:col-span-6 text-sm text-red-600 dark:text-red-400">{state.error}</p>
       )}
     </form>
   );

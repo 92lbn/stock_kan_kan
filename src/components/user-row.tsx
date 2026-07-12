@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { changeUserPassword, deleteUser } from "@/lib/actions/users";
+import { changeUserPassword, deleteUser, updateHourlyRate } from "@/lib/actions/users";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/card";
@@ -12,12 +12,16 @@ type UserRowData = {
   identifier: string;
   role: string;
   isSuperAdmin: boolean;
+  hourlyRate: number;
 };
 
 export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentUser: boolean }) {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const boundChangePassword = changeUserPassword.bind(null, user.id);
   const [state, formAction, pending] = useActionState(boundChangePassword, undefined);
+
+  const boundRate = updateHourlyRate.bind(null, user.id);
+  const [rateState, rateAction, ratePending] = useActionState(boundRate, undefined);
 
   return (
     <tr className="border-b border-zinc-100 align-top dark:border-zinc-800">
@@ -34,6 +38,23 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
         <Badge variant={user.role === "ADMIN" ? "success" : "default"}>
           {user.role === "ADMIN" ? "Responsable" : "Employé"}
         </Badge>
+      </td>
+      <td className="py-2">
+        <form action={rateAction} className="flex items-center gap-1">
+          <Input
+            name="hourlyRate"
+            type="number"
+            step="0.01"
+            min="0"
+            defaultValue={user.hourlyRate}
+            className="h-8 w-20 text-xs"
+          />
+          <span className="text-xs text-zinc-400">€/h</span>
+          <Button type="submit" size="sm" variant="ghost" disabled={ratePending}>
+            {ratePending ? "..." : "OK"}
+          </Button>
+        </form>
+        {rateState?.error && <p className="mt-1 text-xs text-red-600">{rateState.error}</p>}
       </td>
       <td className="py-2">
         {showPasswordForm ? (

@@ -27,6 +27,7 @@ export default async function EmployeesPage() {
               <th className="pb-2 font-medium">Nom</th>
               <th className="pb-2 font-medium">Identifiant</th>
               <th className="pb-2 font-medium">Rôle</th>
+              <th className="pb-2 font-medium">Taux horaire</th>
               <th className="pb-2 font-medium">Mot de passe</th>
               <th className="pb-2"></th>
             </tr>

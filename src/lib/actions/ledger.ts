@@ -54,3 +54,27 @@ export async function deleteLedgerEntry(entryId: string) {
   revalidatePath("/comptabilite");
   revalidatePath("/");
 }
+
+// Records a payroll total (for a given month) as a single EXPENSE entry.
+export async function recordPayrollAsExpense(amount: number, label: string) {
+  const admin = await requireAdmin();
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Montant de paye invalide." };
+  }
+
+  await db.ledgerEntry.create({
+    data: {
+      date: new Date(),
+      type: "EXPENSE",
+      amount,
+      category: "Salaires",
+      note: label,
+      createdById: admin.id,
+    },
+  });
+
+  revalidatePath("/comptabilite");
+  revalidatePath("/");
+  return undefined;
+}
