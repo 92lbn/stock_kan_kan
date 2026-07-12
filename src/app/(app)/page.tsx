@@ -3,11 +3,18 @@ import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card, Badge } from "@/components/ui/card";
 
+function monthRange(date = new Date()) {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  return { start, end };
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
   if (user.role === "ADMIN") {
-    const [allStockItems, todayShiftsCount, employeeCount] = await Promise.all([
+    const { start, end } = monthRange();
+    const [allStockItems, todayShiftsCount, employeeCount, ledgerEntries] = await Promise.all([
       db.stockItem.findMany({ orderBy: { name: "asc" } }),
       db.shift.count({
         where: {
@@ -18,9 +25,14 @@ export default async function DashboardPage() {
         },
       }),
       db.user.count({ where: { role: "EMPLOYEE" } }),
+      db.ledgerEntry.findMany({ where: { date: { gte: start, lt: end } } }),
     ]);
 
     const lowStockItems = allStockItems.filter((item) => item.quantity <= item.minThreshold);
+    const net = ledgerEntries.reduce(
+      (sum, e) => sum + (e.type === "REVENUE" ? e.amount : -e.amount),
+      0
+    );
 
     return (
       <div className="space-y-6">
@@ -28,7 +40,7 @@ export default async function DashboardPage() {
           Bonjour {user.name}
         </h1>
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <p className="text-sm text-zinc-500">Alertes de stock</p>
             <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
@@ -47,6 +59,17 @@ export default async function DashboardPage() {
               {employeeCount}
             </p>
           </Card>
+          <Link href="/comptabilite">
+            <Card className="transition-colors hover:border-zinc-400 dark:hover:border-zinc-600">
+              <p className="text-sm text-zinc-500">Solde du mois</p>
+              <p
+                className={`mt-1 text-2xl font-semibold ${net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+              >
+                {net >= 0 ? "+" : ""}
+                {net.toFixed(0)} €
+              </p>
+            </Card>
+          </Link>
         </div>
 
         {lowStockItems.length > 0 && (

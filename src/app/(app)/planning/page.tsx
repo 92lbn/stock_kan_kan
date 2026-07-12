@@ -1,10 +1,13 @@
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { ShiftForm } from "@/components/shift-form";
 import { Button } from "@/components/ui/button";
 import { deleteShift } from "@/lib/actions/planning";
 import { sumShiftHours } from "@/lib/hours";
+import { colorForId } from "@/lib/colors";
+import { PlanningManager } from "@/components/planning-manager";
+import { EmployeePlanningCalendar } from "@/components/employee-planning-calendar";
+import type { CalendarEvent } from "@/components/planning-calendar";
 
 function monthRange(date = new Date()) {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -12,15 +15,33 @@ function monthRange(date = new Date()) {
   return { start, end };
 }
 
+// Wider window so the calendar's prev/next navigation shows real data
+// without needing a client-side refetch.
+function calendarRange(date = new Date()) {
+  const start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 2, 1);
+  return { start, end };
+}
+
+function toDateStr(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 export default async function PlanningPage() {
   const user = await getCurrentUser();
   const { start, end } = monthRange();
+  const calendarWindow = calendarRange();
 
   if (user.role === "ADMIN") {
-    const [employees, shifts] = await Promise.all([
+    const [employees, shifts, calendarShifts] = await Promise.all([
       db.user.findMany({ where: { role: "EMPLOYEE" }, orderBy: { name: "asc" } }),
       db.shift.findMany({
         where: { date: { gte: start, lt: end } },
+        include: { employee: { select: { id: true, name: true } } },
+        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+      }),
+      db.shift.findMany({
+        where: { date: { gte: calendarWindow.start, lt: calendarWindow.end } },
         include: { employee: { select: { id: true, name: true } } },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       }),
@@ -35,24 +56,20 @@ export default async function PlanningPage() {
       if (entry) entry.hours += sumShiftHours([shift]);
     }
 
+    const events: CalendarEvent[] = calendarShifts.map((shift) => ({
+      id: shift.id,
+      title: `${shift.employee.name} ${shift.startTime}-${shift.endTime}`,
+      date: toDateStr(shift.date),
+      color: colorForId(shift.employeeId),
+    }));
+
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
           Planning du mois
         </h1>
 
-        <Card>
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
-            Assigner un créneau
-          </h2>
-          {employees.length === 0 ? (
-            <p className="text-sm text-zinc-500">
-              Ajoutez d&apos;abord des employés dans la page Employés.
-            </p>
-          ) : (
-            <ShiftForm employees={employees} />
-          )}
-        </Card>
+        <PlanningManager employees={employees} events={events} />
 
         <Card>
           <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
@@ -75,11 +92,12 @@ export default async function PlanningPage() {
 
         <Card>
           <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
-            Créneaux du mois
+            Créneaux du mois (liste)
           </h2>
           {shifts.length === 0 ? (
             <p className="text-sm text-zinc-500">Aucun créneau planifié.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
@@ -112,17 +130,33 @@ export default async function PlanningPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </Card>
       </div>
     );
   }
 
-  const shifts = await db.shift.findMany({
-    where: { employeeId: user.id, date: { gte: start, lt: end } },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
+  const [shifts, calendarShifts] = await Promise.all([
+    db.shift.findMany({
+      where: { employeeId: user.id, date: { gte: start, lt: end } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    }),
+    db.shift.findMany({
+      where: {
+        employeeId: user.id,
+        date: { gte: calendarWindow.start, lt: calendarWindow.end },
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    }),
+  ]);
   const totalHours = sumShiftHours(shifts);
+  const events: CalendarEvent[] = calendarShifts.map((shift) => ({
+    id: shift.id,
+    title: `${shift.startTime}-${shift.endTime}`,
+    date: toDateStr(shift.date),
+    color: colorForId(user.id),
+  }));
 
   return (
     <div className="space-y-6">
@@ -136,22 +170,7 @@ export default async function PlanningPage() {
       </Card>
 
       <Card>
-        {shifts.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun créneau planifié ce mois-ci.</p>
-        ) : (
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {shifts.map((shift) => (
-              <li key={shift.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-zinc-700 dark:text-zinc-300">
-                  {shift.date.toLocaleDateString("fr-FR")}
-                </span>
-                <span className="text-zinc-500">
-                  {shift.startTime} – {shift.endTime}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <EmployeePlanningCalendar events={events} />
       </Card>
     </div>
   );

@@ -59,6 +59,39 @@ export async function deleteUser(userId: string) {
     // Self-deletion is not offered in the UI; guard against direct action calls.
     return;
   }
+
+  const target = await db.user.findUnique({ where: { id: userId } });
+  if (!target || target.isSuperAdmin) {
+    // The superadmin account can never be deleted, by anyone.
+    return;
+  }
+
   await db.user.delete({ where: { id: userId } });
   revalidatePath("/employees");
+}
+
+const ChangePasswordSchema = z.object({
+  password: z.string().min(4, { error: "4 caractères minimum." }),
+});
+
+export async function changeUserPassword(
+  userId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requireAdmin();
+
+  const parsed = ChangePasswordSchema.safeParse({
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    return { error: "Mot de passe trop court (4 caractères minimum)." };
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  await db.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  revalidatePath("/employees");
+  return undefined;
 }

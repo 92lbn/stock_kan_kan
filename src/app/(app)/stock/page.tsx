@@ -25,6 +25,7 @@ export default async function StockPage() {
         {items.length === 0 ? (
           <p className="text-sm text-zinc-500">Aucun article pour le moment.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
@@ -40,6 +41,7 @@ export default async function StockPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </Card>
     </div>
