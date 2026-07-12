@@ -1,0 +1,186 @@
+// Prisma schema — Gestion Restaurant
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  identifier   String   @unique // identifiant unique de connexion (employé ou admin)
+  name         String
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shifts       Shift[]
+  timeEntries  TimeEntry[]
+  stockAlertsAck StockMovement[]
+  ideas        ContentIdea[]     @relation("IdeaAuthor")
+  mediaUploads MediaAsset[]      @relation("MediaUploader")
+
+  @@map("users")
+}
+
+// ---------- Module 1 : Stocks & Inventaire ----------
+
+enum StockCategory {
+  MATERIEL_INFORMATIQUE
+  CONSOMMABLES
+  ALIMENTAIRE
+}
+
+model StockItem {
+  id           String        @id @default(cuid())
+  name         String
+  category     StockCategory
+  unit         String // ex: "carton", "bouteille", "kg"
+  quantity     Float         @default(0)
+  minThreshold Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  movements    StockMovement[]
+
+  @@index([category])
+  @@map("stock_items")
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+model StockMovement {
+  id          String            @id @default(cuid())
+  stockItem   StockItem         @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  stockItemId String
+  type        StockMovementType
+  quantity    Float
+  note        String?
+  createdAt   DateTime          @default(now())
+  createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+
+  @@index([stockItemId])
+  @@map("stock_movements")
+}
+
+// ---------- Module 2 : Planning & Pointage ----------
+
+model Shift {
+  id        String   @id @default(cuid())
+  employee  User     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  date      DateTime @db.Date
+  startTime String // "HH:mm"
+  endTime   String // "HH:mm"
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId, date])
+  @@map("shifts")
+}
+
+enum TimeEntryType {
+  CLOCK_IN
+  CLOCK_OUT
+}
+
+model TimeEntry {
+  id         String        @id @default(cuid())
+  employee   User          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId String
+  type       TimeEntryType
+  timestamp  DateTime      @default(now())
+
+  @@index([employeeId, timestamp])
+  @@map("time_entries")
+}
+
+// ---------- Module 3 : Fichiers du restaurant & Recettes ----------
+
+enum RecipeCategory {
+  MENU
+  BOISSON
+  MARINADE
+}
+
+model Recipe {
+  id          String         @id @default(cuid())
+  title       String
+  category    RecipeCategory
+  ingredients String // texte libre, une ligne par ingrédient
+  steps       String // texte libre, une étape par ligne
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+  @@map("recipes")
+}
+
+// ---------- Module 4 : Réseaux sociaux ----------
+
+enum SocialPlatform {
+  TIKTOK
+  SNAPCHAT
+  INSTAGRAM
+}
+
+model ContentIdea {
+  id        String   @id @default(cuid())
+  text      String
+  author    User     @relation("IdeaAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+  createdAt DateTime @default(now())
+
+  @@map("content_ideas")
+}
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  url        String // clé/URL sur Cloudflare R2
+  fileName   String
+  uploader   User     @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  uploaderId String
+  createdAt  DateTime @default(now())
+
+  post       ScheduledPost?
+
+  @@map("media_assets")
+}
+
+enum PostStatus {
+  IDEA
+  READY
+  SCHEDULED
+  PUBLISHED
+}
+
+model ScheduledPost {
+  id          String         @id @default(cuid())
+  platform    SocialPlatform
+  caption     String?
+  status      PostStatus     @default(READY)
+  scheduledAt DateTime?
+  media       MediaAsset?    @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  mediaId     String?        @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([scheduledAt])
+  @@map("scheduled_posts")
+}
