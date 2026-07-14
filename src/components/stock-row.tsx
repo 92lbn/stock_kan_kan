@@ -10,6 +10,8 @@ const categoryLabels: Record<string, string> = {
   MATERIEL_INFORMATIQUE: "Matériel informatique",
   CONSOMMABLES: "Consommables",
   ALIMENTAIRE: "Alimentaire",
+  HYGIENE: "Hygiène",
+  EMBALLAGE: "Emballage",
 };
 
 type StockItem = {

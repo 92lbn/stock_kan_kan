@@ -95,9 +95,61 @@ async function seedRecipes() {
   console.log(`${DEFAULT_RECIPES.length} recettes par défaut ajoutées (boissons + marinades).`);
 }
 
+const DEFAULT_STOCK: {
+  name: string;
+  category: "ALIMENTAIRE" | "HYGIENE" | "EMBALLAGE" | "CONSOMMABLES" | "MATERIEL_INFORMATIQUE";
+  unit: string;
+  quantity: number;
+  minThreshold: number;
+}[] = [
+  // Alimentaire
+  { name: "Riz", category: "ALIMENTAIRE", unit: "sac 25kg", quantity: 4, minThreshold: 2 },
+  { name: "Huile de tournesol", category: "ALIMENTAIRE", unit: "bidon 5L", quantity: 6, minThreshold: 3 },
+  { name: "Poulet", category: "ALIMENTAIRE", unit: "kg", quantity: 20, minThreshold: 10 },
+  { name: "Viande de bœuf", category: "ALIMENTAIRE", unit: "kg", quantity: 15, minThreshold: 8 },
+  { name: "Oignons", category: "ALIMENTAIRE", unit: "sac 10kg", quantity: 3, minThreshold: 2 },
+  { name: "Tomates", category: "ALIMENTAIRE", unit: "cageot", quantity: 5, minThreshold: 2 },
+  { name: "Fleurs d'hibiscus (bissap)", category: "ALIMENTAIRE", unit: "sachet 1kg", quantity: 4, minThreshold: 2 },
+  { name: "Gingembre", category: "ALIMENTAIRE", unit: "kg", quantity: 3, minThreshold: 1 },
+  { name: "Mangues", category: "ALIMENTAIRE", unit: "cageot", quantity: 2, minThreshold: 1 },
+  { name: "Sel", category: "ALIMENTAIRE", unit: "paquet 5kg", quantity: 4, minThreshold: 2 },
+  // Hygiène
+  { name: "Savon liquide mains", category: "HYGIENE", unit: "bidon 5L", quantity: 3, minThreshold: 2 },
+  { name: "Gel hydroalcoolique", category: "HYGIENE", unit: "flacon 1L", quantity: 6, minThreshold: 3 },
+  { name: "Gants jetables", category: "HYGIENE", unit: "boîte 100", quantity: 8, minThreshold: 4 },
+  { name: "Produit nettoyant sols", category: "HYGIENE", unit: "bidon 5L", quantity: 4, minThreshold: 2 },
+  { name: "Essuie-tout", category: "HYGIENE", unit: "lot 6 rouleaux", quantity: 10, minThreshold: 4 },
+  { name: "Dégraissant cuisine", category: "HYGIENE", unit: "spray 750ml", quantity: 5, minThreshold: 2 },
+  { name: "Sacs poubelle 100L", category: "HYGIENE", unit: "rouleau 25", quantity: 6, minThreshold: 3 },
+  // Emballage
+  { name: "Barquettes plastique", category: "EMBALLAGE", unit: "carton 500", quantity: 4, minThreshold: 2 },
+  { name: "Sacs kraft à emporter", category: "EMBALLAGE", unit: "paquet 250", quantity: 5, minThreshold: 2 },
+  { name: "Gobelets carton", category: "EMBALLAGE", unit: "sleeve 100", quantity: 12, minThreshold: 5 },
+  { name: "Couvercles gobelets", category: "EMBALLAGE", unit: "sleeve 100", quantity: 12, minThreshold: 5 },
+  { name: "Bols carton", category: "EMBALLAGE", unit: "carton 300", quantity: 3, minThreshold: 2 },
+  { name: "Couverts jetables", category: "EMBALLAGE", unit: "boîte 250", quantity: 6, minThreshold: 3 },
+  { name: "Serviettes en papier", category: "EMBALLAGE", unit: "carton 1000", quantity: 4, minThreshold: 2 },
+];
+
+async function seedStock() {
+  let added = 0;
+  for (const item of DEFAULT_STOCK) {
+    const existing = await db.stockItem.findFirst({ where: { name: item.name } });
+    if (existing) continue;
+    await db.stockItem.create({ data: item });
+    added++;
+  }
+  if (added > 0) {
+    console.log(`${added} articles de stock d'exemple ajoutés (alimentaire, hygiène, emballage).`);
+  } else {
+    console.log("Articles de stock d'exemple déjà présents, rien à ajouter.");
+  }
+}
+
 async function main() {
   await seedAdmin();
   await seedRecipes();
+  await seedStock();
 }
 
 main()

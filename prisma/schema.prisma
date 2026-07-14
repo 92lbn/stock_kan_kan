@@ -42,6 +42,8 @@ enum StockCategory {
   MATERIEL_INFORMATIQUE
   CONSOMMABLES
   ALIMENTAIRE
+  HYGIENE
+  EMBALLAGE
 }
 
 model StockItem {

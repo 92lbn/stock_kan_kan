@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 
 const categories = [
-  { value: "MATERIEL_INFORMATIQUE", label: "Matériel informatique" },
-  { value: "CONSOMMABLES", label: "Consommables" },
   { value: "ALIMENTAIRE", label: "Alimentaire" },
+  { value: "HYGIENE", label: "Hygiène" },
+  { value: "EMBALLAGE", label: "Emballage" },
+  { value: "CONSOMMABLES", label: "Consommables" },
+  { value: "MATERIEL_INFORMATIQUE", label: "Matériel informatique" },
 ];
 
 export function StockForm() {
