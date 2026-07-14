@@ -12,6 +12,7 @@ const adminLinks = [
   { href: "/stock", label: "Stock" },
   { href: "/planning", label: "Planning" },
   { href: "/pointage", label: "Pointage" },
+  { href: "/recettes", label: "Recettes" },
   { href: "/comptabilite", label: "Compta" },
   { href: "/employees", label: "Employés" },
 ];
