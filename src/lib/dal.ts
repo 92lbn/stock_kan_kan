@@ -31,12 +31,15 @@ export const getCurrentUser = cache(async () => {
   return user;
 });
 
+// Session-based admin check: reads the signed session (no DB round-trip) so
+// admin pages and actions stay fast. The role in the JWT is trusted because
+// the token is signed with SESSION_SECRET.
 export async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (user.role !== "ADMIN") {
+  const session = await verifySession();
+  if (session.role !== "ADMIN") {
     redirect("/");
   }
-  return user;
+  return { id: session.userId, role: session.role };
 }
 
 // Optimistic check for use outside of request-scoped React cache (e.g. in Server Actions
