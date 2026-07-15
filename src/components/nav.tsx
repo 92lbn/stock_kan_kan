@@ -13,7 +13,9 @@ const adminLinks = [
   { href: "/planning", label: "Planning" },
   { href: "/pointage", label: "Pointage" },
   { href: "/recettes", label: "Recettes" },
+  { href: "/reseaux", label: "Réseaux" },
   { href: "/comptabilite", label: "Compta" },
+  { href: "/notes", label: "Notes" },
   { href: "/employees", label: "Employés" },
 ];
 
@@ -21,6 +23,7 @@ const employeeLinks = [
   { href: "/", label: "Accueil" },
   { href: "/planning", label: "Mon planning" },
   { href: "/pointage", label: "Pointage" },
+  { href: "/notes", label: "Notes" },
 ];
 
 export function Nav({ role, name }: { role: Role; name: string }) {

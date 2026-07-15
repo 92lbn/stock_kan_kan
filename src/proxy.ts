@@ -24,5 +24,9 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$|.*\\.svg$).*)"],
+  // Exclude API routes, Next static assets, images, the service worker and the
+  // web manifest so they stay publicly reachable without a session.
+  matcher: [
+    "/((?!api|_next/static|_next/image|sw\\.js|manifest\\.webmanifest|.*\\.png$|.*\\.svg$).*)",
+  ],
 };

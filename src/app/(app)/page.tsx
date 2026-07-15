@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card, Badge } from "@/components/ui/card";
+import { DueRemindersBanner } from "@/components/due-reminders-banner";
 
 function monthRange(date = new Date()) {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -9,8 +10,17 @@ function monthRange(date = new Date()) {
   return { start, end };
 }
 
+// Notes with a reminder that is due now or earlier, still to do.
+async function getDueReminders(userId: string) {
+  return db.note.findMany({
+    where: { authorId: userId, done: false, remindAt: { not: null, lte: new Date() } },
+    orderBy: { remindAt: "asc" },
+  });
+}
+
 export default async function DashboardPage() {
   const user = await getCurrentUser();
+  const dueReminders = await getDueReminders(user.id);
 
   if (user.role === "ADMIN") {
     const { start, end } = monthRange();
@@ -39,6 +49,8 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
           Bonjour {user.name}
         </h1>
+
+        <DueRemindersBanner notes={dueReminders} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -107,6 +119,8 @@ export default async function DashboardPage() {
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
         Bonjour {user.name}
       </h1>
+
+      <DueRemindersBanner notes={dueReminders} />
 
       <Card>
         <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">

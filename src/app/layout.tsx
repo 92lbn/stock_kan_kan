@@ -15,6 +15,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Gestion Restaurant",
   description: "Outil interne de gestion de stock, planning et pointage",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Restaurant",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/icon-192.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#18181b",
 };
 
 export default function RootLayout({

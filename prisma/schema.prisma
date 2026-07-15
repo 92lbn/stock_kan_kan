@@ -32,8 +32,42 @@ model User {
   ideas        ContentIdea[]     @relation("IdeaAuthor")
   mediaUploads MediaAsset[]      @relation("MediaUploader")
   ledgerEntries LedgerEntry[]
+  notes        Note[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
+}
+
+// ---------- Notes & rappels ----------
+
+model Note {
+  id         String    @id @default(cuid())
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String
+  content    String
+  remindAt   DateTime? // date/heure du rappel (optionnel)
+  notifiedAt DateTime? // renseigné une fois la notification push envoyée
+  done       Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([remindAt])
+  @@map("notes")
+}
+
+// Abonnement Web Push (un appareil/navigateur par ligne)
+model PushSubscription {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // ---------- Module 1 : Stocks & Inventaire ----------
