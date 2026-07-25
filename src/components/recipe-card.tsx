@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { updateRecipe, deleteRecipe } from "@/lib/actions/recipes";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
@@ -39,17 +39,19 @@ export function RecipeCard({ recipe, canEdit }: { recipe: Recipe; canEdit: boole
   const [editing, setEditing] = useState(false);
   const boundUpdate = updateRecipe.bind(null, recipe.id);
   const [state, formAction, pending] = useActionState(boundUpdate, undefined);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && !state?.error) {
+      setEditing(false);
+    }
+    wasPending.current = pending;
+  }, [pending, state]);
 
   if (editing) {
     return (
       <Card>
-        <form
-          action={async (fd) => {
-            await formAction(fd);
-            setEditing(false);
-          }}
-          className="space-y-3"
-        >
+        <form action={formAction} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <Label htmlFor={`title-${recipe.id}`}>Titre</Label>

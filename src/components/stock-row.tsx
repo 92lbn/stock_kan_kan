@@ -1,10 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
-import { recordStockMovement, deleteStockItem } from "@/lib/actions/stock";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { recordStockMovement, deleteStockItem, updateStockItem } from "@/lib/actions/stock";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Label, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/card";
+
+const categories = [
+  { value: "EPICERIE", label: "Épicerie / Secs" },
+  { value: "LEGUMES_FRAIS", label: "Légumes / Frais" },
+  { value: "VIANDES_POISSONS", label: "Viandes / Poissons" },
+  { value: "BOISSONS", label: "Boissons" },
+  { value: "MENAGER_ENTRETIEN", label: "Ménager / Entretien" },
+  { value: "CONSOMMABLES_EMBALLAGES", label: "Consommables / Emballages" },
+];
 
 const categoryLabels: Record<string, string> = {
   MATERIEL_INFORMATIQUE: "Matériel informatique",
@@ -30,22 +39,105 @@ type StockItem = {
 };
 
 export function StockRow({ item }: { item: StockItem }) {
+  const [editing, setEditing] = useState(false);
   const boundMovement = recordStockMovement.bind(null, item.id);
   const [state, formAction, pending] = useActionState(boundMovement, undefined);
+
+  const boundUpdate = updateStockItem.bind(null, item.id);
+  const [editState, editAction, editPending] = useActionState(boundUpdate, undefined);
+  const wasEditPending = useRef(false);
+
+  // Close the edit form once the update has completed successfully.
+  useEffect(() => {
+    if (wasEditPending.current && !editPending && !editState?.error) {
+      setEditing(false);
+    }
+    wasEditPending.current = editPending;
+  }, [editPending, editState]);
+
   const isLow = item.minThreshold > 0 && item.quantity <= item.minThreshold;
+
+  if (editing) {
+    return (
+      <div className="rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
+        <form action={editAction} className="space-y-3">
+          <div>
+            <Label htmlFor={`name-${item.id}`}>Nom</Label>
+            <Input id={`name-${item.id}`} name="name" defaultValue={item.name} required />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor={`cat-${item.id}`}>Catégorie</Label>
+              <Select id={`cat-${item.id}`} name="category" defaultValue={item.category}>
+                {categories.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor={`unit-${item.id}`}>Unité</Label>
+              <Input id={`unit-${item.id}`} name="unit" defaultValue={item.unit} required />
+            </div>
+            <div>
+              <Label htmlFor={`qty-${item.id}`}>Quantité</Label>
+              <Input
+                id={`qty-${item.id}`}
+                name="quantity"
+                type="number"
+                step="any"
+                min="0"
+                defaultValue={item.quantity}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor={`thr-${item.id}`}>Seuil d&apos;alerte</Label>
+              <Input
+                id={`thr-${item.id}`}
+                name="minThreshold"
+                type="number"
+                step="any"
+                min="0"
+                defaultValue={item.minThreshold}
+                required
+              />
+            </div>
+          </div>
+
+          {editState?.error && <p className="text-sm text-red-600">{editState.error}</p>}
+
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={editPending}>
+              {editPending ? "..." : "Enregistrer"}
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
+              Annuler
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
           <p className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</p>
-          <p className="text-xs text-zinc-500">{categoryLabels[item.category]}</p>
+          <p className="text-xs text-zinc-500">{categoryLabels[item.category] ?? item.category}</p>
         </div>
-        <form action={deleteStockItem.bind(null, item.id)}>
-          <Button type="submit" size="sm" variant="ghost">
-            Supprimer
+        <div className="flex gap-1">
+          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
+            Modifier
           </Button>
-        </form>
+          <form action={deleteStockItem.bind(null, item.id)}>
+            <Button type="submit" size="sm" variant="ghost">
+              Supprimer
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="mb-3 flex items-center gap-2">
