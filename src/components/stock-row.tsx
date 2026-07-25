@@ -29,49 +29,50 @@ export function StockRow({ item }: { item: StockItem }) {
   const isLow = item.quantity <= item.minThreshold;
 
   return (
-    <tr className="border-b border-zinc-100 align-top dark:border-zinc-800">
-      <td className="py-3 pr-3">
-        <p className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</p>
-        <p className="text-xs text-zinc-500">{categoryLabels[item.category]}</p>
-      </td>
-      <td className="py-3 pr-3">
-        <span className="text-zinc-700 dark:text-zinc-300">
-          {item.quantity} {item.unit}
-        </span>
-        {isLow && (
-          <Badge variant="warning" className="ml-2">
-            Seuil : {item.minThreshold}
-          </Badge>
-        )}
-      </td>
-      <td className="py-3 pr-3">
-        <form action={formAction} className="flex flex-wrap items-center gap-2">
-          <Select name="type" defaultValue="IN" className="h-8 w-24 text-xs">
-            <option value="IN">Entrée</option>
-            <option value="OUT">Sortie</option>
-          </Select>
-          <Input
-            name="quantity"
-            type="number"
-            step="any"
-            min="0"
-            placeholder="Qté"
-            required
-            className="h-8 w-20 text-xs"
-          />
-          <Button type="submit" size="sm" variant="secondary" disabled={pending}>
-            OK
-          </Button>
-        </form>
-        {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
-      </td>
-      <td className="py-3 text-right">
+    <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</p>
+          <p className="text-xs text-zinc-500">{categoryLabels[item.category]}</p>
+        </div>
         <form action={deleteStockItem.bind(null, item.id)}>
           <Button type="submit" size="sm" variant="ghost">
             Supprimer
           </Button>
         </form>
-      </td>
-    </tr>
+      </div>
+
+      <div className="mb-3 flex items-center gap-2">
+        <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          {item.quantity}
+        </span>
+        <span className="text-sm text-zinc-500">{item.unit}</span>
+        {isLow && (
+          <Badge variant="warning" className="ml-auto">
+            Seuil : {item.minThreshold}
+          </Badge>
+        )}
+      </div>
+
+      <form action={formAction} className="flex flex-wrap items-center gap-2">
+        <Select name="type" defaultValue="IN" className="h-10 w-28">
+          <option value="IN">Entrée</option>
+          <option value="OUT">Sortie</option>
+        </Select>
+        <Input
+          name="quantity"
+          type="number"
+          step="any"
+          min="0"
+          placeholder="Quantité"
+          required
+          className="h-10 w-28"
+        />
+        <Button type="submit" size="md" variant="secondary" disabled={pending}>
+          Valider
+        </Button>
+      </form>
+      {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
+    </div>
   );
 }

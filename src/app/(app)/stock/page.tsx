@@ -20,30 +20,18 @@ export default async function StockPage() {
         <StockForm />
       </Card>
 
-      <Card>
+      <div>
         <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Inventaire</h2>
         {items.length === 0 ? (
           <p className="text-sm text-zinc-500">Aucun article pour le moment.</p>
         ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
-                <th className="pb-2 font-medium">Article</th>
-                <th className="pb-2 font-medium">Quantité</th>
-                <th className="pb-2 font-medium">Mouvement</th>
-                <th className="pb-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <StockRow key={item.id} item={item} />
-              ))}
-            </tbody>
-          </table>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {items.map((item) => (
+              <StockRow key={item.id} item={item} />
+            ))}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
