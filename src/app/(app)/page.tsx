@@ -38,7 +38,9 @@ export default async function DashboardPage() {
       db.ledgerEntry.findMany({ where: { date: { gte: start, lt: end } } }),
     ]);
 
-    const lowStockItems = allStockItems.filter((item) => item.quantity <= item.minThreshold);
+    const lowStockItems = allStockItems.filter(
+      (item) => item.minThreshold > 0 && item.quantity <= item.minThreshold
+    );
     const net = ledgerEntries.reduce(
       (sum, e) => sum + (e.type === "REVENUE" ? e.amount : -e.amount),
       0

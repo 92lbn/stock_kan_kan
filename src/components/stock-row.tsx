@@ -12,6 +12,12 @@ const categoryLabels: Record<string, string> = {
   ALIMENTAIRE: "Alimentaire",
   HYGIENE: "Hygiène",
   EMBALLAGE: "Emballage",
+  MENAGER_ENTRETIEN: "Ménager / Entretien",
+  EPICERIE: "Épicerie / Secs",
+  LEGUMES_FRAIS: "Légumes / Frais",
+  BOISSONS: "Boissons",
+  VIANDES_POISSONS: "Viandes / Poissons",
+  CONSOMMABLES_EMBALLAGES: "Consommables / Emballages",
 };
 
 type StockItem = {
@@ -26,7 +32,7 @@ type StockItem = {
 export function StockRow({ item }: { item: StockItem }) {
   const boundMovement = recordStockMovement.bind(null, item.id);
   const [state, formAction, pending] = useActionState(boundMovement, undefined);
-  const isLow = item.quantity <= item.minThreshold;
+  const isLow = item.minThreshold > 0 && item.quantity <= item.minThreshold;
 
   return (
     <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">

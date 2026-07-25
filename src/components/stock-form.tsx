@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 
 const categories = [
-  { value: "ALIMENTAIRE", label: "Alimentaire" },
-  { value: "HYGIENE", label: "Hygiène" },
-  { value: "EMBALLAGE", label: "Emballage" },
-  { value: "CONSOMMABLES", label: "Consommables" },
-  { value: "MATERIEL_INFORMATIQUE", label: "Matériel informatique" },
+  { value: "EPICERIE", label: "Épicerie / Secs" },
+  { value: "LEGUMES_FRAIS", label: "Légumes / Frais" },
+  { value: "VIANDES_POISSONS", label: "Viandes / Poissons" },
+  { value: "BOISSONS", label: "Boissons" },
+  { value: "MENAGER_ENTRETIEN", label: "Ménager / Entretien" },
+  { value: "CONSOMMABLES_EMBALLAGES", label: "Consommables / Emballages" },
 ];
 
 export function StockForm() {
@@ -24,7 +25,7 @@ export function StockForm() {
       </div>
       <div className="sm:col-span-1">
         <Label htmlFor="category">Catégorie</Label>
-        <Select id="category" name="category" required defaultValue="ALIMENTAIRE">
+        <Select id="category" name="category" required defaultValue="EPICERIE">
           {categories.map((c) => (
             <option key={c.value} value={c.value}>
               {c.label}
