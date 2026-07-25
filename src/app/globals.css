@@ -22,5 +22,56 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Empêche le zoom automatique d'iOS Safari : un champ doit faire >= 16px
+   au focus sur petit écran, sinon la page zoome à chaque saisie. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --- FullCalendar : lisibilité mobile + mode sombre --- */
+.fc {
+  font-size: 0.85rem;
+}
+.fc .fc-toolbar-title {
+  font-size: 1.05rem;
+}
+.fc .fc-button {
+  padding: 0.3rem 0.6rem;
+}
+@media (max-width: 640px) {
+  .fc .fc-toolbar.fc-header-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .fc-daygrid-day-number {
+    font-size: 0.75rem;
+  }
+  .fc-event {
+    font-size: 0.7rem;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .fc {
+    --fc-border-color: #27272a;
+    --fc-page-bg-color: transparent;
+    --fc-neutral-bg-color: #18181b;
+    --fc-today-bg-color: rgba(250, 204, 21, 0.08);
+  }
+  .fc .fc-toolbar-title,
+  .fc .fc-col-header-cell-cushion,
+  .fc .fc-daygrid-day-number {
+    color: #e4e4e7;
+  }
+  .fc-theme-standard td,
+  .fc-theme-standard th {
+    border-color: #27272a;
+  }
 }
