@@ -78,6 +78,13 @@ enum StockCategory {
   ALIMENTAIRE
   HYGIENE
   EMBALLAGE
+  // Catégories réelles du restaurant
+  MENAGER_ENTRETIEN
+  EPICERIE
+  LEGUMES_FRAIS
+  BOISSONS
+  VIANDES_POISSONS
+  CONSOMMABLES_EMBALLAGES
 }
 
 model StockItem {

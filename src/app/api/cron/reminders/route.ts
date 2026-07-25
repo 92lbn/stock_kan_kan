@@ -41,7 +41,9 @@ export async function GET(request: Request) {
 
   // 2. Low-stock alerts sent to all admins (once per run).
   const stockItems = await db.stockItem.findMany();
-  const lowStock = stockItems.filter((item) => item.quantity <= item.minThreshold);
+  const lowStock = stockItems.filter(
+    (item) => item.minThreshold > 0 && item.quantity <= item.minThreshold
+  );
 
   if (lowStock.length > 0) {
     const admins = await db.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
