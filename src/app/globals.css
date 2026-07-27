@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
+/* Force le thème clair : le variant `dark:` ne s'applique qu'avec une classe
+   `.dark` (jamais ajoutée), donc l'app reste claire même si le téléphone est
+   en mode sombre. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -12,13 +18,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -26,7 +25,7 @@ body {
 }
 
 /* Empêche le zoom automatique d'iOS Safari : un champ doit faire >= 16px
-   au focus sur petit écran, sinon la page zoome à chaque saisie. */
+   au focus sur petit écran. */
 @media (max-width: 640px) {
   input,
   select,
@@ -35,7 +34,7 @@ body {
   }
 }
 
-/* --- FullCalendar : lisibilité mobile + mode sombre --- */
+/* --- FullCalendar : lisibilité mobile --- */
 .fc {
   font-size: 0.85rem;
 }
@@ -56,22 +55,5 @@ body {
   }
   .fc-event {
     font-size: 0.7rem;
-  }
-}
-@media (prefers-color-scheme: dark) {
-  .fc {
-    --fc-border-color: #27272a;
-    --fc-page-bg-color: transparent;
-    --fc-neutral-bg-color: #18181b;
-    --fc-today-bg-color: rgba(250, 204, 21, 0.08);
-  }
-  .fc .fc-toolbar-title,
-  .fc .fc-col-header-cell-cushion,
-  .fc .fc-daygrid-day-number {
-    color: #e4e4e7;
-  }
-  .fc-theme-standard td,
-  .fc-theme-standard th {
-    border-color: #27272a;
   }
 }

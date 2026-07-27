@@ -34,18 +34,25 @@ export function PlanningManager({
     });
   }
 
+  const [formOpen, setFormOpen] = useState(false);
+
   return (
     <>
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
-          Assigner des créneaux
-        </h2>
+        <button
+          type="button"
+          onClick={() => setFormOpen((v) => !v)}
+          className="flex w-full items-center justify-between font-semibold text-zinc-900 dark:text-zinc-100"
+        >
+          <span>Assigner des créneaux</span>
+          <span className="text-zinc-400">{formOpen ? "▲" : "+"}</span>
+        </button>
         {employees.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="mt-3 text-sm text-zinc-500">
             Ajoutez d&apos;abord des employés dans la page Employés.
           </p>
-        ) : (
-          <>
+        ) : formOpen ? (
+          <div className="mt-4">
             <div className="mb-4 inline-flex rounded-md border border-zinc-200 p-0.5 dark:border-zinc-800">
               <button
                 type="button"
@@ -78,8 +85,8 @@ export function PlanningManager({
             ) : (
               <BulkShiftForm employees={employees} />
             )}
-          </>
-        )}
+          </div>
+        ) : null}
       </Card>
 
       <Card>
@@ -95,6 +102,7 @@ export function PlanningManager({
           onDateClick={(date) => {
             setSelectedDate(date);
             setMode("single");
+            setFormOpen(true);
           }}
           onEventClick={handleEventClick}
         />

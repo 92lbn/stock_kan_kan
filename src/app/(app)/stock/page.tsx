@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { StockForm } from "@/components/stock-form";
-import { StockRow } from "@/components/stock-row";
+import { StockList } from "@/components/stock-list";
 
 export default async function StockPage() {
   await requireAdmin();
@@ -10,28 +10,19 @@ export default async function StockPage() {
   const items = await db.stockItem.findMany({ orderBy: { name: "asc" } });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-        Stock &amp; inventaire
-      </h1>
+    <div className="space-y-5">
+      <h1 className="text-2xl font-semibold text-zinc-900">Stock &amp; inventaire</h1>
 
-      <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouvel article</h2>
-        <StockForm />
-      </Card>
+      <details className="rounded-lg border border-zinc-200 bg-white">
+        <summary className="cursor-pointer list-none px-4 py-3 font-medium text-zinc-900">
+          + Ajouter un article
+        </summary>
+        <div className="border-t border-zinc-100 p-4">
+          <StockForm />
+        </div>
+      </details>
 
-      <div>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Inventaire</h2>
-        {items.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun article pour le moment.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {items.map((item) => (
-              <StockRow key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </div>
+      <StockList items={items} />
     </div>
   );
 }
