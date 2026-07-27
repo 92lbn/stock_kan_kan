@@ -97,40 +97,23 @@ export default async function PlanningPage() {
           {shifts.length === 0 ? (
             <p className="text-sm text-zinc-500">Aucun créneau planifié.</p>
           ) : (
-            <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
-                  <th className="pb-2 font-medium">Employé</th>
-                  <th className="pb-2 font-medium">Date</th>
-                  <th className="pb-2 font-medium">Horaire</th>
-                  <th className="pb-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {shifts.map((shift) => (
-                  <tr key={shift.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                    <td className="py-2 text-zinc-700 dark:text-zinc-300">
-                      {shift.employee.name}
-                    </td>
-                    <td className="py-2 text-zinc-500">
-                      {shift.date.toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="py-2 text-zinc-500">
-                      {shift.startTime} – {shift.endTime}
-                    </td>
-                    <td className="py-2 text-right">
-                      <form action={deleteShift.bind(null, shift.id)}>
-                        <Button type="submit" size="sm" variant="ghost">
-                          Supprimer
-                        </Button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
+            <ul className="divide-y divide-zinc-100">
+              {shifts.map((shift) => (
+                <li key={shift.id} className="flex items-center justify-between gap-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-800">{shift.employee.name}</p>
+                    <p className="text-xs text-zinc-500">
+                      {shift.date.toLocaleDateString("fr-FR")} · {shift.startTime}–{shift.endTime}
+                    </p>
+                  </div>
+                  <form action={deleteShift.bind(null, shift.id)}>
+                    <Button type="submit" size="sm" variant="ghost">
+                      Supprimer
+                    </Button>
+                  </form>
+                </li>
+              ))}
+            </ul>
           )}
         </Card>
       </div>
