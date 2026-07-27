@@ -144,9 +144,6 @@ export default async function DashboardPage() {
             ))}
           </ul>
         )}
-        <Link href="/pointage" className="mt-3 inline-block text-sm font-medium text-zinc-900 underline dark:text-zinc-100">
-          Pointer mon arrivée / départ →
-        </Link>
       </Card>
     </div>
   );
