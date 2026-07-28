@@ -5,20 +5,15 @@ import { updateRecipe, deleteRecipe } from "@/lib/actions/recipes";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { ConfirmAction } from "@/components/confirm-action";
+import { RecipeFiche } from "@/components/recipe-fiche";
+import type { RecipeVM, StockItemLite } from "@/components/recipes-view";
 
 const categories = [
   { value: "MENU", label: "Menu / Carte" },
   { value: "BOISSON", label: "Boisson" },
   { value: "MARINADE", label: "Marinade" },
 ];
-
-type Recipe = {
-  id: string;
-  title: string;
-  category: string;
-  ingredients: string;
-  steps: string;
-};
 
 function TextBlock({ label, content }: { label: string; content: string }) {
   const lines = content.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -35,7 +30,15 @@ function TextBlock({ label, content }: { label: string; content: string }) {
   );
 }
 
-export function RecipeCard({ recipe, canEdit }: { recipe: Recipe; canEdit: boolean }) {
+export function RecipeCard({
+  recipe,
+  canEdit,
+  stockItems,
+}: {
+  recipe: RecipeVM;
+  canEdit: boolean;
+  stockItems: StockItemLite[];
+}) {
   const [editing, setEditing] = useState(false);
   const boundUpdate = updateRecipe.bind(null, recipe.id);
   const [state, formAction, pending] = useActionState(boundUpdate, undefined);
@@ -101,23 +104,19 @@ export function RecipeCard({ recipe, canEdit }: { recipe: Recipe; canEdit: boole
             <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
               Modifier
             </Button>
-            <form
+            <ConfirmAction
               action={deleteRecipe.bind(null, recipe.id)}
-              onSubmit={(e) => {
-                if (!confirm("Supprimer cette fiche ?")) e.preventDefault();
-              }}
-            >
-              <Button type="submit" size="sm" variant="ghost">
-                Supprimer
-              </Button>
-            </form>
+              title="Supprimer cette fiche ?"
+              message={`« ${recipe.title} » sera définitivement supprimée.`}
+            />
           </div>
         )}
       </div>
       <div className="space-y-3">
-        <TextBlock label="Ingrédients" content={recipe.ingredients} />
+        <TextBlock label="Ingrédients (texte)" content={recipe.ingredients} />
         <TextBlock label="Préparation" content={recipe.steps} />
       </div>
+      <RecipeFiche recipe={recipe} canEdit={canEdit} stockItems={stockItems} />
     </Card>
   );
 }

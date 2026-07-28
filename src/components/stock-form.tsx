@@ -45,6 +45,14 @@ export function StockForm() {
         <Label htmlFor="minThreshold">Seuil d&apos;alerte</Label>
         <Input id="minThreshold" name="minThreshold" type="number" step="any" min="0" defaultValue="0" required />
       </div>
+      <div className="sm:col-span-2">
+        <Label htmlFor="costPrice">Coût unitaire (€)</Label>
+        <Input id="costPrice" name="costPrice" type="number" step="0.01" min="0" defaultValue="0" />
+      </div>
+      <div className="sm:col-span-4">
+        <Label htmlFor="allergens">Allergènes (séparés par des virgules)</Label>
+        <Input id="allergens" name="allergens" placeholder="gluten, lait, œuf..." />
+      </div>
 
       {state?.error && (
         <p className="sm:col-span-6 text-sm text-accent">{state.error}</p>

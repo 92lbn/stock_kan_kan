@@ -37,6 +37,8 @@ export default async function StockPage({
     unit: item.unit,
     quantity: item.quantity.toNumber(),
     minThreshold: item.minThreshold.toNumber(),
+    costPrice: item.costPrice.toNumber(),
+    allergens: item.allergens ?? "",
   }));
 
   return (

@@ -40,6 +40,8 @@ type StockItem = {
   unit: string;
   quantity: number;
   minThreshold: number;
+  costPrice: number;
+  allergens: string;
 };
 
 export function StockRow({ item }: { item: StockItem }) {
@@ -121,6 +123,26 @@ export function StockRow({ item }: { item: StockItem }) {
                 min="0"
                 defaultValue={item.minThreshold}
                 required
+              />
+            </div>
+            <div>
+              <Label htmlFor={`cost-${item.id}`}>Coût unitaire (€)</Label>
+              <Input
+                id={`cost-${item.id}`}
+                name="costPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={item.costPrice}
+              />
+            </div>
+            <div>
+              <Label htmlFor={`allerg-${item.id}`}>Allergènes</Label>
+              <Input
+                id={`allerg-${item.id}`}
+                name="allergens"
+                defaultValue={item.allergens}
+                placeholder="gluten, lait..."
               />
             </div>
           </div>

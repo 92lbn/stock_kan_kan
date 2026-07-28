@@ -17,6 +17,8 @@ const StockItemSchema = z.object({
   unit: z.string().trim().min(1),
   quantity: z.coerce.number().min(0),
   minThreshold: z.coerce.number().min(0),
+  costPrice: z.coerce.number().min(0).default(0),
+  allergens: z.string().trim().optional(),
 });
 
 export type ActionState = { error: string } | undefined;
@@ -33,6 +35,8 @@ export async function createStockItem(
     unit: formData.get("unit"),
     quantity: formData.get("quantity"),
     minThreshold: formData.get("minThreshold"),
+    costPrice: formData.get("costPrice") ?? 0,
+    allergens: formData.get("allergens") || undefined,
   });
 
   if (!parsed.success) {
@@ -63,6 +67,8 @@ export async function updateStockItem(
     unit: formData.get("unit"),
     quantity: formData.get("quantity"),
     minThreshold: formData.get("minThreshold"),
+    costPrice: formData.get("costPrice") ?? 0,
+    allergens: formData.get("allergens") || undefined,
   });
 
   if (!parsed.success) {
