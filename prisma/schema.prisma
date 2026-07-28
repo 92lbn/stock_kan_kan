@@ -148,10 +148,14 @@ model StockMovement {
   stockItemId String
   type        StockMovementType
   quantity    Decimal           @db.Decimal(12, 3)
+  unitCost    Decimal?          @db.Decimal(12, 2) // coût unitaire d'un achat (entrée IN)
   note        String?
   createdAt   DateTime          @default(now())
   createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?
+  // Dépense compta correspondante (un achat IN peut générer une LedgerEntry).
+  ledgerEntry   LedgerEntry?    @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+  ledgerEntryId String?
 
   @@index([stockItemId])
   @@map("stock_movements")
@@ -285,6 +289,17 @@ model ScheduledPost {
   @@map("scheduled_posts")
 }
 
+// CA prévisionnel par jour, pour le ratio masse salariale / CA (liaison compta ↔ planning).
+model DailyForecast {
+  id              String   @id @default(cuid())
+  date            DateTime @unique @db.Date
+  expectedRevenue Decimal  @db.Decimal(12, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("daily_forecasts")
+}
+
 // ---------- Suivi recettes / dépenses (comptabilité légère) ----------
 
 enum LedgerEntryType {
@@ -303,6 +318,8 @@ model LedgerEntry {
   createdBy   User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?
   createdAt   DateTime        @default(now())
+
+  stockMovements StockMovement[]
 
   @@index([date])
   @@index([deletedAt])

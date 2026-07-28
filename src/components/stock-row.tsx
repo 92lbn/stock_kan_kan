@@ -212,9 +212,25 @@ export function StockRow({ item }: { item: StockItem }) {
           required
           className="h-10 w-28"
         />
+        {movementType === "IN" && (
+          <Input
+            name="unitCost"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Coût unit. €"
+            className="h-10 w-28"
+          />
+        )}
         <Button type="submit" size="md" variant="secondary" disabled={pending}>
           Valider
         </Button>
+        {movementType === "IN" && (
+          <label className="flex w-full items-center gap-1.5 text-xs text-muted">
+            <input type="checkbox" name="createExpense" className="accent-accent" />
+            Enregistrer l&apos;achat en dépense (compta) et recalculer le PMP
+          </label>
+        )}
       </form>
       {state?.error && <p className="mt-1 text-xs text-accent">{state.error}</p>}
     </div>

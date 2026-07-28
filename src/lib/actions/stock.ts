@@ -3,8 +3,10 @@
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { Prisma } from "@/generated/prisma/client";
 import { requireAdmin } from "@/lib/dal";
 import { formatQuantity } from "@/lib/money";
+import { toDateOnly } from "@/lib/date";
 import { logAudit } from "@/lib/audit";
 import { StockCategory, StockMovementType } from "@/generated/prisma/enums";
 
@@ -107,6 +109,7 @@ export async function deleteStockItem(itemId: string) {
 const MovementSchema = z.object({
   type: z.enum(StockMovementType),
   quantity: z.coerce.number(),
+  unitCost: z.coerce.number().min(0).optional(),
   note: z.string().trim().optional(),
 });
 
@@ -120,6 +123,7 @@ export async function recordStockMovement(
   const parsed = MovementSchema.safeParse({
     type: formData.get("type"),
     quantity: formData.get("quantity"),
+    unitCost: formData.get("unitCost") || undefined,
     note: formData.get("note") || undefined,
   });
 
@@ -127,7 +131,8 @@ export async function recordStockMovement(
     return { error: "Quantité invalide." };
   }
 
-  const { type, quantity, note } = parsed.data;
+  const { type, quantity, unitCost, note } = parsed.data;
+  const createExpense = formData.get("createExpense") === "on";
 
   if (quantity < 0) {
     return { error: "La quantité ne peut pas être négative." };
@@ -141,7 +146,7 @@ export async function recordStockMovement(
     await db.$transaction(async (tx) => {
       const item = await tx.stockItem.findUnique({
         where: { id: stockItemId },
-        select: { quantity: true, unit: true, deletedAt: true },
+        select: { name: true, quantity: true, unit: true, costPrice: true, deletedAt: true },
       });
       if (!item || item.deletedAt) {
         throw new MovementError("Article introuvable.");
@@ -155,14 +160,41 @@ export async function recordStockMovement(
       }
 
       // ADJUSTMENT fixe une valeur absolue (correction d'inventaire) ; IN/OUT ajustent.
-      const data =
+      const data: Record<string, unknown> =
         type === "ADJUSTMENT"
           ? { quantity }
           : { quantity: { increment: type === "OUT" ? -quantity : quantity } };
 
+      // Entrée avec coût unitaire : recalcul du PMP (prix moyen pondéré).
+      if (type === "IN" && unitCost !== undefined && unitCost > 0) {
+        const currentQty = item.quantity;
+        const currentValue = currentQty.times(item.costPrice);
+        const inValue = new Prisma.Decimal(unitCost).times(quantity);
+        const newQty = currentQty.plus(quantity);
+        if (newQty.gt(0)) {
+          data.costPrice = currentValue.plus(inValue).div(newQty).toDecimalPlaces(2);
+        }
+      }
+
+      // Achat (IN) : proposer d'enregistrer la dépense correspondante et la lier.
+      let ledgerEntryId: string | undefined;
+      if (type === "IN" && createExpense && unitCost !== undefined && unitCost > 0) {
+        const entry = await tx.ledgerEntry.create({
+          data: {
+            date: toDateOnly(new Date()),
+            type: "EXPENSE",
+            amount: new Prisma.Decimal(unitCost).times(quantity).toDecimalPlaces(2),
+            category: "Achats stock",
+            note: `${item.name} × ${formatQuantity(quantity)} ${item.unit}`,
+            createdById: admin.id,
+          },
+        });
+        ledgerEntryId = entry.id;
+      }
+
       await tx.stockItem.update({ where: { id: stockItemId }, data });
       await tx.stockMovement.create({
-        data: { stockItemId, type, quantity, note, createdById: admin.id },
+        data: { stockItemId, type, quantity, unitCost, note, createdById: admin.id, ledgerEntryId },
       });
     });
   } catch (e) {
@@ -177,8 +209,9 @@ export async function recordStockMovement(
     action: `stock.movement.${type.toLowerCase()}`,
     entity: "StockItem",
     entityId: stockItemId,
-    after: { type, quantity, note },
+    after: { type, quantity, unitCost, note },
   });
   revalidatePath("/stock");
+  revalidatePath("/comptabilite");
   revalidatePath("/");
 }

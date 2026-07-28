@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { formatEUR } from "@/lib/money";
 import { Card } from "@/components/ui/card";
 import { StockForm } from "@/components/stock-form";
 import { StockRow } from "@/components/stock-row";
@@ -18,7 +19,7 @@ export default async function StockPage({
   const page = Math.max(1, Number(pageParam) || 1);
 
   const where = { deletedAt: null };
-  const [rawItems, total] = await Promise.all([
+  const [rawItems, total, valuation] = await Promise.all([
     db.stockItem.findMany({
       where,
       orderBy: { name: "asc" },
@@ -26,7 +27,13 @@ export default async function StockPage({
       take: PAGE_SIZE,
     }),
     db.stockItem.count({ where }),
+    // Valorisation du stock : combien d'euros dorment en réserve (quantité × PMP).
+    db.$queryRaw<{ value: string | null }[]>`
+      SELECT COALESCE(SUM(quantity * "costPrice"), 0) AS value
+      FROM stock_items WHERE "deletedAt" IS NULL
+    `,
   ]);
+  const stockValue = valuation[0]?.value ?? 0;
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   // Decimal n'est pas sérialisable vers un composant client : on ramène en Number.
@@ -43,9 +50,13 @@ export default async function StockPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-ink">
-        Stock &amp; inventaire
-      </h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-ink">Stock &amp; inventaire</h1>
+        <div className="text-right">
+          <p className="kpi-label">Valeur du stock</p>
+          <p className="num text-2xl font-semibold text-ink">{formatEUR(stockValue)}</p>
+        </div>
+      </div>
 
       <Card>
         <h2 className="mb-3 font-semibold text-ink">Nouvel article</h2>

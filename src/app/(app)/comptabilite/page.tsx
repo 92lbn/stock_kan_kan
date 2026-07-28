@@ -9,7 +9,10 @@ import { MonthNav } from "@/components/month-nav";
 import { deleteLedgerEntry } from "@/lib/actions/ledger";
 import { addMoney, multiplyMoney, formatEUR } from "@/lib/money";
 import { sumShiftHours, computeTotalHours } from "@/lib/hours";
+import { computeLaborRatio, classifyLaborRatio } from "@/lib/labor";
 import { monthRange, monthRangeOf, toYearMonth, formatMonthFR, formatDateFR } from "@/lib/date";
+import { LaborRatioCard, type LaborRow } from "@/components/labor-ratio-card";
+import { Prisma } from "@/generated/prisma/client";
 
 export default async function ComptabilitePage({
   searchParams,
@@ -22,7 +25,7 @@ export default async function ComptabilitePage({
   const month = isValid ? mois : toYearMonth();
   const { start, end } = isValid ? monthRangeOf(month) : monthRange();
 
-  const [entries, employees] = await Promise.all([
+  const [entries, employees, forecasts] = await Promise.all([
     db.ledgerEntry.findMany({
       where: { date: { gte: start, lt: end }, deletedAt: null },
       orderBy: { date: "desc" },
@@ -38,6 +41,7 @@ export default async function ComptabilitePage({
         },
       },
     }),
+    db.dailyForecast.findMany({ where: { date: { gte: start, lt: end } } }),
   ]);
 
   const monthLabel = formatMonthFR(month);
@@ -57,6 +61,35 @@ export default async function ComptabilitePage({
   });
   const totalPlannedPay = addMoney(...payroll.map((p) => p.plannedPay));
   const totalActualPay = addMoney(...payroll.map((p) => p.actualPay));
+
+  // Ratio masse salariale / CA, par jour (liaison compta ↔ planning).
+  const laborByDay = new Map<string, Prisma.Decimal>();
+  for (const emp of employees) {
+    for (const shift of emp.shifts) {
+      const key = shift.date.toISOString().slice(0, 10);
+      const cost = multiplyMoney(sumShiftHours([shift]), emp.hourlyRate);
+      laborByDay.set(key, (laborByDay.get(key) ?? new Prisma.Decimal(0)).plus(cost));
+    }
+  }
+  const forecastByDay = new Map(
+    forecasts.map((f) => [f.date.toISOString().slice(0, 10), f.expectedRevenue])
+  );
+  const laborDayKeys = [...new Set([...laborByDay.keys(), ...forecastByDay.keys()])].sort();
+  const laborRows: LaborRow[] = laborDayKeys.map((key) => {
+    const laborCost = laborByDay.get(key) ?? new Prisma.Decimal(0);
+    const forecast = forecastByDay.get(key) ?? null;
+    const ratio = computeLaborRatio(laborCost, forecast);
+    return {
+      date: key,
+      label: formatDateFR(new Date(`${key}T00:00:00.000Z`)),
+      laborCost: laborCost.toNumber(),
+      forecast: forecast ? forecast.toNumber() : null,
+      ratio,
+      rating: classifyLaborRatio(ratio),
+    };
+  });
+  const monthlyForecast = addMoney(...forecasts.map((f) => f.expectedRevenue));
+  const monthlyRatio = computeLaborRatio(totalPlannedPay, monthlyForecast);
 
   const totalRevenue = addMoney(
     ...entries.filter((e) => e.type === "REVENUE").map((e) => e.amount)
@@ -178,6 +211,13 @@ export default async function ComptabilitePage({
           </>
         )}
       </Card>
+
+      <LaborRatioCard
+        rows={laborRows}
+        monthlyCost={totalPlannedPay.toNumber()}
+        monthlyRevenue={monthlyForecast.toNumber()}
+        monthlyRatio={monthlyRatio}
+      />
 
       <Card>
         <h2 className="mb-3 font-semibold text-ink">Nouvelle entrée</h2>
