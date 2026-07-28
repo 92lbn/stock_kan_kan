@@ -6,7 +6,9 @@ import { PostForm } from "@/components/post-form";
 import { SocialCalendar } from "@/components/social-calendar";
 import { ConfirmAction } from "@/components/confirm-action";
 import { deleteScheduledPost } from "@/lib/actions/social";
-import type { CalendarEvent } from "@/components/planning-calendar";
+import type { CalendarEvent } from "@/components/month-calendar";
+
+const pad = (n: number) => String(n).padStart(2, "0");
 
 const platformColors: Record<string, string> = {
   TIKTOK: "#000000",
@@ -35,6 +37,8 @@ export default async function ReseauxPage() {
     db.scheduledPost.findMany({ orderBy: { scheduledAt: "asc" } }),
   ]);
 
+  const now = new Date();
+  const month = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
   const scheduled = posts.filter((p) => p.scheduledAt);
   const events: CalendarEvent[] = scheduled.map((post) => ({
     id: post.id,
@@ -65,7 +69,7 @@ export default async function ReseauxPage() {
         <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
           Calendrier éditorial
         </h2>
-        <SocialCalendar events={events} />
+        <SocialCalendar events={events} month={month} />
       </Card>
 
       <Card>

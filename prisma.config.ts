@@ -9,6 +9,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // CLI Prisma (migrations, studio) : session pooler (5432), pas le transaction
+    // pooler. Fallback sur DATABASE_URL tant que DIRECT_URL n'est pas configuré.
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });

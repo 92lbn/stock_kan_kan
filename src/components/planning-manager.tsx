@@ -1,35 +1,37 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import dynamic from "next/dynamic";
+import { useOptimistic, useState, useTransition } from "react";
 import { ShiftForm } from "@/components/shift-form";
 import { BulkShiftForm } from "@/components/bulk-shift-form";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { deleteShift } from "@/lib/actions/planning";
-import type { CalendarEvent } from "@/components/planning-calendar";
-
-const PlanningCalendar = dynamic(
-  () => import("@/components/planning-calendar").then((mod) => mod.PlanningCalendar),
-  { ssr: false, loading: () => <p className="text-sm text-zinc-500">Chargement du calendrier...</p> }
-);
+import { MonthCalendar, type CalendarEvent } from "@/components/month-calendar";
 
 type Employee = { id: string; name: string };
 
 export function PlanningManager({
   employees,
   events,
+  month,
 }: {
   employees: Employee[];
   events: CalendarEvent[];
+  month: string;
 }) {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<"single" | "bulk">("single");
   const [isPending, startTransition] = useTransition();
 
+  // Le créneau disparaît du calendrier dès le clic, avant la confirmation serveur.
+  const [optimisticEvents, removeEvent] = useOptimistic(events, (evts, removedId: string) =>
+    evts.filter((e) => e.id !== removedId)
+  );
+
   function handleEventClick(eventId: string) {
     if (!confirm("Supprimer ce créneau ?")) return;
     startTransition(async () => {
+      removeEvent(eventId);
       await deleteShift(eventId);
     });
   }
@@ -90,8 +92,9 @@ export function PlanningManager({
           Clique sur un jour pour pré-remplir le formulaire &quot;un créneau&quot;, clique sur un
           créneau pour le supprimer.
         </p>
-        <PlanningCalendar
-          events={events}
+        <MonthCalendar
+          events={optimisticEvents}
+          month={month}
           onDateClick={(date) => {
             setSelectedDate(date);
             setMode("single");

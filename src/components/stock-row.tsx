@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useOptimistic, useRef, useState } from "react";
+import type { ActionState } from "@/lib/actions/stock";
 import { recordStockMovement, deleteStockItem, updateStockItem } from "@/lib/actions/stock";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -44,8 +45,22 @@ type StockItem = {
 export function StockRow({ item }: { item: StockItem }) {
   const [editing, setEditing] = useState(false);
   const [movementType, setMovementType] = useState("IN");
-  const boundMovement = recordStockMovement.bind(null, item.id);
-  const [state, formAction, pending] = useActionState(boundMovement, undefined);
+
+  // La quantité affichée bouge tout de suite ; elle est réconciliée au revalidatePath.
+  const [optimisticQty, setOptimisticQty] = useOptimistic(item.quantity);
+
+  async function handleMovement(prevState: ActionState, formData: FormData): Promise<ActionState> {
+    const type = String(formData.get("type"));
+    const qty = Number(formData.get("quantity"));
+    if (!Number.isNaN(qty) && qty >= 0) {
+      if (type === "ADJUSTMENT") setOptimisticQty(qty);
+      else if (type === "OUT") setOptimisticQty(Math.max(0, optimisticQty - qty));
+      else setOptimisticQty(optimisticQty + qty);
+    }
+    return recordStockMovement(item.id, prevState, formData);
+  }
+
+  const [state, formAction, pending] = useActionState(handleMovement, undefined);
 
   const boundUpdate = updateStockItem.bind(null, item.id);
   const [editState, editAction, editPending] = useActionState(boundUpdate, undefined);
@@ -59,7 +74,7 @@ export function StockRow({ item }: { item: StockItem }) {
     wasEditPending.current = editPending;
   }, [editPending, editState]);
 
-  const isLow = item.minThreshold > 0 && item.quantity <= item.minThreshold;
+  const isLow = item.minThreshold > 0 && optimisticQty <= item.minThreshold;
 
   if (editing) {
     return (
@@ -144,8 +159,8 @@ export function StockRow({ item }: { item: StockItem }) {
       </div>
 
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          {fr(item.quantity)}
+        <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+          {fr(optimisticQty)}
         </span>
         <span className="text-sm text-zinc-500">{item.unit}</span>
         {isLow && (

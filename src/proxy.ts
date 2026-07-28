@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { decryptSession } from "@/lib/session";
 import { SESSION_COOKIE_NAME } from "@/lib/session";
 
-const publicRoutes = ["/login"];
+const publicRoutes = ["/login", "/offline"];
 
 export default async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;

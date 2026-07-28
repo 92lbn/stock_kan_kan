@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { toggleNoteDone, deleteNote } from "@/lib/actions/notes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/card";
@@ -15,6 +15,8 @@ type Note = {
 
 export function NoteItem({ note, isDue }: { note: Note; isDue: boolean }) {
   const [isPending, startTransition] = useTransition();
+  // La case se coche instantanément, avant le round-trip serveur.
+  const [optimisticDone, setOptimisticDone] = useOptimistic(note.done);
 
   const remindLabel = note.remindAt
     ? note.remindAt.toLocaleString("fr-FR", {
@@ -30,16 +32,21 @@ export function NoteItem({ note, isDue }: { note: Note; isDue: boolean }) {
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
-          checked={note.done}
+          checked={optimisticDone}
           disabled={isPending}
-          onChange={() => startTransition(() => toggleNoteDone(note.id))}
+          onChange={() =>
+            startTransition(async () => {
+              setOptimisticDone(!optimisticDone);
+              await toggleNoteDone(note.id);
+            })
+          }
           className="mt-1 accent-zinc-900 dark:accent-zinc-100"
         />
         <div>
           <p
             className={cn(
               "text-sm text-zinc-800 dark:text-zinc-200",
-              note.done && "text-zinc-400 line-through dark:text-zinc-600"
+              optimisticDone && "text-zinc-400 line-through dark:text-zinc-600"
             )}
           >
             {note.content}

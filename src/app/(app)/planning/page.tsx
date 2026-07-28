@@ -7,7 +7,7 @@ import { sumShiftHours } from "@/lib/hours";
 import { colorForId } from "@/lib/colors";
 import { PlanningManager } from "@/components/planning-manager";
 import { EmployeePlanningCalendar } from "@/components/employee-planning-calendar";
-import type { CalendarEvent } from "@/components/planning-calendar";
+import type { CalendarEvent } from "@/components/month-calendar";
 
 function monthRange(date = new Date()) {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -15,13 +15,7 @@ function monthRange(date = new Date()) {
   return { start, end };
 }
 
-// Wider window so the calendar's prev/next navigation shows real data
-// without needing a client-side refetch.
-function calendarRange(date = new Date()) {
-  const start = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 2, 1);
-  return { start, end };
-}
+const pad = (n: number) => String(n).padStart(2, "0");
 
 function toDateStr(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -29,19 +23,18 @@ function toDateStr(date: Date) {
 
 export default async function PlanningPage() {
   const user = await getCurrentUser();
-  const { start, end } = monthRange();
-  const calendarWindow = calendarRange();
+  const now = new Date();
+  const { start, end } = monthRange(now);
+  const month = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
 
   if (user.role === "ADMIN") {
-    const [employees, shifts, calendarShifts] = await Promise.all([
-      db.user.findMany({ where: { role: "EMPLOYEE" }, orderBy: { name: "asc" } }),
-      db.shift.findMany({
-        where: { date: { gte: start, lt: end } },
-        include: { employee: { select: { id: true, name: true } } },
-        orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    const [employees, shifts] = await Promise.all([
+      db.user.findMany({
+        where: { role: "EMPLOYEE", deletedAt: null },
+        orderBy: { name: "asc" },
       }),
       db.shift.findMany({
-        where: { date: { gte: calendarWindow.start, lt: calendarWindow.end } },
+        where: { date: { gte: start, lt: end } },
         include: { employee: { select: { id: true, name: true } } },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       }),
@@ -56,7 +49,7 @@ export default async function PlanningPage() {
       if (entry) entry.hours += sumShiftHours([shift]);
     }
 
-    const events: CalendarEvent[] = calendarShifts.map((shift) => ({
+    const events: CalendarEvent[] = shifts.map((shift) => ({
       id: shift.id,
       title: `${shift.employee.name} ${shift.startTime}-${shift.endTime}`,
       date: toDateStr(shift.date),
@@ -69,7 +62,7 @@ export default async function PlanningPage() {
           Planning du mois
         </h1>
 
-        <PlanningManager employees={employees} events={events} />
+        <PlanningManager employees={employees} events={events} month={month} />
 
         <Card>
           <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
@@ -137,21 +130,12 @@ export default async function PlanningPage() {
     );
   }
 
-  const [shifts, calendarShifts] = await Promise.all([
-    db.shift.findMany({
-      where: { employeeId: user.id, date: { gte: start, lt: end } },
-      orderBy: [{ date: "asc" }, { startTime: "asc" }],
-    }),
-    db.shift.findMany({
-      where: {
-        employeeId: user.id,
-        date: { gte: calendarWindow.start, lt: calendarWindow.end },
-      },
-      orderBy: [{ date: "asc" }, { startTime: "asc" }],
-    }),
-  ]);
+  const shifts = await db.shift.findMany({
+    where: { employeeId: user.id, date: { gte: start, lt: end } },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }],
+  });
   const totalHours = sumShiftHours(shifts);
-  const events: CalendarEvent[] = calendarShifts.map((shift) => ({
+  const events: CalendarEvent[] = shifts.map((shift) => ({
     id: shift.id,
     title: `${shift.startTime}-${shift.endTime}`,
     date: toDateStr(shift.date),
@@ -170,7 +154,7 @@ export default async function PlanningPage() {
       </Card>
 
       <Card>
-        <EmployeePlanningCalendar events={events} />
+        <EmployeePlanningCalendar events={events} month={month} />
       </Card>
     </div>
   );

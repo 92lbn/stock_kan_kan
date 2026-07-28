@@ -3,7 +3,8 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { REAL_INVENTORY, OLD_SAMPLE_NAMES } from "./inventory-data";
 
-const adapter = new PrismaPg(process.env.DATABASE_URL!);
+// Scripts CLI : session pooler (DIRECT_URL), pas le transaction pooler.
+const adapter = new PrismaPg(process.env.DIRECT_URL ?? process.env.DATABASE_URL!);
 const db = new PrismaClient({ adapter });
 
 async function main() {

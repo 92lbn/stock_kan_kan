@@ -26,8 +26,17 @@ export default async function DashboardPage() {
 
   if (user.role === "ADMIN") {
     const { start, end } = monthRange();
-    const [allStockItems, todayShiftsCount, employeeCount, ledgerEntries] = await Promise.all([
-      db.stockItem.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
+    // Uniquement les articles réellement sous seuil (comparaison inter-colonnes en SQL),
+    // au lieu de charger tout l'inventaire pour le filtrer en JS.
+    const [lowStockItems, todayShiftsCount, employeeCount, ledgerAgg] = await Promise.all([
+      db.$queryRaw<
+        { id: string; name: string; quantity: string; minThreshold: string; unit: string }[]
+      >`
+        SELECT id, name, quantity, "minThreshold", unit
+        FROM stock_items
+        WHERE "deletedAt" IS NULL AND "minThreshold" > 0 AND quantity <= "minThreshold"
+        ORDER BY name ASC
+      `,
       db.shift.count({
         where: {
           date: {
@@ -37,16 +46,19 @@ export default async function DashboardPage() {
         },
       }),
       db.user.count({ where: { role: "EMPLOYEE", deletedAt: null } }),
-      db.ledgerEntry.findMany({ where: { date: { gte: start, lt: end }, deletedAt: null } }),
+      // Somme par type en SQL plutôt que de charger toutes les lignes.
+      db.ledgerEntry.groupBy({
+        by: ["type"],
+        where: { date: { gte: start, lt: end }, deletedAt: null },
+        _sum: { amount: true },
+      }),
     ]);
 
-    const lowStockItems = allStockItems.filter(
-      (item) => item.minThreshold.gt(0) && item.quantity.lte(item.minThreshold)
-    );
-    const net = ledgerEntries.reduce(
-      (sum, e) => (e.type === "REVENUE" ? sum.plus(e.amount) : sum.minus(e.amount)),
-      new Prisma.Decimal(0)
-    );
+    const revenue =
+      ledgerAgg.find((g) => g.type === "REVENUE")?._sum.amount ?? new Prisma.Decimal(0);
+    const expense =
+      ledgerAgg.find((g) => g.type === "EXPENSE")?._sum.amount ?? new Prisma.Decimal(0);
+    const net = revenue.minus(expense);
 
     return (
       <div className="space-y-6">
