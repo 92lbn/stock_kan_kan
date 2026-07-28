@@ -25,8 +25,8 @@ function TextBlock({ label, content }: { label: string; content: string }) {
   if (lines.length === 0) return null;
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold uppercase text-zinc-400">{label}</p>
-      <ul className="list-inside list-disc space-y-0.5 text-sm text-zinc-700 dark:text-zinc-300">
+      <p className="mb-1 text-xs font-semibold uppercase text-muted">{label}</p>
+      <ul className="list-inside list-disc space-y-0.5 text-sm text-ink">
         {lines.map((line, i) => (
           <li key={i}>{line}</li>
         ))}
@@ -77,7 +77,7 @@ export function RecipeCard({ recipe, canEdit }: { recipe: Recipe; canEdit: boole
             <Textarea id={`steps-${recipe.id}`} name="steps" rows={5} defaultValue={recipe.steps} />
           </div>
 
-          {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+          {state?.error && <p className="text-sm text-accent">{state.error}</p>}
 
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={pending}>
@@ -95,7 +95,7 @@ export function RecipeCard({ recipe, canEdit }: { recipe: Recipe; canEdit: boole
   return (
     <Card>
       <div className="mb-3 flex items-start justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{recipe.title}</h3>
+        <h3 className="font-semibold text-ink">{recipe.title}</h3>
         {canEdit && (
           <div className="flex gap-1">
             <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>

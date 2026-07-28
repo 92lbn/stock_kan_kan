@@ -51,7 +51,7 @@ export function RecipeForm({ defaultCategory }: { defaultCategory?: string }) {
         <Textarea id="steps" name="steps" rows={5} />
       </div>
 
-      {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-accent">{state.error}</p>}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Enregistrement..." : "Ajouter la fiche"}

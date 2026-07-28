@@ -41,22 +41,22 @@ export default async function StockPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-2xl font-semibold text-ink">
         Stock &amp; inventaire
       </h1>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouvel article</h2>
+        <h2 className="mb-3 font-semibold text-ink">Nouvel article</h2>
         <StockForm />
       </Card>
 
       <div>
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">Inventaire</h2>
-          <span className="text-xs text-zinc-500 tabular-nums">{total} article(s)</span>
+          <h2 className="font-semibold text-ink">Inventaire</h2>
+          <span className="text-xs text-muted tabular-nums">{total} article(s)</span>
         </div>
         {items.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun article pour le moment.</p>
+          <p className="text-sm text-muted">Aucun article pour le moment.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {items.map((item) => (
@@ -70,25 +70,25 @@ export default async function StockPage({
             {page > 1 ? (
               <Link
                 href={`/stock?page=${page - 1}`}
-                className="rounded-md px-3 py-1.5 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="rounded-md px-3 py-1.5 font-medium text-ink hover:bg-card dark:text-muted"
               >
                 ‹ Précédent
               </Link>
             ) : (
-              <span className="px-3 py-1.5 text-zinc-300 dark:text-zinc-700">‹ Précédent</span>
+              <span className="px-3 py-1.5 text-muted dark:text-ink">‹ Précédent</span>
             )}
-            <span className="text-zinc-500 tabular-nums">
+            <span className="text-muted tabular-nums">
               Page {page} / {totalPages}
             </span>
             {page < totalPages ? (
               <Link
                 href={`/stock?page=${page + 1}`}
-                className="rounded-md px-3 py-1.5 font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="rounded-md px-3 py-1.5 font-medium text-ink hover:bg-card dark:text-muted"
               >
                 Suivant ›
               </Link>
             ) : (
-              <span className="px-3 py-1.5 text-zinc-300 dark:text-zinc-700">Suivant ›</span>
+              <span className="px-3 py-1.5 text-muted dark:text-ink">Suivant ›</span>
             )}
           </div>
         )}

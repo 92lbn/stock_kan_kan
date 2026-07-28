@@ -21,7 +21,7 @@ export function RecordPayrollButton({ amount, label }: { amount: number; label: 
   }
 
   if (done) {
-    return <p className="text-sm text-emerald-600 dark:text-emerald-400">Paye enregistrée en dépense ✓</p>;
+    return <p className="text-sm text-positive">Paye enregistrée en dépense ✓</p>;
   }
 
   return (
@@ -29,7 +29,7 @@ export function RecordPayrollButton({ amount, label }: { amount: number; label: 
       <Button onClick={handleClick} disabled={isPending || amount <= 0} variant="secondary">
         {isPending ? "Enregistrement..." : "Enregistrer la paye réelle comme dépense"}
       </Button>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-accent">{error}</p>}
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function LedgerForm() {
       </div>
 
       {state?.error && (
-        <p className="sm:col-span-6 text-sm text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="sm:col-span-6 text-sm text-accent">{state.error}</p>
       )}
     </form>
   );

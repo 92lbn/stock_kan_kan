@@ -19,10 +19,10 @@ export default function Error({
       <p className="text-4xl" aria-hidden>
         ⚠️
       </p>
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-xl font-semibold text-ink">
         Une erreur est survenue
       </h1>
-      <p className="max-w-sm text-sm text-zinc-500">
+      <p className="max-w-sm text-sm text-muted">
         La page n&apos;a pas pu s&apos;afficher. Réessaie ; si le problème persiste, préviens le
         responsable.
       </p>

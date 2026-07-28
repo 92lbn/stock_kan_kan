@@ -58,16 +58,16 @@ export function BulkShiftForm({ employees }: { employees: Employee[] }) {
           {WEEKDAYS.map((d) => (
             <label
               key={d.value}
-              className="flex cursor-pointer items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-card dark:text-muted"
             >
-              <input type="checkbox" name="weekdays" value={d.value} className="accent-zinc-900 dark:accent-zinc-100" />
+              <input type="checkbox" name="weekdays" value={d.value} className="accent-accent" />
               {d.label}
             </label>
           ))}
         </div>
       </div>
 
-      {state?.error && <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>}
+      {state?.error && <p className="text-sm text-accent">{state.error}</p>}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Création..." : "Créer les créneaux"}

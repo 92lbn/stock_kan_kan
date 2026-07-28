@@ -78,7 +78,7 @@ export default async function ComptabilitePage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-semibold text-ink">
           Recettes &amp; dépenses
         </h1>
         <MonthNav month={month} basePath="/comptabilite" />
@@ -86,21 +86,21 @@ export default async function ComptabilitePage({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <p className="text-sm text-zinc-500">Recettes du mois</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
+          <p className="text-sm text-muted">Recettes du mois</p>
+          <p className="mt-1 text-2xl font-semibold text-positive">
             +{formatEUR(totalRevenue)}
           </p>
         </Card>
         <Card>
-          <p className="text-sm text-zinc-500">Dépenses du mois</p>
-          <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">
+          <p className="text-sm text-muted">Dépenses du mois</p>
+          <p className="mt-1 text-2xl font-semibold text-accent">
             -{formatEUR(totalExpense)}
           </p>
         </Card>
         <Card>
-          <p className="text-sm text-zinc-500">Solde net</p>
+          <p className="text-sm text-muted">Solde net</p>
           <p
-            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-zinc-900 dark:text-zinc-100" : "text-red-600 dark:text-red-400"}`}
+            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-ink" : "text-accent"}`}
           >
             {net.gte(0) ? "+" : ""}
             {formatEUR(net)}
@@ -109,28 +109,28 @@ export default async function ComptabilitePage({
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Solde net par jour
         </h2>
         <DailyNetChart data={netByDay} />
       </Card>
 
       <Card>
-        <h2 className="mb-1 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-1 font-semibold text-ink">
           Paye du mois ({monthLabel})
         </h2>
-        <p className="mb-3 text-xs text-zinc-500">
+        <p className="mb-3 text-xs text-muted">
           Planifié = heures des créneaux × taux horaire. Réel = heures pointées × taux horaire.
           Réglez le taux horaire dans la page Employés.
         </p>
         {payroll.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun employé.</p>
+          <p className="text-sm text-muted">Aucun employé.</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
+                  <tr className="border-b border-line text-left text-xs uppercase text-muted">
                     <th className="pb-2 font-medium">Employé</th>
                     <th className="pb-2 font-medium">Taux</th>
                     <th className="pb-2 font-medium">Planifié</th>
@@ -141,28 +141,28 @@ export default async function ComptabilitePage({
                 </thead>
                 <tbody>
                   {payroll.map((p) => (
-                    <tr key={p.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                      <td className="py-2 text-zinc-700 dark:text-zinc-300">{p.name}</td>
-                      <td className="py-2 text-zinc-500">{formatEUR(p.hourlyRate)}/h</td>
-                      <td className="py-2 text-zinc-500">{p.plannedHours.toFixed(1)} h</td>
-                      <td className="py-2 text-zinc-700 dark:text-zinc-300">
+                    <tr key={p.id} className="border-b border-line">
+                      <td className="py-2 text-ink">{p.name}</td>
+                      <td className="py-2 text-muted">{formatEUR(p.hourlyRate)}/h</td>
+                      <td className="py-2 text-muted">{p.plannedHours.toFixed(1)} h</td>
+                      <td className="py-2 text-ink">
                         {formatEUR(p.plannedPay)}
                       </td>
-                      <td className="py-2 text-zinc-500">{p.actualHours.toFixed(1)} h</td>
-                      <td className="py-2 font-medium text-zinc-900 dark:text-zinc-100">
+                      <td className="py-2 text-muted">{p.actualHours.toFixed(1)} h</td>
+                      <td className="py-2 font-medium text-ink">
                         {formatEUR(p.actualPay)}
                       </td>
                     </tr>
                   ))}
                   <tr className="text-sm font-semibold">
-                    <td className="pt-3 text-zinc-900 dark:text-zinc-100">Total</td>
+                    <td className="pt-3 text-ink">Total</td>
                     <td className="pt-3"></td>
                     <td className="pt-3"></td>
-                    <td className="pt-3 text-zinc-900 dark:text-zinc-100">
+                    <td className="pt-3 text-ink">
                       {formatEUR(totalPlannedPay)}
                     </td>
                     <td className="pt-3"></td>
-                    <td className="pt-3 text-zinc-900 dark:text-zinc-100">
+                    <td className="pt-3 text-ink">
                       {formatEUR(totalActualPay)}
                     </td>
                   </tr>
@@ -180,21 +180,21 @@ export default async function ComptabilitePage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouvelle entrée</h2>
+        <h2 className="mb-3 font-semibold text-ink">Nouvelle entrée</h2>
         <LedgerForm />
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Entrées du mois
         </h2>
         {entries.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucune entrée ce mois-ci.</p>
+          <p className="text-sm text-muted">Aucune entrée ce mois-ci.</p>
         ) : (
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
+              <tr className="border-b border-line text-left text-xs uppercase text-muted">
                 <th className="pb-2 font-medium">Date</th>
                 <th className="pb-2 font-medium">Type</th>
                 <th className="pb-2 font-medium">Catégorie</th>
@@ -204,17 +204,17 @@ export default async function ComptabilitePage({
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                  <td className="py-2 text-zinc-500">{formatDateFR(entry.date)}</td>
-                  <td className="py-2 text-zinc-700 dark:text-zinc-300">
+                <tr key={entry.id} className="border-b border-line">
+                  <td className="py-2 text-muted">{formatDateFR(entry.date)}</td>
+                  <td className="py-2 text-ink">
                     {entry.type === "REVENUE" ? "Recette" : "Dépense"}
                   </td>
-                  <td className="py-2 text-zinc-500">{entry.category ?? "—"}</td>
+                  <td className="py-2 text-muted">{entry.category ?? "—"}</td>
                   <td
                     className={
                       entry.type === "REVENUE"
-                        ? "py-2 text-emerald-600 dark:text-emerald-400"
-                        : "py-2 text-red-600 dark:text-red-400"
+                        ? "py-2 text-positive"
+                        : "py-2 text-accent"
                     }
                   >
                     {entry.type === "REVENUE" ? "+" : "-"}

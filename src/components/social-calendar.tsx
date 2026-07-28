@@ -22,9 +22,9 @@ export function SocialCalendar({
 
   return (
     <div>
-      <p className="mb-3 text-xs text-zinc-500">Clique sur un post pour le supprimer.</p>
+      <p className="mb-3 text-xs text-muted">Clique sur un post pour le supprimer.</p>
       <MonthCalendar events={events} month={month} onEventClick={handleEventClick} />
-      {isPending && <p className="mt-2 text-xs text-zinc-500">Suppression...</p>}
+      {isPending && <p className="mt-2 text-xs text-muted">Suppression...</p>}
     </div>
   );
 }

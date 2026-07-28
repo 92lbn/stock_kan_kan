@@ -18,11 +18,11 @@ export default async function NotesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Mes notes</h1>
+      <h1 className="text-2xl font-semibold text-ink">Mes notes</h1>
 
       <Card>
-        <h2 className="mb-1 font-semibold text-zinc-900 dark:text-zinc-100">Notifications</h2>
-        <p className="mb-3 text-xs text-zinc-500">
+        <h2 className="mb-1 font-semibold text-ink">Notifications</h2>
+        <p className="mb-3 text-xs text-muted">
           Active les notifications pour recevoir un rappel sur ton téléphone à l&apos;heure prévue,
           même l&apos;application fermée.
         </p>
@@ -30,14 +30,14 @@ export default async function NotesPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouvelle note</h2>
+        <h2 className="mb-3 font-semibold text-ink">Nouvelle note</h2>
         <NoteForm />
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Mes notes</h2>
+        <h2 className="mb-3 font-semibold text-ink">Mes notes</h2>
         {notes.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucune note pour le moment.</p>
+          <p className="text-sm text-muted">Aucune note pour le moment.</p>
         ) : (
           <ul>
             {notes.map((note) => (

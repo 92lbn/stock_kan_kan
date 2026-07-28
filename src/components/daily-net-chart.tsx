@@ -17,8 +17,8 @@ export function DailyNetChart({ data }: { data: { day: number; net: number }[] }
               className={cn(
                 "absolute right-0 bottom-0 left-0 rounded-sm transition-colors",
                 d.net >= 0
-                  ? "bg-emerald-500 group-hover:bg-emerald-600"
-                  : "bg-red-400 group-hover:bg-red-500"
+                  ? "bg-positive group-hover:bg-positive"
+                  : "bg-accent group-hover:bg-accent"
               )}
               style={{ height: `${heightPct}%` }}
             />

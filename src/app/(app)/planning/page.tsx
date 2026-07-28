@@ -64,24 +64,24 @@ export default async function PlanningPage({
     return (
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Planning</h1>
+          <h1 className="text-2xl font-semibold text-ink">Planning</h1>
           <MonthNav month={month} basePath="/planning" />
         </div>
 
         <PlanningManager employees={employees} events={events} month={month} />
 
         <Card>
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="mb-3 font-semibold text-ink">
             Total d&apos;heures ce mois-ci
           </h2>
           <ul className="grid gap-2 sm:grid-cols-2">
             {[...hoursByEmployee.values()].map((e) => (
               <li
                 key={e.name}
-                className="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-800"
+                className="flex items-center justify-between rounded-md bg-card px-3 py-2 text-sm"
               >
-                <span className="text-zinc-700 dark:text-zinc-300">{e.name}</span>
-                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                <span className="text-ink">{e.name}</span>
+                <span className="font-medium text-ink">
                   {e.hours.toFixed(1)} h
                 </span>
               </li>
@@ -90,16 +90,16 @@ export default async function PlanningPage({
         </Card>
 
         <Card>
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="mb-3 font-semibold text-ink">
             Créneaux du mois (liste)
           </h2>
           {shifts.length === 0 ? (
-            <p className="text-sm text-zinc-500">Aucun créneau planifié.</p>
+            <p className="text-sm text-muted">Aucun créneau planifié.</p>
           ) : (
             <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
+                <tr className="border-b border-line text-left text-xs uppercase text-muted">
                   <th className="pb-2 font-medium">Employé</th>
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Horaire</th>
@@ -108,12 +108,12 @@ export default async function PlanningPage({
               </thead>
               <tbody>
                 {shifts.map((shift) => (
-                  <tr key={shift.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                    <td className="py-2 text-zinc-700 dark:text-zinc-300">
+                  <tr key={shift.id} className="border-b border-line">
+                    <td className="py-2 text-ink">
                       {shift.employee.name}
                     </td>
-                    <td className="py-2 text-zinc-500">{formatDateFR(shift.date)}</td>
-                    <td className="py-2 text-zinc-500">
+                    <td className="py-2 text-muted">{formatDateFR(shift.date)}</td>
+                    <td className="py-2 text-muted">
                       {shift.startTime} – {shift.endTime}
                     </td>
                     <td className="py-2 text-right">
@@ -149,13 +149,13 @@ export default async function PlanningPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Mon planning</h1>
+        <h1 className="text-2xl font-semibold text-ink">Mon planning</h1>
         <MonthNav month={month} basePath="/planning" />
       </div>
 
       <Card>
-        <p className="text-sm text-zinc-500">Total prévu ce mois-ci</p>
-        <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <p className="text-sm text-muted">Total prévu ce mois-ci</p>
+        <p className="mt-1 text-2xl font-semibold text-ink">
           {totalHours.toFixed(1)} h
         </p>
       </Card>

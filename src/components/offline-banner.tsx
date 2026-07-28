@@ -33,7 +33,7 @@ export function OfflineBanner() {
   return (
     <div
       role="status"
-      className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-black"
+      className="bg-accent px-4 py-1.5 text-center text-xs font-medium text-accent-ink"
     >
       Hors ligne — données du {since ?? "dernier chargement"} (lecture seule)
     </div>

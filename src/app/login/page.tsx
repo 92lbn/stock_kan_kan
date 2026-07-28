@@ -9,12 +9,12 @@ export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined);
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-      <div className="w-full max-w-sm rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="mb-1 text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+    <div className="flex flex-1 items-center justify-center bg-surface px-4">
+      <div className="w-full max-w-sm rounded-lg border border-line bg-card p-6 shadow-sm">
+        <h1 className="mb-1 text-xl font-semibold text-ink">
           Gestion Restaurant
         </h1>
-        <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-6 text-sm text-muted">
           Connectez-vous avec votre identifiant.
         </p>
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
 
           {state?.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+            <p className="text-sm text-accent">{state.error}</p>
           )}
 
           <Button type="submit" disabled={pending} className="w-full">

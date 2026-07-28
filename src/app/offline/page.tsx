@@ -9,10 +9,10 @@ export default function OfflinePage() {
       <p className="text-4xl" aria-hidden>
         📶
       </p>
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-xl font-semibold text-ink">
         Hors ligne
       </h1>
-      <p className="max-w-xs text-sm text-zinc-500">
+      <p className="max-w-xs text-sm text-muted">
         Cette page n&apos;a pas encore été consultée. Reconnecte-toi pour la charger. Les pages
         déjà visitées (stock, recettes…) restent accessibles.
       </p>

@@ -69,7 +69,7 @@ export function MonthCalendar({
     navParam && basePath ? (
       <Link
         href={`${basePath}?${navParam}=${targetMonth}`}
-        className="rounded-md px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-md px-2 py-1 text-sm text-muted hover:bg-card dark:text-muted"
         aria-label={label}
       >
         {arrow}
@@ -80,7 +80,7 @@ export function MonthCalendar({
     <div>
       <div className="mb-2 flex items-center justify-between">
         {navLink(monthOf(prev), "Mois précédent", "‹")}
-        <span className="text-sm font-semibold capitalize text-zinc-900 dark:text-zinc-100">
+        <span className="text-sm font-semibold capitalize text-ink">
           {title}
         </span>
         {navLink(monthOf(next), "Mois suivant", "›")}
@@ -88,7 +88,7 @@ export function MonthCalendar({
 
       <div className="grid grid-cols-7 gap-px">
         {WEEKDAYS.map((d) => (
-          <div key={d} className="pb-1 text-center text-[11px] font-medium text-zinc-400">
+          <div key={d} className="pb-1 text-center text-[11px] font-medium text-muted">
             {d}
           </div>
         ))}
@@ -103,9 +103,9 @@ export function MonthCalendar({
             <div
               key={dateStr}
               className={cn(
-                "min-h-16 rounded-sm border border-zinc-100 p-1 dark:border-zinc-800",
-                onDateClick && "cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
-                isToday && "border-zinc-400 dark:border-zinc-500"
+                "min-h-16 rounded-sm border border-line p-1",
+                onDateClick && "cursor-pointer hover:bg-card/50",
+                isToday && "border-accent"
               )}
               onClick={onDateClick ? () => onDateClick(dateStr) : undefined}
               role={onDateClick ? "button" : undefined}
@@ -125,8 +125,8 @@ export function MonthCalendar({
                 className={cn(
                   "mb-0.5 text-right text-[11px] tabular-nums",
                   isToday
-                    ? "font-bold text-zinc-900 dark:text-zinc-100"
-                    : "text-zinc-400"
+                    ? "font-bold text-ink"
+                    : "text-muted"
                 )}
               >
                 {day}
@@ -152,7 +152,7 @@ export function MonthCalendar({
                   </button>
                 ))}
                 {dayEvents.length > 3 && (
-                  <div className="px-1 text-[10px] text-zinc-400">
+                  <div className="px-1 text-[10px] text-muted">
                     +{dayEvents.length - 3}
                   </div>
                 )}

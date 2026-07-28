@@ -28,7 +28,7 @@ export function NoteItem({ note, isDue }: { note: Note; isDue: boolean }) {
     : null;
 
   return (
-    <li className="flex items-start justify-between gap-3 border-b border-zinc-100 py-3 dark:border-zinc-800">
+    <li className="flex items-start justify-between gap-3 border-b border-line py-3">
       <div className="flex items-start gap-3">
         <input
           type="checkbox"
@@ -40,13 +40,13 @@ export function NoteItem({ note, isDue }: { note: Note; isDue: boolean }) {
               await toggleNoteDone(note.id);
             })
           }
-          className="mt-1 accent-zinc-900 dark:accent-zinc-100"
+          className="mt-1 accent-accent"
         />
         <div>
           <p
             className={cn(
-              "text-sm text-zinc-800 dark:text-zinc-200",
-              optimisticDone && "text-zinc-400 line-through dark:text-zinc-600"
+              "text-sm text-ink",
+              optimisticDone && "text-muted line-through dark:text-muted"
             )}
           >
             {note.content}

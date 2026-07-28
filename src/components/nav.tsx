@@ -5,6 +5,7 @@ import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Role } from "@/generated/prisma/enums";
 
 const adminLinks = [
@@ -35,7 +36,7 @@ function PendingBar() {
   return (
     <span
       aria-hidden
-      className="absolute inset-x-1 -bottom-px h-0.5 animate-pulse rounded-full bg-zinc-900 dark:bg-white"
+      className="absolute inset-x-1 -bottom-px h-0.5 animate-pulse rounded-full bg-accent"
     />
   );
 }
@@ -75,19 +76,19 @@ export function Nav({ role, name }: { role: Role; name: string }) {
   const links = role === "ADMIN" ? adminLinks : employeeLinks;
 
   const linkBase =
-    "rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100";
+    "rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:bg-card hover:text-ink";
   const linkActive =
-    "bg-zinc-900 text-white hover:bg-zinc-900 hover:text-white dark:bg-white dark:text-zinc-900";
+    "bg-ink text-surface";
 
   return (
-    <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <header className="border-b border-line bg-card">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-label="Menu"
           aria-expanded={open}
-          className="rounded-md p-1.5 text-zinc-600 hover:bg-zinc-100 sm:hidden dark:text-zinc-400 dark:hover:bg-zinc-800"
+          className="rounded-md p-1.5 text-muted hover:bg-card sm:hidden dark:text-muted"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             {open ? (
@@ -110,14 +111,15 @@ export function Nav({ role, name }: { role: Role; name: string }) {
           ))}
         </nav>
 
-        <span className="text-sm text-zinc-500 sm:hidden dark:text-zinc-400">{name}</span>
+        <span className="text-sm text-muted sm:hidden dark:text-muted">{name}</span>
 
         <div className="hidden items-center gap-3 sm:flex">
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">{name}</span>
+          <ThemeToggle />
+          <span className="text-sm text-muted">{name}</span>
           <form action={logout}>
             <button
               type="submit"
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="rounded-md px-3 py-1.5 text-sm font-medium text-muted hover:bg-card"
             >
               Déconnexion
             </button>
@@ -126,7 +128,7 @@ export function Nav({ role, name }: { role: Role; name: string }) {
       </div>
 
       {open && (
-        <nav className="flex flex-col gap-1 border-t border-zinc-200 px-4 py-3 sm:hidden dark:border-zinc-800">
+        <nav className="flex flex-col gap-1 border-t border-line px-4 py-3 sm:hidden">
           {links.map((link) => (
             <NavLink
               key={link.href}
@@ -135,15 +137,18 @@ export function Nav({ role, name }: { role: Role; name: string }) {
               active={pathname === link.href}
               onNavigate={() => setOpen(false)}
               className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
+                "rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-card hover:text-ink",
                 pathname === link.href && linkActive
               )}
             />
           ))}
-          <form action={logout} className="mt-1 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+          <div className="mt-2 border-t border-line px-3 pt-3">
+            <ThemeToggle />
+          </div>
+          <form action={logout} className="mt-1 border-t border-line pt-2">
             <button
               type="submit"
-              className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-muted hover:bg-card"
             >
               Déconnexion
             </button>

@@ -6,15 +6,15 @@ export default function NotFound() {
       <p className="text-4xl" aria-hidden>
         🔍
       </p>
-      <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-xl font-semibold text-ink">
         Page introuvable
       </h1>
-      <p className="max-w-sm text-sm text-zinc-500">
+      <p className="max-w-sm text-sm text-muted">
         Cette page n&apos;existe pas ou a été déplacée.
       </p>
       <Link
         href="/"
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-zinc-900"
+        className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-surface"
       >
         Retour à l&apos;accueil
       </Link>

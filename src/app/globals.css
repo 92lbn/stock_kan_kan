@@ -1,77 +1,122 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ─────────────────────────────────────────────────────────────
+   « Ardoise & Craie » — registre d'ardoise de cuisine / bon de commande.
+   Trait net 1px, rayon ≤ 2px, aucune ombre portée, accent braise unique.
+   ───────────────────────────────────────────────────────────── */
+
+:root,
+:root[data-theme="light"] {
+  --surface: #f4f1ea; /* papier */
+  --card: #fbf9f4;
+  --ink: #151512;
+  --muted: #5f5a4e;
+  --line: #d8d2c4;
+  --accent: #e8532a; /* braise */
+  --accent-ink: #ffffff;
+  --positive: #3f7a50; /* olive foncé */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root[data-theme="dark"] {
+  --surface: #0e0e0c; /* ardoise */
+  --card: #1a1a16;
+  --ink: #edeae2;
+  --muted: #a8a296;
+  --line: #2c2a24;
+  --accent: #e8532a;
+  --accent-ink: #ffffff;
+  --positive: #5e9e70;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --surface: #0e0e0c;
+    --card: #1a1a16;
+    --ink: #edeae2;
+    --muted: #a8a296;
+    --line: #2c2a24;
+    --accent: #e8532a;
+    --accent-ink: #ffffff;
+    --positive: #5e9e70;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+@theme inline {
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-positive: var(--positive);
+
+  --font-display: var(--font-instrument), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* Rayon plafonné à 2px : tout rounded-* de l'app reste discret. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+
+  /* Aucune ombre : on neutralise toute l'échelle. */
+  --shadow-2xs: 0 0 #0000;
+  --shadow-xs: 0 0 #0000;
+  --shadow-sm: 0 0 #0000;
+  --shadow: 0 0 #0000;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  --shadow-xl: 0 0 #0000;
+  --shadow-2xl: 0 0 #0000;
 }
 
-/* Empêche le zoom automatique d'iOS Safari : un champ doit faire >= 16px
-   au focus sur petit écran, sinon la page zoome à chaque saisie. */
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* Titres : serif éditoriale à fort contraste, en grand. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Libellé de KPI : petites capitales espacées, au-dessus du chiffre. */
+.kpi-label {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Chiffres : monospace tabulaire pour aligner euros/heures/quantités au pixel. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus visible net et systématique (jamais d'outline-none sans remplacement). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Empêche le zoom auto d'iOS Safari : champ >= 16px au focus sur petit écran. */
 @media (max-width: 640px) {
   input,
   select,
   textarea {
     font-size: 16px !important;
-  }
-}
-
-/* --- FullCalendar : lisibilité mobile + mode sombre --- */
-.fc {
-  font-size: 0.85rem;
-}
-.fc .fc-toolbar-title {
-  font-size: 1.05rem;
-}
-.fc .fc-button {
-  padding: 0.3rem 0.6rem;
-}
-@media (max-width: 640px) {
-  .fc .fc-toolbar.fc-header-toolbar {
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  .fc-daygrid-day-number {
-    font-size: 0.75rem;
-  }
-  .fc-event {
-    font-size: 0.7rem;
-  }
-}
-@media (prefers-color-scheme: dark) {
-  .fc {
-    --fc-border-color: #27272a;
-    --fc-page-bg-color: transparent;
-    --fc-neutral-bg-color: #18181b;
-    --fc-today-bg-color: rgba(250, 204, 21, 0.08);
-  }
-  .fc .fc-toolbar-title,
-  .fc .fc-col-header-cell-cushion,
-  .fc .fc-daygrid-day-number {
-    color: #e4e4e7;
-  }
-  .fc-theme-standard td,
-  .fc-theme-standard th {
-    border-color: #27272a;
   }
 }

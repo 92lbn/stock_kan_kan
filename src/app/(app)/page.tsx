@@ -50,36 +50,44 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+        <h1 className="text-2xl font-semibold text-ink">
           Bonjour {user.name}
         </h1>
 
         <DueRemindersBanner notes={dueReminders} />
 
+        {/* Alerte de stock : bande pleine largeur, couleur braise, lisible à distance. */}
+        {lowStockItems.length > 0 && (
+          <Link
+            href="/stock"
+            className="block bg-accent px-5 py-4 text-accent-ink"
+          >
+            <span className="kpi-label !text-accent-ink">À réapprovisionner</span>
+            <span className="mt-1 block text-lg font-medium">
+              <span className="num text-2xl">{lowStockItems.length}</span> article(s) sous le
+              seuil →
+            </span>
+          </Link>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <p className="text-sm text-zinc-500">Alertes de stock</p>
-            <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-              {lowStockItems.length}
-            </p>
+            <p className="kpi-label">Alertes de stock</p>
+            <p className="num mt-1 text-5xl font-semibold text-ink">{lowStockItems.length}</p>
           </Card>
           <Card>
-            <p className="text-sm text-zinc-500">Créneaux aujourd&apos;hui</p>
-            <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-              {todayShiftsCount}
-            </p>
+            <p className="kpi-label">Créneaux aujourd&apos;hui</p>
+            <p className="num mt-1 text-5xl font-semibold text-ink">{todayShiftsCount}</p>
           </Card>
           <Card>
-            <p className="text-sm text-zinc-500">Employés</p>
-            <p className="mt-1 text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-              {employeeCount}
-            </p>
+            <p className="kpi-label">Employés</p>
+            <p className="num mt-1 text-5xl font-semibold text-ink">{employeeCount}</p>
           </Card>
           <Link href="/comptabilite">
-            <Card className="transition-colors hover:border-zinc-400 dark:hover:border-zinc-600">
-              <p className="text-sm text-zinc-500">Solde du mois</p>
+            <Card className="transition-colors hover:border-ink">
+              <p className="kpi-label">Solde du mois</p>
               <p
-                className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                className={`num mt-1 text-4xl font-semibold ${net.gte(0) ? "text-positive" : "text-accent"}`}
               >
                 {net.gte(0) ? "+" : ""}
                 {formatEUR(net)}
@@ -90,20 +98,21 @@ export default async function DashboardPage() {
 
         {lowStockItems.length > 0 && (
           <Card>
-            <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
-              Produits à réapprovisionner
-            </h2>
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <h2 className="mb-3 font-semibold text-ink">Produits à réapprovisionner</h2>
+            <ul className="divide-y divide-line">
               {lowStockItems.map((item) => (
                 <li key={item.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-zinc-700 dark:text-zinc-300">{item.name}</span>
+                  <span className="text-ink">{item.name}</span>
                   <Badge variant="warning">
-                    {formatQuantity(item.quantity)} / {formatQuantity(item.minThreshold)} {item.unit}
+                    <span className="num">
+                      {formatQuantity(item.quantity)} / {formatQuantity(item.minThreshold)}
+                    </span>{" "}
+                    {item.unit}
                   </Badge>
                 </li>
               ))}
             </ul>
-            <Link href="/stock" className="mt-3 inline-block text-sm font-medium text-zinc-900 underline dark:text-zinc-100">
+            <Link href="/stock" className="mt-3 inline-block text-sm font-medium text-accent underline">
               Voir le stock →
             </Link>
           </Card>
@@ -120,33 +129,33 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-2xl font-semibold text-ink">
         Bonjour {user.name}
       </h1>
 
       <DueRemindersBanner notes={dueReminders} />
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Vos prochains créneaux
         </h2>
         {upcomingShifts.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun créneau à venir.</p>
+          <p className="text-sm text-muted">Aucun créneau à venir.</p>
         ) : (
-          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <ul className="divide-y divide-line">
             {upcomingShifts.map((shift) => (
               <li key={shift.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-zinc-700 dark:text-zinc-300">
+                <span className="text-ink">
                   {formatDateFR(shift.date)}
                 </span>
-                <span className="text-zinc-500">
+                <span className="text-muted">
                   {shift.startTime} – {shift.endTime}
                 </span>
               </li>
             ))}
           </ul>
         )}
-        <Link href="/pointage" className="mt-3 inline-block text-sm font-medium text-zinc-900 underline dark:text-zinc-100">
+        <Link href="/pointage" className="mt-3 inline-block text-sm font-medium text-ink underline">
           Pointer mon arrivée / départ →
         </Link>
       </Card>

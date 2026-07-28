@@ -78,7 +78,7 @@ export function StockRow({ item }: { item: StockItem }) {
 
   if (editing) {
     return (
-      <div className="rounded-lg border border-zinc-300 p-4 dark:border-zinc-700">
+      <div className="rounded-lg border border-line p-4">
         <form action={editAction} className="space-y-3">
           <div>
             <Label htmlFor={`name-${item.id}`}>Nom</Label>
@@ -125,7 +125,7 @@ export function StockRow({ item }: { item: StockItem }) {
             </div>
           </div>
 
-          {editState?.error && <p className="text-sm text-red-600">{editState.error}</p>}
+          {editState?.error && <p className="text-sm text-accent">{editState.error}</p>}
 
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={editPending}>
@@ -141,11 +141,11 @@ export function StockRow({ item }: { item: StockItem }) {
   }
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="rounded-lg border border-line p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">{item.name}</p>
-          <p className="text-xs text-zinc-500">{categoryLabels[item.category] ?? item.category}</p>
+          <p className="font-medium text-ink">{item.name}</p>
+          <p className="text-xs text-muted">{categoryLabels[item.category] ?? item.category}</p>
         </div>
         <div className="flex gap-1">
           <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
@@ -159,10 +159,10 @@ export function StockRow({ item }: { item: StockItem }) {
       </div>
 
       <div className="mb-3 flex items-center gap-2">
-        <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">
+        <span className="text-lg font-semibold text-ink tabular-nums">
           {fr(optimisticQty)}
         </span>
-        <span className="text-sm text-zinc-500">{item.unit}</span>
+        <span className="text-sm text-muted">{item.unit}</span>
         {isLow && (
           <Badge variant="warning" className="ml-auto">
             Seuil : {fr(item.minThreshold)}
@@ -194,7 +194,7 @@ export function StockRow({ item }: { item: StockItem }) {
           Valider
         </Button>
       </form>
-      {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
+      {state?.error && <p className="mt-1 text-xs text-accent">{state.error}</p>}
     </div>
   );
 }

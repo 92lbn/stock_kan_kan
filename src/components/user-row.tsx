@@ -25,8 +25,8 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
   const [rateState, rateAction, ratePending] = useActionState(boundRate, undefined);
 
   return (
-    <tr className="border-b border-zinc-100 align-top dark:border-zinc-800">
-      <td className="py-2 text-zinc-700 dark:text-zinc-300">
+    <tr className="border-b border-line align-top">
+      <td className="py-2 text-ink">
         {user.name}
         {user.isSuperAdmin && (
           <Badge variant="warning" className="ml-2">
@@ -34,7 +34,7 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
           </Badge>
         )}
       </td>
-      <td className="py-2 text-zinc-500">{user.identifier}</td>
+      <td className="py-2 text-muted">{user.identifier}</td>
       <td className="py-2">
         <Badge variant={user.role === "ADMIN" ? "success" : "default"}>
           {user.role === "ADMIN" ? "Responsable" : "Employé"}
@@ -50,12 +50,12 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
             defaultValue={user.hourlyRate}
             className="h-8 w-20 text-xs"
           />
-          <span className="text-xs text-zinc-400">€/h</span>
+          <span className="text-xs text-muted">€/h</span>
           <Button type="submit" size="sm" variant="ghost" disabled={ratePending}>
             {ratePending ? "..." : "OK"}
           </Button>
         </form>
-        {rateState?.error && <p className="mt-1 text-xs text-red-600">{rateState.error}</p>}
+        {rateState?.error && <p className="mt-1 text-xs text-accent">{rateState.error}</p>}
       </td>
       <td className="py-2">
         {showPasswordForm ? (
@@ -79,7 +79,7 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
             Changer le mot de passe
           </Button>
         )}
-        {state?.error && <p className="mt-1 text-xs text-red-600">{state.error}</p>}
+        {state?.error && <p className="mt-1 text-xs text-accent">{state.error}</p>}
       </td>
       <td className="py-2 text-right">
         {!user.isSuperAdmin && !isCurrentUser && (

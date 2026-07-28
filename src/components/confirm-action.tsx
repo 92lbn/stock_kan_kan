@@ -45,7 +45,7 @@ export function ConfirmAction({
       <dialog
         ref={ref}
         aria-labelledby="confirm-title"
-        className="m-auto w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-zinc-200 bg-white p-0 text-zinc-900 shadow-lg backdrop:bg-black/50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        className="m-auto w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-line bg-card p-0 text-ink shadow-lg backdrop:bg-black/50"
         onClick={(e) => {
           // Clic sur le fond (backdrop) : ferme la modale.
           if (e.target === ref.current) close();
@@ -55,7 +55,7 @@ export function ConfirmAction({
           <h2 id="confirm-title" className="text-base font-semibold">
             {title}
           </h2>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{message}</p>
+          <p className="mt-2 text-sm text-muted">{message}</p>
           <div className="mt-5 flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={close} className="h-11">
               Annuler

@@ -28,18 +28,18 @@ export function IdeaBox({ ideas }: { ideas: Idea[] }) {
           {pending ? "..." : "Ajouter"}
         </Button>
       </form>
-      {state?.error && <p className="mt-1 text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="mt-1 text-sm text-accent">{state.error}</p>}
 
       {ideas.length === 0 ? (
-        <p className="mt-4 text-sm text-zinc-500">Aucune idée pour le moment.</p>
+        <p className="mt-4 text-sm text-muted">Aucune idée pour le moment.</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {ideas.map((idea) => (
             <li
               key={idea.id}
-              className="flex items-start justify-between gap-3 rounded-md bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-800"
+              className="flex items-start justify-between gap-3 rounded-md bg-card px-3 py-2 text-sm"
             >
-              <span className="text-zinc-700 dark:text-zinc-300">{idea.text}</span>
+              <span className="text-ink">{idea.text}</span>
               <ConfirmAction
                 action={deleteIdea.bind(null, idea.id)}
                 title="Supprimer cette idée ?"

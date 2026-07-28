@@ -26,7 +26,7 @@ export function RecipesView({ recipes, canEdit }: { recipes: Recipe[]; canEdit: 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-1 rounded-md border border-zinc-200 p-1 dark:border-zinc-800">
+      <div className="flex flex-wrap gap-1 rounded-md border border-line p-1">
         {TABS.map((t) => (
           <button
             key={t.value}
@@ -35,8 +35,8 @@ export function RecipesView({ recipes, canEdit }: { recipes: Recipe[]; canEdit: 
             className={cn(
               "rounded px-3 py-1.5 text-sm font-medium",
               tab === t.value
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                ? "bg-ink text-surface"
+                : "text-muted hover:bg-card dark:text-muted"
             )}
           >
             {t.label}
@@ -46,13 +46,13 @@ export function RecipesView({ recipes, canEdit }: { recipes: Recipe[]; canEdit: 
 
       {canEdit && (
         <Card>
-          <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouvelle fiche</h2>
+          <h2 className="mb-3 font-semibold text-ink">Nouvelle fiche</h2>
           <RecipeForm defaultCategory={tab} />
         </Card>
       )}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucune fiche dans cette catégorie.</p>
+        <p className="text-sm text-muted">Aucune fiche dans cette catégorie.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((recipe) => (

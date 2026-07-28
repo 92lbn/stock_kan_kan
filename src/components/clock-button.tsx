@@ -36,7 +36,7 @@ export function ClockButton({ isClockedIn }: { isClockedIn: boolean }) {
           Pointer l&apos;arrivée
         </Button>
       )}
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-accent">{error}</p>}
     </div>
   );
 }

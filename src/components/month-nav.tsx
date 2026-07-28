@@ -16,17 +16,17 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
       <Link
         href={`${basePath}?mois=${shiftMonth(month, -1)}`}
         aria-label="Mois précédent"
-        className="rounded-md border border-zinc-200 px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-md border border-line px-2 py-1 text-sm text-muted hover:bg-card dark:text-muted"
       >
         ‹
       </Link>
-      <span className="min-w-36 text-center text-sm font-medium capitalize text-zinc-900 dark:text-zinc-100">
+      <span className="min-w-36 text-center text-sm font-medium capitalize text-ink">
         {formatMonthFR(month)}
       </span>
       <Link
         href={`${basePath}?mois=${shiftMonth(month, 1)}`}
         aria-label="Mois suivant"
-        className="rounded-md border border-zinc-200 px-2 py-1 text-sm text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className="rounded-md border border-line px-2 py-1 text-sm text-muted hover:bg-card dark:text-muted"
       >
         ›
       </Link>

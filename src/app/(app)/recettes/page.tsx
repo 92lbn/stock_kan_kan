@@ -13,7 +13,7 @@ export default async function RecettesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+      <h1 className="text-2xl font-semibold text-ink">
         Fichiers &amp; recettes
       </h1>
       <RecipesView recipes={recipes} canEdit={canEdit} />

@@ -39,24 +39,24 @@ export function PlanningManager({
   return (
     <>
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Assigner des créneaux
         </h2>
         {employees.length === 0 ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted">
             Ajoutez d&apos;abord des employés dans la page Employés.
           </p>
         ) : (
           <>
-            <div className="mb-4 inline-flex rounded-md border border-zinc-200 p-0.5 dark:border-zinc-800">
+            <div className="mb-4 inline-flex rounded-md border border-line p-0.5">
               <button
                 type="button"
                 onClick={() => setMode("single")}
                 className={cn(
                   "rounded px-3 py-1.5 text-sm font-medium",
                   mode === "single"
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "bg-ink text-surface"
+                    : "text-muted"
                 )}
               >
                 Un créneau
@@ -67,8 +67,8 @@ export function PlanningManager({
                 className={cn(
                   "rounded px-3 py-1.5 text-sm font-medium",
                   mode === "bulk"
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "bg-ink text-surface"
+                    : "text-muted"
                 )}
               >
                 Plusieurs jours
@@ -85,10 +85,10 @@ export function PlanningManager({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Calendrier du mois
         </h2>
-        <p className="mb-3 text-xs text-zinc-500">
+        <p className="mb-3 text-xs text-muted">
           Clique sur un jour pour pré-remplir le formulaire &quot;un créneau&quot;, clique sur un
           créneau pour le supprimer.
         </p>
@@ -101,7 +101,7 @@ export function PlanningManager({
           }}
           onEventClick={handleEventClick}
         />
-        {isPending && <p className="mt-2 text-xs text-zinc-500">Suppression...</p>}
+        {isPending && <p className="mt-2 text-xs text-muted">Suppression...</p>}
       </Card>
     </>
   );

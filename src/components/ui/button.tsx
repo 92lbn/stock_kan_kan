@@ -6,22 +6,20 @@ type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const variantClasses: Record<Variant, string> = {
-  primary:
-    "bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200",
-  secondary:
-    "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700",
-  ghost:
-    "bg-transparent text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
-  danger: "bg-red-600 text-white hover:bg-red-700",
+  primary: "bg-ink text-surface hover:opacity-90 border border-ink",
+  secondary: "bg-card text-ink border border-line hover:border-ink",
+  ghost: "bg-transparent text-ink border border-transparent hover:bg-card",
+  danger: "bg-accent text-accent-ink border border-accent hover:opacity-90",
 };
 
 const sizeClasses: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
+  // Cibles tactiles : md respecte 44px (usage debout, une main). sm réservé au non-destructif.
+  sm: "h-9 px-3 text-sm",
+  md: "h-11 px-4 text-sm",
 };
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-2 rounded-sm font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none";
 
 export function Button({
   className,

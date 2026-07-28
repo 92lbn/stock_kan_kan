@@ -37,11 +37,11 @@ export default async function PointagePage() {
 
     adminSection = (
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">
+        <h2 className="mb-3 font-semibold text-ink">
           Heures pointées ce mois-ci (équipe)
         </h2>
         {employees.length === 0 ? (
-          <p className="text-sm text-zinc-500">Aucun employé pour le moment.</p>
+          <p className="text-sm text-muted">Aucun employé pour le moment.</p>
         ) : (
           <ul className="grid gap-2 sm:grid-cols-2">
             {employees.map((e) => {
@@ -50,13 +50,13 @@ export default async function PointagePage() {
               return (
                 <li
                   key={e.id}
-                  className="flex items-center justify-between rounded-md bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-800"
+                  className="flex items-center justify-between rounded-md bg-card px-3 py-2 text-sm"
                 >
                   <div>
-                    <p className="text-zinc-700 dark:text-zinc-300">{e.name}</p>
-                    <p className="text-xs text-zinc-500">{status}</p>
+                    <p className="text-ink">{e.name}</p>
+                    <p className="text-xs text-muted">{status}</p>
                   </div>
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <span className="font-medium text-ink">
                     {computeTotalHours(e.timeEntries).toFixed(1)} h
                   </span>
                 </li>
@@ -70,15 +70,15 @@ export default async function PointagePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Pointage</h1>
+      <h1 className="text-2xl font-semibold text-ink">Pointage</h1>
 
       <Card className="flex flex-col items-center gap-4 py-10 text-center">
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-muted">
           {isClockedIn ? "Vous êtes actuellement en service." : "Vous n'êtes pas en service."}
         </p>
         <ClockButton isClockedIn={isClockedIn} />
-        <p className="text-sm text-zinc-500">
-          Total pointé ce mois-ci : <span className="font-medium text-zinc-900 dark:text-zinc-100">{myMonthlyHours.toFixed(1)} h</span>
+        <p className="text-sm text-muted">
+          Total pointé ce mois-ci : <span className="font-medium text-ink">{myMonthlyHours.toFixed(1)} h</span>
         </p>
       </Card>
 

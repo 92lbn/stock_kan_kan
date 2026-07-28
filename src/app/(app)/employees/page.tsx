@@ -22,19 +22,19 @@ export default async function EmployeesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Employés</h1>
+      <h1 className="text-2xl font-semibold text-ink">Employés</h1>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Nouveau compte</h2>
+        <h2 className="mb-3 font-semibold text-ink">Nouveau compte</h2>
         <UserForm />
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-zinc-900 dark:text-zinc-100">Comptes existants</h2>
+        <h2 className="mb-3 font-semibold text-ink">Comptes existants</h2>
         <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 text-left text-xs uppercase text-zinc-500 dark:border-zinc-800">
+            <tr className="border-b border-line text-left text-xs uppercase text-muted">
               <th className="pb-2 font-medium">Nom</th>
               <th className="pb-2 font-medium">Identifiant</th>
               <th className="pb-2 font-medium">Rôle</th>

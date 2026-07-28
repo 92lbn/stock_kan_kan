@@ -91,7 +91,7 @@ export function PushToggle() {
 
   if (!supported) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-muted">
         Les notifications push ne sont pas supportées par ce navigateur. Sur iPhone, ajoutez
         d&apos;abord le site à l&apos;écran d&apos;accueil.
       </p>
@@ -109,7 +109,7 @@ export function PushToggle() {
           {busy ? "..." : "Activer les notifications"}
         </Button>
       )}
-      {message && <p className="text-sm text-zinc-600 dark:text-zinc-400">{message}</p>}
+      {message && <p className="text-sm text-muted">{message}</p>}
     </div>
   );
 }
