@@ -22,7 +22,12 @@ export function sumShiftHours(shifts: { startTime: string; endTime: string }[]) 
   return shifts.reduce((total, shift) => {
     const [startH, startM] = shift.startTime.split(":").map(Number);
     const [endH, endM] = shift.endTime.split(":").map(Number);
-    const minutes = endH * 60 + endM - (startH * 60 + startM);
-    return total + Math.max(minutes, 0) / 60;
+    let minutes = endH * 60 + endM - (startH * 60 + startM);
+    // Créneau qui passe minuit (ex. 18:00 → 02:00) : endTime < startTime donne un
+    // nombre négatif ; on ajoute une journée. Un créneau de durée nulle reste 0.
+    if (minutes < 0) {
+      minutes += 24 * 60;
+    }
+    return total + minutes / 60;
   }, 0);
 }

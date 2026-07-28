@@ -4,6 +4,7 @@ import { useActionState, useRef, useEffect } from "react";
 import { createIdea, deleteIdea } from "@/lib/actions/social";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ConfirmAction } from "@/components/confirm-action";
 
 type Idea = { id: string; text: string };
 
@@ -39,15 +40,12 @@ export function IdeaBox({ ideas }: { ideas: Idea[] }) {
               className="flex items-start justify-between gap-3 rounded-md bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-800"
             >
               <span className="text-zinc-700 dark:text-zinc-300">{idea.text}</span>
-              <form action={deleteIdea.bind(null, idea.id)}>
-                <button
-                  type="submit"
-                  className="text-xs text-zinc-400 hover:text-red-600"
-                  aria-label="Supprimer"
-                >
-                  ✕
-                </button>
-              </form>
+              <ConfirmAction
+                action={deleteIdea.bind(null, idea.id)}
+                title="Supprimer cette idée ?"
+                message="L'idée sera définitivement supprimée."
+                triggerLabel="Retirer"
+              />
             </li>
           ))}
         </ul>

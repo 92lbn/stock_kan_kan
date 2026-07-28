@@ -1,11 +1,12 @@
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { LedgerForm } from "@/components/ledger-form";
 import { DailyNetChart } from "@/components/daily-net-chart";
 import { RecordPayrollButton } from "@/components/record-payroll-button";
+import { ConfirmAction } from "@/components/confirm-action";
 import { deleteLedgerEntry } from "@/lib/actions/ledger";
+import { addMoney, multiplyMoney, formatEUR } from "@/lib/money";
 import { sumShiftHours, computeTotalHours } from "@/lib/hours";
 
 function monthRange(date = new Date()) {
@@ -20,11 +21,11 @@ export default async function ComptabilitePage() {
 
   const [entries, employees] = await Promise.all([
     db.ledgerEntry.findMany({
-      where: { date: { gte: start, lt: end } },
+      where: { date: { gte: start, lt: end }, deletedAt: null },
       orderBy: { date: "desc" },
     }),
     db.user.findMany({
-      where: { role: "EMPLOYEE" },
+      where: { role: "EMPLOYEE", deletedAt: null },
       orderBy: { name: "asc" },
       include: {
         shifts: { where: { date: { gte: start, lt: end } } },
@@ -47,26 +48,27 @@ export default async function ComptabilitePage() {
       hourlyRate: emp.hourlyRate,
       plannedHours,
       actualHours,
-      plannedPay: plannedHours * emp.hourlyRate,
-      actualPay: actualHours * emp.hourlyRate,
+      plannedPay: multiplyMoney(plannedHours, emp.hourlyRate),
+      actualPay: multiplyMoney(actualHours, emp.hourlyRate),
     };
   });
-  const totalPlannedPay = payroll.reduce((sum, p) => sum + p.plannedPay, 0);
-  const totalActualPay = payroll.reduce((sum, p) => sum + p.actualPay, 0);
+  const totalPlannedPay = addMoney(...payroll.map((p) => p.plannedPay));
+  const totalActualPay = addMoney(...payroll.map((p) => p.actualPay));
 
-  const totalRevenue = entries
-    .filter((e) => e.type === "REVENUE")
-    .reduce((sum, e) => sum + e.amount, 0);
-  const totalExpense = entries
-    .filter((e) => e.type === "EXPENSE")
-    .reduce((sum, e) => sum + e.amount, 0);
-  const net = totalRevenue - totalExpense;
+  const totalRevenue = addMoney(
+    ...entries.filter((e) => e.type === "REVENUE").map((e) => e.amount)
+  );
+  const totalExpense = addMoney(
+    ...entries.filter((e) => e.type === "EXPENSE").map((e) => e.amount)
+  );
+  const net = totalRevenue.minus(totalExpense);
 
   const daysInMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate();
   const netByDay = Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, net: 0 }));
   for (const entry of entries) {
     const day = entry.date.getUTCDate();
-    const signed = entry.type === "REVENUE" ? entry.amount : -entry.amount;
+    // Le graphe est purement visuel : on ramène en Number pour l'affichage.
+    const signed = (entry.type === "REVENUE" ? entry.amount : entry.amount.negated()).toNumber();
     if (netByDay[day - 1]) netByDay[day - 1].net += signed;
   }
 
@@ -80,22 +82,22 @@ export default async function ComptabilitePage() {
         <Card>
           <p className="text-sm text-zinc-500">Recettes du mois</p>
           <p className="mt-1 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
-            +{totalRevenue.toFixed(0)} €
+            +{formatEUR(totalRevenue)}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-zinc-500">Dépenses du mois</p>
           <p className="mt-1 text-2xl font-semibold text-red-600 dark:text-red-400">
-            -{totalExpense.toFixed(0)} €
+            -{formatEUR(totalExpense)}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-zinc-500">Solde net</p>
           <p
-            className={`mt-1 text-2xl font-semibold ${net >= 0 ? "text-zinc-900 dark:text-zinc-100" : "text-red-600 dark:text-red-400"}`}
+            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-zinc-900 dark:text-zinc-100" : "text-red-600 dark:text-red-400"}`}
           >
-            {net >= 0 ? "+" : ""}
-            {net.toFixed(0)} €
+            {net.gte(0) ? "+" : ""}
+            {formatEUR(net)}
           </p>
         </Card>
       </div>
@@ -135,14 +137,14 @@ export default async function ComptabilitePage() {
                   {payroll.map((p) => (
                     <tr key={p.id} className="border-b border-zinc-100 dark:border-zinc-800">
                       <td className="py-2 text-zinc-700 dark:text-zinc-300">{p.name}</td>
-                      <td className="py-2 text-zinc-500">{p.hourlyRate.toFixed(2)} €/h</td>
+                      <td className="py-2 text-zinc-500">{formatEUR(p.hourlyRate)}/h</td>
                       <td className="py-2 text-zinc-500">{p.plannedHours.toFixed(1)} h</td>
                       <td className="py-2 text-zinc-700 dark:text-zinc-300">
-                        {p.plannedPay.toFixed(2)} €
+                        {formatEUR(p.plannedPay)}
                       </td>
                       <td className="py-2 text-zinc-500">{p.actualHours.toFixed(1)} h</td>
                       <td className="py-2 font-medium text-zinc-900 dark:text-zinc-100">
-                        {p.actualPay.toFixed(2)} €
+                        {formatEUR(p.actualPay)}
                       </td>
                     </tr>
                   ))}
@@ -151,11 +153,11 @@ export default async function ComptabilitePage() {
                     <td className="pt-3"></td>
                     <td className="pt-3"></td>
                     <td className="pt-3 text-zinc-900 dark:text-zinc-100">
-                      {totalPlannedPay.toFixed(2)} €
+                      {formatEUR(totalPlannedPay)}
                     </td>
                     <td className="pt-3"></td>
                     <td className="pt-3 text-zinc-900 dark:text-zinc-100">
-                      {totalActualPay.toFixed(2)} €
+                      {formatEUR(totalActualPay)}
                     </td>
                   </tr>
                 </tbody>
@@ -163,7 +165,7 @@ export default async function ComptabilitePage() {
             </div>
             <div className="mt-4">
               <RecordPayrollButton
-                amount={totalActualPay}
+                amount={totalActualPay.toNumber()}
                 label={`Salaires ${monthLabel} (heures pointées)`}
               />
             </div>
@@ -212,14 +214,13 @@ export default async function ComptabilitePage() {
                     }
                   >
                     {entry.type === "REVENUE" ? "+" : "-"}
-                    {entry.amount.toFixed(2)} €
+                    {formatEUR(entry.amount)}
                   </td>
                   <td className="py-2 text-right">
-                    <form action={deleteLedgerEntry.bind(null, entry.id)}>
-                      <Button type="submit" size="sm" variant="ghost">
-                        Supprimer
-                      </Button>
-                    </form>
+                    <ConfirmAction
+                      action={deleteLedgerEntry.bind(null, entry.id)}
+                      message="L'entrée sera masquée (suppression réversible)."
+                    />
                   </td>
                 </tr>
               ))}

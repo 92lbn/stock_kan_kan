@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { savePushSubscription, removePushSubscription, sendTestPush } from "@/lib/actions/push";
 import { Button } from "@/components/ui/button";
+
+// Détection du support push sans setState synchrone dans un effet : snapshot serveur
+// optimiste (true) puis vraie valeur côté client, géré proprement par React à l'hydratation.
+const subscribeNoop = () => () => {};
+const isPushSupported = () =>
+  typeof window !== "undefined" &&
+  "serviceWorker" in navigator &&
+  "PushManager" in window;
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -14,23 +22,19 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function PushToggle() {
-  const [supported, setSupported] = useState(true);
+  const supported = useSyncExternalStore(subscribeNoop, isPushSupported, () => true);
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setSupported(false);
-      return;
-    }
+    if (!supported) return;
     navigator.serviceWorker
       .register("/sw.js")
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setSubscribed(!!sub))
       .catch(() => {});
-  }, []);
+  }, [supported]);
 
   async function subscribe() {
     setBusy(true);

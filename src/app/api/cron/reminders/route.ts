@@ -2,17 +2,23 @@ import { db } from "@/lib/db";
 import { sendPushToUser } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
+// web-push nécessite le runtime Node (crypto natif).
+export const runtime = "nodejs";
 
 // Triggered by Vercel Cron (see vercel.json). Also callable manually with the
 // correct Bearer token. Sends push notifications for due note reminders and
 // low-stock alerts.
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+  // Endpoint fermé par défaut : sans secret configuré, on refuse (500) plutôt que
+  // de laisser l'endpoint ouvert à tous.
+  if (!secret) {
+    console.error("CRON_SECRET manquant : endpoint /api/cron/reminders désactivé.");
+    return new Response("Server misconfiguration", { status: 500 });
+  }
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${secret}`) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const now = new Date();
@@ -40,13 +46,16 @@ export async function GET(request: Request) {
   }
 
   // 2. Low-stock alerts sent to all admins (once per run).
-  const stockItems = await db.stockItem.findMany();
+  const stockItems = await db.stockItem.findMany({ where: { deletedAt: null } });
   const lowStock = stockItems.filter(
-    (item) => item.minThreshold > 0 && item.quantity <= item.minThreshold
+    (item) => item.minThreshold.gt(0) && item.quantity.lte(item.minThreshold)
   );
 
   if (lowStock.length > 0) {
-    const admins = await db.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+    const admins = await db.user.findMany({
+      where: { role: "ADMIN", deletedAt: null },
+      select: { id: true },
+    });
     const names = lowStock.slice(0, 5).map((i) => i.name).join(", ");
     const extra = lowStock.length > 5 ? ` +${lowStock.length - 5} autres` : "";
     for (const admin of admins) {

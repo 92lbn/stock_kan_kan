@@ -1,9 +1,11 @@
-import { requireAdmin } from "@/lib/dal";
+import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { RecipesView } from "@/components/recipes-view";
 
 export default async function RecettesPage() {
-  await requireAdmin();
+  // Ouverte à tous : les employés la consultent en lecture seule, l'admin peut éditer.
+  const user = await getCurrentUser();
+  const canEdit = user.role === "ADMIN";
 
   const recipes = await db.recipe.findMany({
     orderBy: [{ category: "asc" }, { title: "asc" }],
@@ -14,7 +16,7 @@ export default async function RecettesPage() {
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
         Fichiers &amp; recettes
       </h1>
-      <RecipesView recipes={recipes} canEdit />
+      <RecipesView recipes={recipes} canEdit={canEdit} />
     </div>
   );
 }

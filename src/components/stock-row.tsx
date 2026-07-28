@@ -5,6 +5,9 @@ import { recordStockMovement, deleteStockItem, updateStockItem } from "@/lib/act
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Badge } from "@/components/ui/card";
+import { ConfirmAction } from "@/components/confirm-action";
+
+const fr = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 3 });
 
 const categories = [
   { value: "EPICERIE", label: "Épicerie / Secs" },
@@ -40,6 +43,7 @@ type StockItem = {
 
 export function StockRow({ item }: { item: StockItem }) {
   const [editing, setEditing] = useState(false);
+  const [movementType, setMovementType] = useState("IN");
   const boundMovement = recordStockMovement.bind(null, item.id);
   const [state, formAction, pending] = useActionState(boundMovement, undefined);
 
@@ -132,37 +136,42 @@ export function StockRow({ item }: { item: StockItem }) {
           <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
             Modifier
           </Button>
-          <form action={deleteStockItem.bind(null, item.id)}>
-            <Button type="submit" size="sm" variant="ghost">
-              Supprimer
-            </Button>
-          </form>
+          <ConfirmAction
+            action={deleteStockItem.bind(null, item.id)}
+            message={`« ${item.name} » sera masqué (suppression réversible).`}
+          />
         </div>
       </div>
 
       <div className="mb-3 flex items-center gap-2">
         <span className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-          {item.quantity}
+          {fr(item.quantity)}
         </span>
         <span className="text-sm text-zinc-500">{item.unit}</span>
         {isLow && (
           <Badge variant="warning" className="ml-auto">
-            Seuil : {item.minThreshold}
+            Seuil : {fr(item.minThreshold)}
           </Badge>
         )}
       </div>
 
       <form action={formAction} className="flex flex-wrap items-center gap-2">
-        <Select name="type" defaultValue="IN" className="h-10 w-28">
+        <Select
+          name="type"
+          value={movementType}
+          onChange={(e) => setMovementType(e.target.value)}
+          className="h-10 w-32"
+        >
           <option value="IN">Entrée</option>
           <option value="OUT">Sortie</option>
+          <option value="ADJUSTMENT">Correction</option>
         </Select>
         <Input
           name="quantity"
           type="number"
           step="any"
           min="0"
-          placeholder="Quantité"
+          placeholder={movementType === "ADJUSTMENT" ? "Nouvelle qté" : "Quantité"}
           required
           className="h-10 w-28"
         />

@@ -7,7 +7,19 @@ import { StockRow } from "@/components/stock-row";
 export default async function StockPage() {
   await requireAdmin();
 
-  const items = await db.stockItem.findMany({ orderBy: { name: "asc" } });
+  const rawItems = await db.stockItem.findMany({
+    where: { deletedAt: null },
+    orderBy: { name: "asc" },
+  });
+  // Decimal n'est pas sérialisable vers un composant client : on ramène en Number.
+  const items = rawItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    unit: item.unit,
+    quantity: item.quantity.toNumber(),
+    minThreshold: item.minThreshold.toNumber(),
+  }));
 
   return (
     <div className="space-y-6">

@@ -18,11 +18,19 @@ function getSecretKey() {
 export type SessionPayload = {
   userId: string;
   role: Role;
+  // Version embarquée du compte. verifySession() la compare à celle en base pour
+  // révoquer un JWT encore valide après un changement de rôle/mot de passe ou une
+  // suppression du compte.
+  sessionVersion: number;
   expiresAt: number;
 };
 
 export async function encryptSession(payload: SessionPayload) {
-  return new SignJWT({ userId: payload.userId, role: payload.role })
+  return new SignJWT({
+    userId: payload.userId,
+    role: payload.role,
+    sessionVersion: payload.sessionVersion,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(Math.floor(payload.expiresAt / 1000))
@@ -40,6 +48,7 @@ export async function decryptSession(
     return {
       userId: payload.userId as string,
       role: payload.role as Role,
+      sessionVersion: (payload.sessionVersion as number) ?? 0,
       expiresAt: (payload.exp ?? 0) * 1000,
     };
   } catch {
@@ -47,9 +56,9 @@ export async function decryptSession(
   }
 }
 
-export async function createSession(userId: string, role: Role) {
+export async function createSession(userId: string, role: Role, sessionVersion: number) {
   const expiresAt = Date.now() + SESSION_DURATION_MS;
-  const token = await encryptSession({ userId, role, expiresAt });
+  const token = await encryptSession({ userId, role, sessionVersion, expiresAt });
   const cookieStore = await cookies();
 
   cookieStore.set(SESSION_COOKIE, token, {

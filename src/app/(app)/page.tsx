@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
+import { formatEUR, formatQuantity } from "@/lib/money";
 import { Card, Badge } from "@/components/ui/card";
 import { DueRemindersBanner } from "@/components/due-reminders-banner";
 
@@ -25,7 +27,7 @@ export default async function DashboardPage() {
   if (user.role === "ADMIN") {
     const { start, end } = monthRange();
     const [allStockItems, todayShiftsCount, employeeCount, ledgerEntries] = await Promise.all([
-      db.stockItem.findMany({ orderBy: { name: "asc" } }),
+      db.stockItem.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
       db.shift.count({
         where: {
           date: {
@@ -34,16 +36,16 @@ export default async function DashboardPage() {
           },
         },
       }),
-      db.user.count({ where: { role: "EMPLOYEE" } }),
-      db.ledgerEntry.findMany({ where: { date: { gte: start, lt: end } } }),
+      db.user.count({ where: { role: "EMPLOYEE", deletedAt: null } }),
+      db.ledgerEntry.findMany({ where: { date: { gte: start, lt: end }, deletedAt: null } }),
     ]);
 
     const lowStockItems = allStockItems.filter(
-      (item) => item.minThreshold > 0 && item.quantity <= item.minThreshold
+      (item) => item.minThreshold.gt(0) && item.quantity.lte(item.minThreshold)
     );
     const net = ledgerEntries.reduce(
-      (sum, e) => sum + (e.type === "REVENUE" ? e.amount : -e.amount),
-      0
+      (sum, e) => (e.type === "REVENUE" ? sum.plus(e.amount) : sum.minus(e.amount)),
+      new Prisma.Decimal(0)
     );
 
     return (
@@ -77,10 +79,10 @@ export default async function DashboardPage() {
             <Card className="transition-colors hover:border-zinc-400 dark:hover:border-zinc-600">
               <p className="text-sm text-zinc-500">Solde du mois</p>
               <p
-                className={`mt-1 text-2xl font-semibold ${net >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
+                className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}
               >
-                {net >= 0 ? "+" : ""}
-                {net.toFixed(0)} €
+                {net.gte(0) ? "+" : ""}
+                {formatEUR(net)}
               </p>
             </Card>
           </Link>
@@ -96,7 +98,7 @@ export default async function DashboardPage() {
                 <li key={item.id} className="flex items-center justify-between py-2 text-sm">
                   <span className="text-zinc-700 dark:text-zinc-300">{item.name}</span>
                   <Badge variant="warning">
-                    {item.quantity} / {item.minThreshold} {item.unit}
+                    {formatQuantity(item.quantity)} / {formatQuantity(item.minThreshold)} {item.unit}
                   </Badge>
                 </li>
               ))}

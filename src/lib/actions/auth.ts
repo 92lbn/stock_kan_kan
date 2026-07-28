@@ -31,7 +31,7 @@ export async function login(
   const { identifier, password } = parsed.data;
 
   const user = await db.user.findUnique({ where: { identifier } });
-  if (!user) {
+  if (!user || user.deletedAt) {
     return { error: "Identifiant ou mot de passe incorrect." };
   }
 
@@ -40,7 +40,7 @@ export async function login(
     return { error: "Identifiant ou mot de passe incorrect." };
   }
 
-  await createSession(user.id, user.role);
+  await createSession(user.id, user.role, user.sessionVersion);
   redirect("/");
 }
 

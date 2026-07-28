@@ -5,6 +5,7 @@ import { changeUserPassword, deleteUser, updateHourlyRate } from "@/lib/actions/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/card";
+import { ConfirmAction } from "@/components/confirm-action";
 
 type UserRowData = {
   id: string;
@@ -82,11 +83,11 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
       </td>
       <td className="py-2 text-right">
         {!user.isSuperAdmin && !isCurrentUser && (
-          <form action={deleteUser.bind(null, user.id)}>
-            <Button type="submit" size="sm" variant="ghost">
-              Supprimer
-            </Button>
-          </form>
+          <ConfirmAction
+            action={deleteUser.bind(null, user.id)}
+            title="Supprimer ce compte ?"
+            message={`« ${user.name} » sera désactivé et ses sessions révoquées (réversible).`}
+          />
         )}
       </td>
     </tr>

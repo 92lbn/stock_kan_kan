@@ -2,10 +2,15 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { decryptSession, getSessionToken } from "@/lib/session";
+import { decryptSession, getSessionToken, deleteSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
-export const verifySession = cache(async () => {
+// Une seule requête base par rendu, mise en cache par React `cache`. Elle relit le
+// rôle et la version de session pour révoquer un JWT encore valide après un
+// changement de rôle/mot de passe, une suppression, ou une mise à jour côté serveur.
+// Toutes les gardes (verifySession, getCurrentUser, requireAdmin) dérivent d'ici :
+// pas de vague de requêtes séquentielle supplémentaire.
+const getVerifiedUser = cache(async () => {
   const token = await getSessionToken();
   const session = await decryptSession(token);
 
@@ -13,42 +18,54 @@ export const verifySession = cache(async () => {
     redirect("/login");
   }
 
-  return session;
-});
-
-export const getCurrentUser = cache(async () => {
-  const session = await verifySession();
-
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    select: { id: true, identifier: true, name: true, role: true },
+    select: {
+      id: true,
+      identifier: true,
+      name: true,
+      role: true,
+      sessionVersion: true,
+      deletedAt: true,
+    },
   });
 
-  if (!user) {
+  // Compte supprimé, introuvable, ou token périmé (version incrémentée) → session révoquée.
+  if (!user || user.deletedAt || user.sessionVersion !== session.sessionVersion) {
+    await deleteSession();
     redirect("/login");
   }
 
   return user;
 });
 
-// Session-based admin check: reads the signed session (no DB round-trip) so
-// admin pages and actions stay fast. The role in the JWT is trusted because
-// the token is signed with SESSION_SECRET.
+export const verifySession = cache(async () => {
+  const user = await getVerifiedUser();
+  return { userId: user.id, role: user.role };
+});
+
+export const getCurrentUser = cache(async () => {
+  const user = await getVerifiedUser();
+  return {
+    id: user.id,
+    identifier: user.identifier,
+    name: user.name,
+    role: user.role,
+  };
+});
+
+// Contrôle admin, basé sur le rôle RELU en base (pas sur le rôle figé dans le JWT).
 export async function requireAdmin() {
-  const session = await verifySession();
-  if (session.role !== "ADMIN") {
+  const user = await getVerifiedUser();
+  if (user.role !== "ADMIN") {
     redirect("/");
   }
-  return { id: session.userId, role: session.role };
+  return { id: user.id, role: user.role };
 }
 
-// Optimistic check for use outside of request-scoped React cache (e.g. in Server Actions
-// where we still want a hard redirect-free failure rather than a page redirect).
+// Variante qui lève au lieu de rediriger (server actions), avec la même
+// revalidation en base. Renvoie l'utilisateur vérifié.
 export async function requireSession() {
-  const token = await getSessionToken();
-  const session = await decryptSession(token);
-  if (!session?.userId) {
-    throw new Error("Unauthorized");
-  }
-  return session;
+  const user = await getVerifiedUser();
+  return { userId: user.id, role: user.role };
 }

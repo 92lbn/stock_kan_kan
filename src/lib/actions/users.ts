@@ -93,12 +93,16 @@ export async function deleteUser(userId: string) {
   }
 
   const target = await db.user.findUnique({ where: { id: userId } });
-  if (!target || target.isSuperAdmin) {
+  if (!target || target.isSuperAdmin || target.deletedAt) {
     // The superadmin account can never be deleted, by anyone.
     return;
   }
 
-  await db.user.delete({ where: { id: userId } });
+  // Suppression réversible + révocation des sessions encore valides du compte.
+  await db.user.update({
+    where: { id: userId },
+    data: { deletedAt: new Date(), sessionVersion: { increment: 1 } },
+  });
   revalidatePath("/employees");
 }
 
@@ -122,7 +126,11 @@ export async function changeUserPassword(
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  await db.user.update({ where: { id: userId }, data: { passwordHash } });
+  // Changer le mot de passe révoque les JWT existants de ce compte.
+  await db.user.update({
+    where: { id: userId },
+    data: { passwordHash, sessionVersion: { increment: 1 } },
+  });
 
   revalidatePath("/employees");
   return undefined;

@@ -23,6 +23,7 @@ const employeeLinks = [
   { href: "/", label: "Accueil" },
   { href: "/planning", label: "Mon planning" },
   { href: "/pointage", label: "Pointage" },
+  { href: "/recettes", label: "Recettes" },
   { href: "/notes", label: "Notes" },
 ];
 

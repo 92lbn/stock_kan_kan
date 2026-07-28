@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/confirm-action";
 import { deleteShift } from "@/lib/actions/planning";
 import { sumShiftHours } from "@/lib/hours";
 import { colorForId } from "@/lib/colors";
@@ -120,11 +120,11 @@ export default async function PlanningPage() {
                       {shift.startTime} – {shift.endTime}
                     </td>
                     <td className="py-2 text-right">
-                      <form action={deleteShift.bind(null, shift.id)}>
-                        <Button type="submit" size="sm" variant="ghost">
-                          Supprimer
-                        </Button>
-                      </form>
+                      <ConfirmAction
+                        action={deleteShift.bind(null, shift.id)}
+                        title="Supprimer ce créneau ?"
+                        message={`${shift.employee.name} — ${shift.date.toLocaleDateString("fr-FR")} ${shift.startTime}–${shift.endTime}`}
+                      />
                     </td>
                   </tr>
                 ))}

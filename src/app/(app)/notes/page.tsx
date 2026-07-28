@@ -13,6 +13,9 @@ export default async function NotesPage() {
     orderBy: [{ done: "asc" }, { remindAt: "asc" }, { createdAt: "desc" }],
   });
 
+  // « Rappel dû » est calculé côté serveur (pas de Date.now() impur pendant le rendu client).
+  const now = new Date().getTime();
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Mes notes</h1>
@@ -38,7 +41,11 @@ export default async function NotesPage() {
         ) : (
           <ul>
             {notes.map((note) => (
-              <NoteItem key={note.id} note={note} />
+              <NoteItem
+                key={note.id}
+                note={note}
+                isDue={!!(note.remindAt && note.remindAt.getTime() <= now && !note.done)}
+              />
             ))}
           </ul>
         )}

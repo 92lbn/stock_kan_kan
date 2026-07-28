@@ -13,7 +13,7 @@ type Note = {
   done: boolean;
 };
 
-export function NoteItem({ note }: { note: Note }) {
+export function NoteItem({ note, isDue }: { note: Note; isDue: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   const remindLabel = note.remindAt
@@ -24,7 +24,6 @@ export function NoteItem({ note }: { note: Note }) {
         minute: "2-digit",
       })
     : null;
-  const isDue = note.remindAt && note.remindAt.getTime() <= Date.now() && !note.done;
 
   return (
     <li className="flex items-start justify-between gap-3 border-b border-zinc-100 py-3 dark:border-zinc-800">

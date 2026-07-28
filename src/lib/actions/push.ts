@@ -31,8 +31,9 @@ export async function savePushSubscription(sub: SubscriptionInput) {
 }
 
 export async function removePushSubscription(endpoint: string) {
-  await getCurrentUser();
-  await db.pushSubscription.deleteMany({ where: { endpoint } });
+  const user = await getCurrentUser();
+  // Scopé par userId : un utilisateur ne peut désabonner que ses propres appareils.
+  await db.pushSubscription.deleteMany({ where: { endpoint, userId: user.id } });
   return { ok: true };
 }
 

@@ -50,7 +50,8 @@ export async function createLedgerEntry(
 
 export async function deleteLedgerEntry(entryId: string) {
   await requireAdmin();
-  await db.ledgerEntry.delete({ where: { id: entryId } });
+  // Suppression réversible (soft delete).
+  await db.ledgerEntry.update({ where: { id: entryId }, data: { deletedAt: new Date() } });
   revalidatePath("/comptabilite");
   revalidatePath("/");
 }

@@ -7,7 +7,18 @@ import { UserRow } from "@/components/user-row";
 export default async function EmployeesPage() {
   const currentUser = await requireAdmin();
 
-  const users = await db.user.findMany({ orderBy: { createdAt: "asc" } });
+  const rawUsers = await db.user.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "asc" },
+  });
+  const users = rawUsers.map((u) => ({
+    id: u.id,
+    name: u.name,
+    identifier: u.identifier,
+    role: u.role,
+    isSuperAdmin: u.isSuperAdmin,
+    hourlyRate: u.hourlyRate.toNumber(),
+  }));
 
   return (
     <div className="space-y-6">

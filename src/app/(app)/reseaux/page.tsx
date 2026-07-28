@@ -4,7 +4,7 @@ import { Card, Badge } from "@/components/ui/card";
 import { IdeaBox } from "@/components/idea-box";
 import { PostForm } from "@/components/post-form";
 import { SocialCalendar } from "@/components/social-calendar";
-import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/confirm-action";
 import { deleteScheduledPost } from "@/lib/actions/social";
 import type { CalendarEvent } from "@/components/planning-calendar";
 
@@ -109,11 +109,11 @@ export default async function ReseauxPage() {
                     </td>
                     <td className="py-2 text-zinc-500">{post.caption ?? "—"}</td>
                     <td className="py-2 text-right">
-                      <form action={deleteScheduledPost.bind(null, post.id)}>
-                        <Button type="submit" size="sm" variant="ghost">
-                          Supprimer
-                        </Button>
-                      </form>
+                      <ConfirmAction
+                        action={deleteScheduledPost.bind(null, post.id)}
+                        title="Supprimer cette publication ?"
+                        message="La publication planifiée sera définitivement supprimée."
+                      />
                     </td>
                   </tr>
                 ))}
