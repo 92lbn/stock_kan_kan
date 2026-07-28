@@ -114,7 +114,15 @@ export default async function ComptabilitePage({
         <h1 className="text-2xl font-semibold text-ink">
           Recettes &amp; dépenses
         </h1>
-        <MonthNav month={month} basePath="/comptabilite" />
+        <div className="flex items-center gap-4">
+          <a
+            href={`/api/export/comptabilite?mois=${month}`}
+            className="text-sm font-medium text-accent underline"
+          >
+            Export CSV
+          </a>
+          <MonthNav month={month} basePath="/comptabilite" />
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

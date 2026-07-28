@@ -69,3 +69,17 @@ export async function requireSession() {
   const user = await getVerifiedUser();
   return { userId: user.id, role: user.role };
 }
+
+// Pour les route handlers (exports…) : renvoie l'utilisateur vérifié ou null,
+// sans rediriger — le handler décide du code HTTP (403).
+export async function getApiUser() {
+  const token = await getSessionToken();
+  const session = await decryptSession(token);
+  if (!session?.userId) return null;
+  const user = await db.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, role: true, sessionVersion: true, deletedAt: true },
+  });
+  if (!user || user.deletedAt || user.sessionVersion !== session.sessionVersion) return null;
+  return { id: user.id, role: user.role };
+}
