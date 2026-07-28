@@ -18,6 +18,26 @@ export function computeTotalHours(entries: Pick<TimeEntryModel, "type" | "timest
   return totalMs / (1000 * 60 * 60);
 }
 
+function toMinutes(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+// Deux créneaux (même jour) se chevauchent-ils ? Gère le passage de minuit en
+// normalisant une fin <= début sur +24h.
+export function shiftsOverlap(
+  a: { startTime: string; endTime: string },
+  b: { startTime: string; endTime: string }
+) {
+  const aStart = toMinutes(a.startTime);
+  let aEnd = toMinutes(a.endTime);
+  if (aEnd <= aStart) aEnd += 24 * 60;
+  const bStart = toMinutes(b.startTime);
+  let bEnd = toMinutes(b.endTime);
+  if (bEnd <= bStart) bEnd += 24 * 60;
+  return aStart < bEnd && bStart < aEnd;
+}
+
 export function sumShiftHours(shifts: { startTime: string; endTime: string }[]) {
   return shifts.reduce((total, shift) => {
     const [startH, startM] = shift.startTime.split(":").map(Number);

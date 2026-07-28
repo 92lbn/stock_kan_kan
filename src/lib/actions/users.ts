@@ -5,13 +5,14 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
+import { logAudit } from "@/lib/audit";
 import { Role } from "@/generated/prisma/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 const CreateUserSchema = z.object({
-  identifier: z.string().trim().min(1),
+  identifier: z.string().trim().min(1).toLowerCase(),
   name: z.string().trim().min(1),
-  password: z.string().min(4, { error: "8 caractères minimum recommandés." }),
+  password: z.string().min(8, { error: "8 caractères minimum." }),
   role: z.enum(Role),
   hourlyRate: z.coerce.number().min(0).default(0),
 });
@@ -20,7 +21,7 @@ export async function createUser(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = CreateUserSchema.safeParse({
     identifier: formData.get("identifier"),
@@ -31,7 +32,7 @@ export async function createUser(
   });
 
   if (!parsed.success) {
-    return { error: "Champs invalides (mot de passe : 4 caractères minimum)." };
+    return { error: "Champs invalides (mot de passe : 8 caractères minimum)." };
   }
 
   const existing = await db.user.findUnique({
@@ -43,7 +44,7 @@ export async function createUser(
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
-  await db.user.create({
+  const created = await db.user.create({
     data: {
       identifier: parsed.data.identifier,
       name: parsed.data.name,
@@ -51,6 +52,13 @@ export async function createUser(
       hourlyRate: parsed.data.hourlyRate,
       passwordHash,
     },
+  });
+  await logAudit({
+    userId: admin.id,
+    action: "user.create",
+    entity: "User",
+    entityId: created.id,
+    after: { identifier: created.identifier, name: created.name, role: created.role },
   });
 
   revalidatePath("/employees");
@@ -65,7 +73,7 @@ export async function updateHourlyRate(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = HourlyRateSchema.safeParse({
     hourlyRate: formData.get("hourlyRate"),
@@ -78,6 +86,13 @@ export async function updateHourlyRate(
   await db.user.update({
     where: { id: userId },
     data: { hourlyRate: parsed.data.hourlyRate },
+  });
+  await logAudit({
+    userId: admin.id,
+    action: "user.updateHourlyRate",
+    entity: "User",
+    entityId: userId,
+    after: { hourlyRate: parsed.data.hourlyRate },
   });
 
   revalidatePath("/employees");
@@ -103,11 +118,18 @@ export async function deleteUser(userId: string) {
     where: { id: userId },
     data: { deletedAt: new Date(), sessionVersion: { increment: 1 } },
   });
+  await logAudit({
+    userId: admin.id,
+    action: "user.delete",
+    entity: "User",
+    entityId: userId,
+    before: { identifier: target.identifier, name: target.name, role: target.role },
+  });
   revalidatePath("/employees");
 }
 
 const ChangePasswordSchema = z.object({
-  password: z.string().min(4, { error: "4 caractères minimum." }),
+  password: z.string().min(8, { error: "8 caractères minimum." }),
 });
 
 export async function changeUserPassword(
@@ -115,14 +137,14 @@ export async function changeUserPassword(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = ChangePasswordSchema.safeParse({
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    return { error: "Mot de passe trop court (4 caractères minimum)." };
+    return { error: "Mot de passe trop court (8 caractères minimum)." };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
@@ -130,6 +152,12 @@ export async function changeUserPassword(
   await db.user.update({
     where: { id: userId },
     data: { passwordHash, sessionVersion: { increment: 1 } },
+  });
+  await logAudit({
+    userId: admin.id,
+    action: "user.changePassword",
+    entity: "User",
+    entityId: userId,
   });
 
   revalidatePath("/employees");

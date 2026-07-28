@@ -4,6 +4,8 @@ import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
+import { parseDateInput, toDateOnly } from "@/lib/date";
+import { logAudit } from "@/lib/audit";
 import { LedgerEntryType } from "@/generated/prisma/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
@@ -33,9 +35,9 @@ export async function createLedgerEntry(
     return { error: "Champs invalides." };
   }
 
-  await db.ledgerEntry.create({
+  const created = await db.ledgerEntry.create({
     data: {
-      date: new Date(parsed.data.date),
+      date: parseDateInput(parsed.data.date),
       type: parsed.data.type,
       amount: parsed.data.amount,
       category: parsed.data.category,
@@ -43,15 +45,30 @@ export async function createLedgerEntry(
       createdById: admin.id,
     },
   });
+  await logAudit({
+    userId: admin.id,
+    action: "ledger.create",
+    entity: "LedgerEntry",
+    entityId: created.id,
+    after: created,
+  });
 
   revalidatePath("/comptabilite");
   revalidatePath("/");
 }
 
 export async function deleteLedgerEntry(entryId: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   // Suppression réversible (soft delete).
+  const before = await db.ledgerEntry.findUnique({ where: { id: entryId } });
   await db.ledgerEntry.update({ where: { id: entryId }, data: { deletedAt: new Date() } });
+  await logAudit({
+    userId: admin.id,
+    action: "ledger.delete",
+    entity: "LedgerEntry",
+    entityId: entryId,
+    before,
+  });
   revalidatePath("/comptabilite");
   revalidatePath("/");
 }
@@ -66,7 +83,7 @@ export async function recordPayrollAsExpense(amount: number, label: string) {
 
   await db.ledgerEntry.create({
     data: {
-      date: new Date(),
+      date: toDateOnly(new Date()),
       type: "EXPENSE",
       amount,
       category: "Salaires",

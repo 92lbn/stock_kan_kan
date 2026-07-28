@@ -1,5 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { sumShiftHours } from "./hours";
+import { sumShiftHours, shiftsOverlap } from "./hours";
+
+describe("shiftsOverlap", () => {
+  it("détecte un chevauchement", () => {
+    expect(
+      shiftsOverlap({ startTime: "10:00", endTime: "14:00" }, { startTime: "12:00", endTime: "16:00" })
+    ).toBe(true);
+  });
+  it("créneaux adjacents ne se chevauchent pas", () => {
+    expect(
+      shiftsOverlap({ startTime: "09:00", endTime: "12:00" }, { startTime: "12:00", endTime: "15:00" })
+    ).toBe(false);
+  });
+  it("créneaux disjoints", () => {
+    expect(
+      shiftsOverlap({ startTime: "09:00", endTime: "12:00" }, { startTime: "14:00", endTime: "18:00" })
+    ).toBe(false);
+  });
+  it("chevauchement avec un service de nuit", () => {
+    expect(
+      shiftsOverlap({ startTime: "18:00", endTime: "02:00" }, { startTime: "23:00", endTime: "23:30" })
+    ).toBe(true);
+  });
+});
 
 describe("sumShiftHours", () => {
   it("compte un service de jour", () => {

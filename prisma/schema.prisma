@@ -40,6 +40,32 @@ model User {
   @@map("users")
 }
 
+// Tentatives de connexion échouées (rate limiting, serverless-safe : état en base).
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  identifier String
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, createdAt])
+  @@map("login_attempts")
+}
+
+// Journal d'audit : toute écriture sur stock, ledger et users.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String? // auteur de l'action (null si système)
+  action    String // ex: "stock.create", "ledger.delete", "user.updateRole"
+  entity    String // ex: "StockItem", "LedgerEntry", "User"
+  entityId  String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
 // ---------- Notes & rappels ----------
 
 model Note {
@@ -141,6 +167,7 @@ model Shift {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([employeeId, date, startTime]) // pas deux fois le même créneau
   @@index([employeeId, date])
   @@map("shifts")
 }

@@ -4,6 +4,8 @@ import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, getCurrentUser } from "@/lib/dal";
+import { parseDateInput } from "@/lib/date";
+import { shiftsOverlap } from "@/lib/hours";
 import { TimeEntryType } from "@/generated/prisma/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
@@ -33,10 +35,22 @@ export async function createShift(
     return { error: "Champs invalides." };
   }
 
+  const date = parseDateInput(parsed.data.date);
+
+  // Refus des créneaux qui se chevauchent pour le même employé ce jour-là.
+  const sameDay = await db.shift.findMany({
+    where: { employeeId: parsed.data.employeeId, date },
+    select: { startTime: true, endTime: true },
+  });
+  const candidate = { startTime: parsed.data.startTime, endTime: parsed.data.endTime };
+  if (sameDay.some((s) => shiftsOverlap(s, candidate))) {
+    return { error: "Ce créneau en chevauche un autre pour cet employé ce jour-là." };
+  }
+
   await db.shift.create({
     data: {
       employeeId: parsed.data.employeeId,
-      date: new Date(parsed.data.date),
+      date,
       startTime: parsed.data.startTime,
       endTime: parsed.data.endTime,
       note: parsed.data.note,
@@ -77,10 +91,9 @@ export async function createShiftsBulk(
 
   const { employeeId, startDate, endDate, startTime, endTime, weekdays } = parsed.data;
 
-  // Use UTC throughout so the stored @db.Date matches the entered day
-  // regardless of the server's timezone.
-  const start = new Date(startDate + "T00:00:00Z");
-  const end = new Date(endDate + "T00:00:00Z");
+  // Minuit UTC pour que la colonne @db.Date corresponde au jour saisi (voir date.ts).
+  const start = parseDateInput(startDate);
+  const end = parseDateInput(endDate);
 
   if (end < start) {
     return { error: "La date de fin doit être après la date de début." };
@@ -110,6 +123,8 @@ export async function createShiftsBulk(
       startTime,
       endTime,
     })),
+    // Contrainte @@unique([employeeId, date, startTime]) : ignore les doublons.
+    skipDuplicates: true,
   });
 
   revalidatePath("/planning");

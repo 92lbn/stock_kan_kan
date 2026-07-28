@@ -3,14 +3,9 @@ import { Prisma } from "@/generated/prisma/client";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { formatEUR, formatQuantity } from "@/lib/money";
+import { monthRange, dayRange, formatDateFR } from "@/lib/date";
 import { Card, Badge } from "@/components/ui/card";
 import { DueRemindersBanner } from "@/components/due-reminders-banner";
-
-function monthRange(date = new Date()) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  return { start, end };
-}
 
 // Notes with a reminder that is due now or earlier, still to do.
 async function getDueReminders(userId: string) {
@@ -37,14 +32,7 @@ export default async function DashboardPage() {
         WHERE "deletedAt" IS NULL AND "minThreshold" > 0 AND quantity <= "minThreshold"
         ORDER BY name ASC
       `,
-      db.shift.count({
-        where: {
-          date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lt: new Date(new Date().setHours(24, 0, 0, 0)),
-          },
-        },
-      }),
+      db.shift.count({ where: { date: { gte: dayRange().start, lt: dayRange().end } } }),
       db.user.count({ where: { role: "EMPLOYEE", deletedAt: null } }),
       // Somme par type en SQL plutôt que de charger toutes les lignes.
       db.ledgerEntry.groupBy({
@@ -125,7 +113,7 @@ export default async function DashboardPage() {
   }
 
   const upcomingShifts = await db.shift.findMany({
-    where: { employeeId: user.id, date: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+    where: { employeeId: user.id, date: { gte: dayRange().start } },
     orderBy: { date: "asc" },
     take: 5,
   });
@@ -149,7 +137,7 @@ export default async function DashboardPage() {
             {upcomingShifts.map((shift) => (
               <li key={shift.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-zinc-700 dark:text-zinc-300">
-                  {shift.date.toLocaleDateString("fr-FR")}
+                  {formatDateFR(shift.date)}
                 </span>
                 <span className="text-zinc-500">
                   {shift.startTime} – {shift.endTime}

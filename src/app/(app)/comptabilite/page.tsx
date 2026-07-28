@@ -5,19 +5,22 @@ import { LedgerForm } from "@/components/ledger-form";
 import { DailyNetChart } from "@/components/daily-net-chart";
 import { RecordPayrollButton } from "@/components/record-payroll-button";
 import { ConfirmAction } from "@/components/confirm-action";
+import { MonthNav } from "@/components/month-nav";
 import { deleteLedgerEntry } from "@/lib/actions/ledger";
 import { addMoney, multiplyMoney, formatEUR } from "@/lib/money";
 import { sumShiftHours, computeTotalHours } from "@/lib/hours";
+import { monthRange, monthRangeOf, toYearMonth, formatMonthFR, formatDateFR } from "@/lib/date";
 
-function monthRange(date = new Date()) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  return { start, end };
-}
-
-export default async function ComptabilitePage() {
+export default async function ComptabilitePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mois?: string }>;
+}) {
   await requireAdmin();
-  const { start, end } = monthRange();
+  const { mois } = await searchParams;
+  const isValid = mois && /^\d{4}-\d{2}$/.test(mois);
+  const month = isValid ? mois : toYearMonth();
+  const { start, end } = isValid ? monthRangeOf(month) : monthRange();
 
   const [entries, employees] = await Promise.all([
     db.ledgerEntry.findMany({
@@ -37,7 +40,7 @@ export default async function ComptabilitePage() {
     }),
   ]);
 
-  const monthLabel = start.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  const monthLabel = formatMonthFR(month);
 
   const payroll = employees.map((emp) => {
     const plannedHours = sumShiftHours(emp.shifts);
@@ -74,9 +77,12 @@ export default async function ComptabilitePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-        Recettes &amp; dépenses
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
+          Recettes &amp; dépenses
+        </h1>
+        <MonthNav month={month} basePath="/comptabilite" />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -199,9 +205,7 @@ export default async function ComptabilitePage() {
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id} className="border-b border-zinc-100 dark:border-zinc-800">
-                  <td className="py-2 text-zinc-500">
-                    {entry.date.toLocaleDateString("fr-FR", { timeZone: "UTC" })}
-                  </td>
+                  <td className="py-2 text-zinc-500">{formatDateFR(entry.date)}</td>
                   <td className="py-2 text-zinc-700 dark:text-zinc-300">
                     {entry.type === "REVENUE" ? "Recette" : "Dépense"}
                   </td>

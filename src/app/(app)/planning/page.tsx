@@ -2,30 +2,35 @@ import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { ConfirmAction } from "@/components/confirm-action";
+import { MonthNav } from "@/components/month-nav";
 import { deleteShift } from "@/lib/actions/planning";
 import { sumShiftHours } from "@/lib/hours";
 import { colorForId } from "@/lib/colors";
+import { monthRange, monthRangeOf, toYearMonth, formatDateFR } from "@/lib/date";
 import { PlanningManager } from "@/components/planning-manager";
 import { EmployeePlanningCalendar } from "@/components/employee-planning-calendar";
 import type { CalendarEvent } from "@/components/month-calendar";
-
-function monthRange(date = new Date()) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  return { start, end };
-}
-
-const pad = (n: number) => String(n).padStart(2, "0");
 
 function toDateStr(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-export default async function PlanningPage() {
+// Mois sélectionné : ?mois=YYYY-MM, sinon le mois courant (parisien).
+function resolveMonth(param?: string) {
+  const isValid = param && /^\d{4}-\d{2}$/.test(param);
+  const month = isValid ? param : toYearMonth();
+  const { start, end } = isValid ? monthRangeOf(month) : monthRange();
+  return { month, start, end };
+}
+
+export default async function PlanningPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mois?: string }>;
+}) {
   const user = await getCurrentUser();
-  const now = new Date();
-  const { start, end } = monthRange(now);
-  const month = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+  const { mois } = await searchParams;
+  const { month, start, end } = resolveMonth(mois);
 
   if (user.role === "ADMIN") {
     const [employees, shifts] = await Promise.all([
@@ -58,9 +63,10 @@ export default async function PlanningPage() {
 
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">
-          Planning du mois
-        </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Planning</h1>
+          <MonthNav month={month} basePath="/planning" />
+        </div>
 
         <PlanningManager employees={employees} events={events} month={month} />
 
@@ -106,9 +112,7 @@ export default async function PlanningPage() {
                     <td className="py-2 text-zinc-700 dark:text-zinc-300">
                       {shift.employee.name}
                     </td>
-                    <td className="py-2 text-zinc-500">
-                      {shift.date.toLocaleDateString("fr-FR")}
-                    </td>
+                    <td className="py-2 text-zinc-500">{formatDateFR(shift.date)}</td>
                     <td className="py-2 text-zinc-500">
                       {shift.startTime} – {shift.endTime}
                     </td>
@@ -116,7 +120,7 @@ export default async function PlanningPage() {
                       <ConfirmAction
                         action={deleteShift.bind(null, shift.id)}
                         title="Supprimer ce créneau ?"
-                        message={`${shift.employee.name} — ${shift.date.toLocaleDateString("fr-FR")} ${shift.startTime}–${shift.endTime}`}
+                        message={`${shift.employee.name} — ${formatDateFR(shift.date)} ${shift.startTime}–${shift.endTime}`}
                       />
                     </td>
                   </tr>
@@ -144,7 +148,10 @@ export default async function PlanningPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Mon planning</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Mon planning</h1>
+        <MonthNav month={month} basePath="/planning" />
+      </div>
 
       <Card>
         <p className="text-sm text-zinc-500">Total prévu ce mois-ci</p>

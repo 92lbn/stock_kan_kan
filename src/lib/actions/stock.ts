@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
 import { formatQuantity } from "@/lib/money";
+import { logAudit } from "@/lib/audit";
 import { StockCategory, StockMovementType } from "@/generated/prisma/enums";
 
 // Erreur métier propagée hors de la transaction interactive pour un retour typé.
@@ -24,7 +25,7 @@ export async function createStockItem(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = StockItemSchema.safeParse({
     name: formData.get("name"),
@@ -38,7 +39,14 @@ export async function createStockItem(
     return { error: "Champs invalides." };
   }
 
-  await db.stockItem.create({ data: parsed.data });
+  const created = await db.stockItem.create({ data: parsed.data });
+  await logAudit({
+    userId: admin.id,
+    action: "stock.create",
+    entity: "StockItem",
+    entityId: created.id,
+    after: created,
+  });
   revalidatePath("/stock");
 }
 
@@ -47,7 +55,7 @@ export async function updateStockItem(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = StockItemSchema.safeParse({
     name: formData.get("name"),
@@ -61,14 +69,31 @@ export async function updateStockItem(
     return { error: "Champs invalides." };
   }
 
-  await db.stockItem.update({ where: { id: itemId }, data: parsed.data });
+  const before = await db.stockItem.findUnique({ where: { id: itemId } });
+  const updated = await db.stockItem.update({ where: { id: itemId }, data: parsed.data });
+  await logAudit({
+    userId: admin.id,
+    action: "stock.update",
+    entity: "StockItem",
+    entityId: itemId,
+    before,
+    after: updated,
+  });
   revalidatePath("/stock");
 }
 
 export async function deleteStockItem(itemId: string) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   // Suppression réversible : on masque l'article, l'historique des mouvements reste.
+  const before = await db.stockItem.findUnique({ where: { id: itemId } });
   await db.stockItem.update({ where: { id: itemId }, data: { deletedAt: new Date() } });
+  await logAudit({
+    userId: admin.id,
+    action: "stock.delete",
+    entity: "StockItem",
+    entityId: itemId,
+    before,
+  });
   revalidatePath("/stock");
   revalidatePath("/");
 }
@@ -141,6 +166,13 @@ export async function recordStockMovement(
     throw e;
   }
 
+  await logAudit({
+    userId: admin.id,
+    action: `stock.movement.${type.toLowerCase()}`,
+    entity: "StockItem",
+    entityId: stockItemId,
+    after: { type, quantity, note },
+  });
   revalidatePath("/stock");
   revalidatePath("/");
 }

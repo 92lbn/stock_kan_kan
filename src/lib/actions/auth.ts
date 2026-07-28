@@ -7,9 +7,13 @@ import { db } from "@/lib/db";
 import { createSession, deleteSession } from "@/lib/session";
 
 const LoginSchema = z.object({
-  identifier: z.string().trim().min(1, { error: "Identifiant requis." }),
+  identifier: z.string().trim().min(1, { error: "Identifiant requis." }).toLowerCase(),
   password: z.string().min(1, { error: "Mot de passe requis." }),
 });
+
+// Rate limiting : verrouillage après trop d'échecs récents pour un même identifiant.
+const RATE_WINDOW_MS = 15 * 60 * 1000;
+const RATE_MAX_FAILS = 5;
 
 export type LoginState =
   | { error: string }
@@ -30,16 +34,28 @@ export async function login(
 
   const { identifier, password } = parsed.data;
 
+  // Verrouillage temporaire si trop d'échecs récents pour cet identifiant.
+  const since = new Date(Date.now() - RATE_WINDOW_MS);
+  const recentFails = await db.loginAttempt.count({
+    where: { identifier, createdAt: { gte: since } },
+  });
+  if (recentFails >= RATE_MAX_FAILS) {
+    return {
+      error: "Trop de tentatives. Réessayez dans une quinzaine de minutes.",
+    };
+  }
+
   const user = await db.user.findUnique({ where: { identifier } });
-  if (!user || user.deletedAt) {
+  const passwordMatches =
+    user && !user.deletedAt && (await bcrypt.compare(password, user.passwordHash));
+
+  if (!user || user.deletedAt || !passwordMatches) {
+    await db.loginAttempt.create({ data: { identifier } });
     return { error: "Identifiant ou mot de passe incorrect." };
   }
 
-  const passwordMatches = await bcrypt.compare(password, user.passwordHash);
-  if (!passwordMatches) {
-    return { error: "Identifiant ou mot de passe incorrect." };
-  }
-
+  // Succès : on purge les échecs de cet identifiant.
+  await db.loginAttempt.deleteMany({ where: { identifier } });
   await createSession(user.id, user.role, user.sessionVersion);
   redirect("/");
 }
