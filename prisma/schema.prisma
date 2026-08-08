@@ -124,6 +124,7 @@ model StockItem {
   minThreshold Decimal       @default(0) @db.Decimal(12, 3)
   costPrice    Decimal       @default(0) @db.Decimal(12, 2) // coût unitaire (base food cost / valorisation)
   allergens    String? // allergènes portés par l'ingrédient (obligation légale FR)
+  barcode      String?       @unique // code-barres (EAN/UPC) pour le scan
   deletedAt    DateTime? // suppression réversible (soft delete)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

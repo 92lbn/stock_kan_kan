@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { formatEUR } from "@/lib/money";
 import { StockView, type StockItem } from "@/components/stock-view";
+import { StockScan } from "@/components/stock-scan";
 
 export default async function StockPage() {
   await requireAdmin();
@@ -27,6 +28,7 @@ export default async function StockPage() {
     minThreshold: item.minThreshold.toNumber(),
     costPrice: item.costPrice.toNumber(),
     allergens: item.allergens ?? "",
+    barcode: item.barcode ?? "",
   }));
 
   return (
@@ -40,6 +42,7 @@ export default async function StockPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 text-sm">
+          <StockScan />
           <Link href="/stock/mouvements" className="font-medium text-accent hover:underline">
             Historique
           </Link>

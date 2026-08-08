@@ -21,7 +21,27 @@ const StockItemSchema = z.object({
   minThreshold: z.coerce.number().min(0),
   costPrice: z.coerce.number().min(0).default(0),
   allergens: z.string().trim().optional(),
+  barcode: z.string().trim().optional(),
 });
+
+// Recherche d'un article par code-barres (scan). Renvoie une forme sérialisable ou null.
+export async function findStockItemByBarcode(barcode: string) {
+  await requireAdmin();
+  const code = barcode.trim();
+  if (!code) return null;
+  const item = await db.stockItem.findFirst({
+    where: { barcode: code, deletedAt: null },
+    select: { id: true, name: true, unit: true, quantity: true, category: true },
+  });
+  if (!item) return null;
+  return {
+    id: item.id,
+    name: item.name,
+    unit: item.unit,
+    category: item.category as string,
+    quantity: item.quantity.toNumber(),
+  };
+}
 
 export type ActionState = { error: string } | undefined;
 
@@ -39,6 +59,7 @@ export async function createStockItem(
     minThreshold: formData.get("minThreshold"),
     costPrice: formData.get("costPrice") ?? 0,
     allergens: formData.get("allergens") || undefined,
+    barcode: formData.get("barcode") || undefined,
   });
 
   if (!parsed.success) {
@@ -71,6 +92,7 @@ export async function updateStockItem(
     minThreshold: formData.get("minThreshold"),
     costPrice: formData.get("costPrice") ?? 0,
     allergens: formData.get("allergens") || undefined,
+    barcode: formData.get("barcode") || undefined,
   });
 
   if (!parsed.success) {

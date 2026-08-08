@@ -23,6 +23,7 @@ export type StockItem = {
   minThreshold: number;
   costPrice: number;
   allergens: string;
+  barcode: string;
 };
 
 const CATEGORIES = [
@@ -344,6 +345,10 @@ function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }
               <Label htmlFor={`e-alg-${item.id}`}>Allergènes</Label>
               <Input id={`e-alg-${item.id}`} name="allergens" defaultValue={item.allergens} placeholder="gluten…" />
             </div>
+            <div>
+              <Label htmlFor={`e-bc-${item.id}`}>Code-barres</Label>
+              <Input id={`e-bc-${item.id}`} name="barcode" inputMode="numeric" defaultValue={item.barcode} placeholder="scan / EAN" />
+            </div>
           </div>
           {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
           <div className="flex gap-2">
@@ -417,6 +422,10 @@ function AddForm({ onClose }: { onClose: () => void }) {
         <div>
           <Label htmlFor="a-alg">Allergènes</Label>
           <Input id="a-alg" name="allergens" placeholder="gluten, lait…" />
+        </div>
+        <div className="col-span-2">
+          <Label htmlFor="a-bc">Code-barres (optionnel)</Label>
+          <Input id="a-bc" name="barcode" inputMode="numeric" placeholder="scan / EAN" />
         </div>
       </div>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
