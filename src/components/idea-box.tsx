@@ -28,7 +28,7 @@ export function IdeaBox({ ideas }: { ideas: Idea[] }) {
           {pending ? "..." : "Ajouter"}
         </Button>
       </form>
-      {state?.error && <p className="mt-1 text-sm text-accent">{state.error}</p>}
+      {state?.error && <p className="mt-1 text-sm text-danger">{state.error}</p>}
 
       {ideas.length === 0 ? (
         <p className="mt-4 text-sm text-muted">Aucune idée pour le moment.</p>

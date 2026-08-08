@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-sm border border-line bg-card p-5", className)}
+      className={cn("rounded-xl border border-line bg-card p-5 shadow-sm", className)}
       {...props}
     />
   );
@@ -17,16 +17,15 @@ export function Badge({
   variant?: "default" | "warning" | "danger" | "success";
 }) {
   const variants = {
-    default: "border border-line bg-transparent text-muted",
-    // Alerte / négatif : accent braise (identité « une seule couleur chaude »).
-    warning: "border border-accent text-accent",
-    danger: "bg-accent text-accent-ink",
-    success: "border border-positive text-positive",
+    default: "border border-line bg-card-2 text-muted",
+    warning: "bg-[var(--warning-bg)] text-warning",
+    danger: "bg-danger/12 text-danger",
+    success: "bg-positive/12 text-positive",
   };
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
         variants[variant],
         className
       )}

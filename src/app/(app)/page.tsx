@@ -56,17 +56,19 @@ export default async function DashboardPage() {
 
         <DueRemindersBanner notes={dueReminders} />
 
-        {/* Alerte de stock : bande pleine largeur, couleur braise, lisible à distance. */}
+        {/* Alerte de stock : bande pleine largeur, ambre, lisible à distance. */}
         {lowStockItems.length > 0 && (
           <Link
             href="/stock"
-            className="block bg-accent px-5 py-4 text-accent-ink"
+            className="flex items-center justify-between gap-3 rounded-xl bg-warning px-5 py-4 text-white shadow-sm"
           >
-            <span className="kpi-label !text-accent-ink">À réapprovisionner</span>
-            <span className="mt-1 block text-lg font-medium">
-              <span className="num text-2xl">{lowStockItems.length}</span> article(s) sous le
-              seuil →
+            <span>
+              <span className="kpi-label !text-white/85">À réapprovisionner</span>
+              <span className="mt-0.5 block text-lg font-medium">
+                <span className="num text-2xl">{lowStockItems.length}</span> article(s) sous le seuil
+              </span>
             </span>
+            <span aria-hidden className="text-2xl">→</span>
           </Link>
         )}
 
@@ -87,7 +89,7 @@ export default async function DashboardPage() {
             <Card className="transition-colors hover:border-ink">
               <p className="kpi-label">Solde du mois</p>
               <p
-                className={`num mt-1 text-4xl font-semibold ${net.gte(0) ? "text-positive" : "text-accent"}`}
+                className={`num mt-1 text-4xl font-semibold ${net.gte(0) ? "text-positive" : "text-danger"}`}
               >
                 {net.gte(0) ? "+" : ""}
                 {formatEUR(net)}

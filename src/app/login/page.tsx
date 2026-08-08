@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
 
           {state?.error && (
-            <p className="text-sm text-accent">{state.error}</p>
+            <p className="text-sm text-danger">{state.error}</p>
           )}
 
           <Button type="submit" disabled={pending} className="w-full">

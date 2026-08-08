@@ -55,7 +55,7 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
             {ratePending ? "..." : "OK"}
           </Button>
         </form>
-        {rateState?.error && <p className="mt-1 text-xs text-accent">{rateState.error}</p>}
+        {rateState?.error && <p className="mt-1 text-xs text-danger">{rateState.error}</p>}
       </td>
       <td className="py-2">
         {showPasswordForm ? (
@@ -79,7 +79,7 @@ export function UserRow({ user, isCurrentUser }: { user: UserRowData; isCurrentU
             Changer le mot de passe
           </Button>
         )}
-        {state?.error && <p className="mt-1 text-xs text-accent">{state.error}</p>}
+        {state?.error && <p className="mt-1 text-xs text-danger">{state.error}</p>}
       </td>
       <td className="py-2 text-right">
         {!user.isSuperAdmin && !isCurrentUser && (

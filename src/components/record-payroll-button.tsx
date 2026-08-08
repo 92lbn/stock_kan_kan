@@ -29,7 +29,7 @@ export function RecordPayrollButton({ amount, label }: { amount: number; label: 
       <Button onClick={handleClick} disabled={isPending || amount <= 0} variant="secondary">
         {isPending ? "Enregistrement..." : "Enregistrer la paye réelle comme dépense"}
       </Button>
-      {error && <p className="mt-1 text-sm text-accent">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
     </div>
   );
 }

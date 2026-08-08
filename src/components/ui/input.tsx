@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-// Anneau de focus visible et net (voir globals.css :focus-visible). On garde une
-// bordure d'accent au focus en plus de l'anneau système, jamais d'outline-none nu.
+// Champs : fond légèrement contrasté, bordure nette, anneau d'accent au focus
+// (voir globals.css :focus-visible) — jamais d'outline-none nu.
 const fieldBase =
-  "w-full rounded-sm border border-line bg-card px-3 text-sm text-ink placeholder:text-muted focus:border-accent";
+  "w-full rounded-md border border-line-strong bg-card px-3 text-sm text-ink placeholder:text-faint focus:border-accent";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn("h-11", fieldBase, className)} {...props} />;

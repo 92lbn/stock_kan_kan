@@ -147,7 +147,7 @@ export function StockRow({ item }: { item: StockItem }) {
             </div>
           </div>
 
-          {editState?.error && <p className="text-sm text-accent">{editState.error}</p>}
+          {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
 
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={editPending}>
@@ -232,7 +232,7 @@ export function StockRow({ item }: { item: StockItem }) {
           </label>
         )}
       </form>
-      {state?.error && <p className="mt-1 text-xs text-accent">{state.error}</p>}
+      {state?.error && <p className="mt-1 text-xs text-danger">{state.error}</p>}
     </div>
   );
 }

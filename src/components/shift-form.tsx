@@ -47,7 +47,7 @@ export function ShiftForm({
       </div>
 
       {state?.error && (
-        <p className="sm:col-span-6 text-sm text-accent">{state.error}</p>
+        <p className="sm:col-span-6 text-sm text-danger">{state.error}</p>
       )}
     </form>
   );

@@ -80,7 +80,7 @@ export function RecipeCard({
             <Textarea id={`steps-${recipe.id}`} name="steps" rows={5} defaultValue={recipe.steps} />
           </div>
 
-          {state?.error && <p className="text-sm text-accent">{state.error}</p>}
+          {state?.error && <p className="text-sm text-danger">{state.error}</p>}
 
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={pending}>

@@ -1,78 +1,114 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   « Ardoise & Craie » — registre d'ardoise de cuisine / bon de commande.
-   Trait net 1px, rayon ≤ 2px, aucune ombre portée, accent braise unique.
+   Identité « Instrument de cuisine pro »
+   Neutres acier + un accent pétrole franc. États sémantiques
+   séparés (vert/ambre/rouge). Rayons discrets, ombres subtiles,
+   chiffres monospace alignés. Pensé mobile d'abord (cuisine).
    ───────────────────────────────────────────────────────────── */
 
 :root,
 :root[data-theme="light"] {
-  --surface: #f4f1ea; /* papier */
-  --card: #fbf9f4;
-  --ink: #151512;
-  --muted: #5f5a4e;
-  --line: #d8d2c4;
-  --accent: #e8532a; /* braise */
+  --surface: #f4f6f7; /* fond d'app, acier très clair */
+  --card: #ffffff;
+  --card-2: #eef1f3; /* remplissage discret : champs, en-têtes */
+  --ink: #131a1e;
+  --muted: #566470;
+  --faint: #85929d;
+  --line: #e0e6ea;
+  --line-strong: #cbd4da;
+  --accent: #0d7d84; /* pétrole */
+  --accent-strong: #0a666c;
   --accent-ink: #ffffff;
-  --positive: #3f7a50; /* olive foncé */
+  --positive: #1c7d46; /* recettes, OK */
+  --danger: #bb2d2d; /* dépenses, destructif, négatif */
+  --warning: #b4600a; /* alertes stock */
+  --warning-bg: #fef2e3;
+  --ring: color-mix(in srgb, var(--accent) 45%, transparent);
+  --shadow-1: 0 1px 2px rgba(19, 26, 30, 0.06), 0 1px 1px rgba(19, 26, 30, 0.03);
+  --shadow-2: 0 4px 12px rgba(19, 26, 30, 0.08);
 }
 
 :root[data-theme="dark"] {
-  --surface: #0e0e0c; /* ardoise */
-  --card: #1a1a16;
-  --ink: #edeae2;
-  --muted: #a8a296;
-  --line: #2c2a24;
-  --accent: #e8532a;
-  --accent-ink: #ffffff;
-  --positive: #5e9e70;
+  --surface: #0d1116;
+  --card: #151b21;
+  --card-2: #1c242c;
+  --ink: #e8eef2;
+  --muted: #97a4af;
+  --faint: #6a7885;
+  --line: #232e38;
+  --line-strong: #33414d;
+  --accent: #2bb3b0;
+  --accent-strong: #46c6c2;
+  --accent-ink: #06201f;
+  --positive: #4ab777;
+  --danger: #e0645f;
+  --warning: #d9902f;
+  --warning-bg: #2a2013;
+  --ring: color-mix(in srgb, var(--accent) 55%, transparent);
+  --shadow-1: none;
+  --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --surface: #0e0e0c;
-    --card: #1a1a16;
-    --ink: #edeae2;
-    --muted: #a8a296;
-    --line: #2c2a24;
-    --accent: #e8532a;
-    --accent-ink: #ffffff;
-    --positive: #5e9e70;
+    --surface: #0d1116;
+    --card: #151b21;
+    --card-2: #1c242c;
+    --ink: #e8eef2;
+    --muted: #97a4af;
+    --faint: #6a7885;
+    --line: #232e38;
+    --line-strong: #33414d;
+    --accent: #2bb3b0;
+    --accent-strong: #46c6c2;
+    --accent-ink: #06201f;
+    --positive: #4ab777;
+    --danger: #e0645f;
+    --warning: #d9902f;
+    --warning-bg: #2a2013;
+    --ring: color-mix(in srgb, var(--accent) 55%, transparent);
+    --shadow-1: none;
+    --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
 }
 
 @theme inline {
   --color-surface: var(--surface);
   --color-card: var(--card);
+  --color-card-2: var(--card-2);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-ink: var(--accent-ink);
   --color-positive: var(--positive);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
 
-  --font-display: var(--font-instrument), Georgia, "Times New Roman", serif;
+  /* Pas de serif : outil, pas éditorial. Sans neutre + mono pour les chiffres. */
+  --font-display: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  /* Rayon plafonné à 2px : tout rounded-* de l'app reste discret. */
-  --radius-xs: 2px;
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 2px;
-  --radius-xl: 2px;
-  --radius-2xl: 2px;
-  --radius-3xl: 2px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-3xl: 16px;
 
-  /* Aucune ombre : on neutralise toute l'échelle. */
-  --shadow-2xs: 0 0 #0000;
-  --shadow-xs: 0 0 #0000;
-  --shadow-sm: 0 0 #0000;
-  --shadow: 0 0 #0000;
-  --shadow-md: 0 0 #0000;
-  --shadow-lg: 0 0 #0000;
-  --shadow-xl: 0 0 #0000;
-  --shadow-2xl: 0 0 #0000;
+  --shadow-2xs: var(--shadow-1);
+  --shadow-xs: var(--shadow-1);
+  --shadow-sm: var(--shadow-1);
+  --shadow: var(--shadow-1);
+  --shadow-md: var(--shadow-2);
+  --shadow-lg: var(--shadow-2);
+  --shadow-xl: var(--shadow-2);
 }
 
 body {
@@ -81,13 +117,13 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Titres : serif éditoriale à fort contraste, en grand. */
+/* Titres : sans serif condensé/appuyé, pas de police décorative. */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 /* Libellé de KPI : petites capitales espacées, au-dessus du chiffre. */
@@ -95,7 +131,7 @@ h3 {
   font-family: var(--font-sans);
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -104,12 +140,19 @@ h3 {
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* Focus visible net et systématique (jamais d'outline-none sans remplacement). */
+/* Focus visible net et systématique. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Marge basse pour ne pas masquer le contenu derrière la barre d'onglets mobile. */
+.has-tabbar {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 
 /* Empêche le zoom auto d'iOS Safari : champ >= 16px au focus sur petit écran. */

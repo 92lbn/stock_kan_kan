@@ -134,14 +134,14 @@ export default async function ComptabilitePage({
         </Card>
         <Card>
           <p className="text-sm text-muted">Dépenses du mois</p>
-          <p className="mt-1 text-2xl font-semibold text-accent">
+          <p className="mt-1 text-2xl font-semibold text-danger">
             -{formatEUR(totalExpense)}
           </p>
         </Card>
         <Card>
           <p className="text-sm text-muted">Solde net</p>
           <p
-            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-ink" : "text-accent"}`}
+            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-ink" : "text-danger"}`}
           >
             {net.gte(0) ? "+" : ""}
             {formatEUR(net)}
@@ -262,7 +262,7 @@ export default async function ComptabilitePage({
                     className={
                       entry.type === "REVENUE"
                         ? "py-2 text-positive"
-                        : "py-2 text-accent"
+                        : "py-2 text-danger"
                     }
                   >
                     {entry.type === "REVENUE" ? "+" : "-"}

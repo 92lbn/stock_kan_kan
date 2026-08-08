@@ -115,7 +115,7 @@ export function RecipeFiche({
       </div>
 
       {canEdit && (
-        <div className="space-y-2 rounded-sm bg-card p-3">
+        <div className="space-y-2 rounded-md bg-card-2 p-3">
           {/* Prix de vente. */}
           <form action={priceAction} className="flex items-end gap-2">
             <label className="flex-1 text-xs text-muted">
@@ -133,7 +133,7 @@ export function RecipeFiche({
               OK
             </Button>
           </form>
-          {priceState?.error && <p className="text-xs text-accent">{priceState.error}</p>}
+          {priceState?.error && <p className="text-xs text-danger">{priceState.error}</p>}
 
           {/* Ajout d'un ingrédient. */}
           <form action={addAction} className="flex items-end gap-2">
@@ -156,7 +156,7 @@ export function RecipeFiche({
               Ajouter
             </Button>
           </form>
-          {addState?.error && <p className="text-xs text-accent">{addState.error}</p>}
+          {addState?.error && <p className="text-xs text-danger">{addState.error}</p>}
 
           {/* Production : décrément du stock. */}
           <form action={prodAction} className="flex items-end gap-2">
@@ -168,7 +168,7 @@ export function RecipeFiche({
               {prodPending ? "…" : "Décrémenter le stock"}
             </Button>
           </form>
-          {prodState?.error && <p className="text-xs text-accent">{prodState.error}</p>}
+          {prodState?.error && <p className="text-xs text-danger">{prodState.error}</p>}
         </div>
       )}
     </div>

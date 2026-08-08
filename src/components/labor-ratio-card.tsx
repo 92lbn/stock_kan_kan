@@ -57,7 +57,7 @@ export function LaborRatioCard({
           <span className="kpi-label">Ratio</span>
           <span
             className={`num ml-2 text-lg font-semibold ${
-              monthlyRatio !== null && monthlyRatio > 30 ? "text-accent" : "text-ink"
+              monthlyRatio !== null && monthlyRatio > 30 ? "text-danger" : "text-ink"
             }`}
           >
             {monthlyRatio !== null ? `${monthlyRatio.toFixed(0)} %` : "—"}

@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <ServiceWorkerRegister />
       <OfflineBanner />
       <Nav role={user.role} name={user.name} />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
+      <main className="has-tabbar mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
     </div>
   );
 }

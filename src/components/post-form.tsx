@@ -47,7 +47,7 @@ export function PostForm() {
         <Textarea id="caption" name="caption" rows={2} placeholder="Texte du post, hashtags..." />
       </div>
 
-      {state?.error && <p className="text-sm text-accent">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <Button type="submit" disabled={pending}>
         {pending ? "..." : "Planifier"}
