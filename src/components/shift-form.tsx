@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createShift } from "@/lib/actions/planning";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -10,11 +10,18 @@ type Employee = { id: string; name: string };
 export function ShiftForm({
   employees,
   defaultDate,
+  onDone,
 }: {
   employees: Employee[];
   defaultDate?: string;
+  onDone?: () => void;
 }) {
   const [state, formAction, pending] = useActionState(createShift, undefined);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending && !state?.error) onDone?.();
+    wasPending.current = pending;
+  }, [pending, state, onDone]);
 
   return (
     <form action={formAction} className="grid gap-3 sm:grid-cols-6">

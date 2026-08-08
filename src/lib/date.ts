@@ -79,6 +79,66 @@ export function toDateOnly(input: string | Date, tz: string = TZ): Date {
 
 export const parseDateInput = toDateOnly;
 
+// "YYYY-MM-DD" d'une Date (à minuit UTC, colonnes @db.Date).
+export function toYmd(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function addDays(date: Date, n: number): Date {
+  return new Date(date.getTime() + n * 86400000);
+}
+
+// Lundi de la semaine contenant `date` (à minuit UTC), semaine commençant lundi.
+export function weekStart(date: Date = new Date(), tz: string = TZ): Date {
+  const { year, month, day } = partsInTZ(date, tz);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  const offset = (d.getUTCDay() + 6) % 7; // jours écoulés depuis lundi
+  return addDays(d, -offset);
+}
+
+// Lundi de la semaine d'un "YYYY-MM-DD" donné.
+export function weekStartOfYmd(ymd: string): Date {
+  const d = new Date(`${ymd}T00:00:00.000Z`);
+  const offset = (d.getUTCDay() + 6) % 7;
+  return addDays(d, -offset);
+}
+
+// Bornes [lundi, lundi+7) d'une semaine à partir d'un "YYYY-MM-DD".
+export function weekRangeOf(ymd: string) {
+  const start = weekStartOfYmd(ymd);
+  return { start, end: addDays(start, 7) };
+}
+
+// Les 7 "YYYY-MM-DD" d'une semaine (lundi → dimanche).
+export function weekDays(ymd: string): string[] {
+  const start = weekStartOfYmd(ymd);
+  return Array.from({ length: 7 }, (_, i) => toYmd(addDays(start, i)));
+}
+
+// "5 – 11 août" (ou "28 juil. – 3 août" à cheval sur deux mois).
+export function formatWeekLabel(ymd: string): string {
+  const start = weekStartOfYmd(ymd);
+  const end = addDays(start, 6);
+  const sameMonth = start.getUTCMonth() === end.getUTCMonth();
+  const fmt = (d: Date, withMonth: boolean) =>
+    new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "UTC",
+      day: "numeric",
+      ...(withMonth ? { month: "short" } : {}),
+    }).format(d);
+  return `${fmt(start, !sameMonth)} – ${fmt(end, true)}`;
+}
+
+// "lun. 5" — jour de la semaine + numéro.
+export function frenchWeekday(ymd: string): string {
+  const d = new Date(`${ymd}T00:00:00.000Z`);
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+  }).format(d);
+}
+
 // Nombre de jours dans le mois civil (parisien) de `date`.
 export function daysInMonth(date: Date = new Date(), tz: string = TZ): number {
   const { year, month } = partsInTZ(date, tz);
