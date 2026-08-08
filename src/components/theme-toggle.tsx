@@ -23,9 +23,10 @@ function subscribe(cb: () => void) {
 function getSnapshot(): Theme {
   try {
     const t = localStorage.getItem("theme");
-    return t === "light" || t === "dark" ? t : "system";
+    // Défaut = clair (et non « système ») si aucun choix n'a été fait.
+    return t === "light" || t === "dark" || t === "system" ? t : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -44,7 +45,7 @@ function setThemePref(theme: Theme) {
 }
 
 export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, () => "system" as Theme);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, () => "light" as Theme);
 
   return (
     <div

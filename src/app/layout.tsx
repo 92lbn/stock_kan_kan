@@ -33,8 +33,9 @@ export const viewport = {
   ],
 };
 
-// Applique le thème persisté avant le premier rendu (aucun flash au chargement).
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+// Applique le thème avant le premier rendu (aucun flash). Défaut = clair : sans
+// choix explicite, on force le thème clair (et non le thème du système).
+const themeScript = `(function(){try{var t=localStorage.getItem('theme')||'light';if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 export default function RootLayout({
   children,
