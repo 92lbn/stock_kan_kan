@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { Sheet } from "@/components/ui/sheet";
 import { ConfirmAction } from "@/components/confirm-action";
+import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@/lib/utils";
 
 export type StockItem = {
@@ -345,9 +346,9 @@ function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }
               <Label htmlFor={`e-alg-${item.id}`}>Allergènes</Label>
               <Input id={`e-alg-${item.id}`} name="allergens" defaultValue={item.allergens} placeholder="gluten…" />
             </div>
-            <div>
+            <div className="col-span-2">
               <Label htmlFor={`e-bc-${item.id}`}>Code-barres</Label>
-              <Input id={`e-bc-${item.id}`} name="barcode" inputMode="numeric" defaultValue={item.barcode} placeholder="scan / EAN" />
+              <BarcodeField id={`e-bc-${item.id}`} name="barcode" defaultValue={item.barcode} />
             </div>
           </div>
           {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
@@ -425,7 +426,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
         </div>
         <div className="col-span-2">
           <Label htmlFor="a-bc">Code-barres (optionnel)</Label>
-          <Input id="a-bc" name="barcode" inputMode="numeric" placeholder="scan / EAN" />
+          <BarcodeField id="a-bc" name="barcode" />
         </div>
       </div>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
