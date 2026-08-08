@@ -1,17 +1,15 @@
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
-import { UserForm } from "@/components/user-form";
-import { UserRow } from "@/components/user-row";
+import { EmployeesView, type UserVM } from "@/components/employees-view";
 
 export default async function EmployeesPage() {
   const currentUser = await requireAdmin();
 
   const rawUsers = await db.user.findMany({
     where: { deletedAt: null },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ role: "asc" }, { name: "asc" }],
   });
-  const users = rawUsers.map((u) => ({
+  const users: UserVM[] = rawUsers.map((u) => ({
     id: u.id,
     name: u.name,
     identifier: u.identifier,
@@ -21,36 +19,12 @@ export default async function EmployeesPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-ink">Employés</h1>
-
-      <Card>
-        <h2 className="mb-3 font-semibold text-ink">Nouveau compte</h2>
-        <UserForm />
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold text-ink">Comptes existants</h2>
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-line text-left text-xs uppercase text-muted">
-              <th className="pb-2 font-medium">Nom</th>
-              <th className="pb-2 font-medium">Identifiant</th>
-              <th className="pb-2 font-medium">Rôle</th>
-              <th className="pb-2 font-medium">Taux horaire</th>
-              <th className="pb-2 font-medium">Mot de passe</th>
-              <th className="pb-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <UserRow key={u.id} user={u} isCurrentUser={u.id === currentUser.id} />
-            ))}
-          </tbody>
-        </table>
-        </div>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-2xl font-semibold text-ink">Équipe</h1>
+        <span className="num text-sm text-muted">{users.length} compte(s)</span>
+      </div>
+      <EmployeesView users={users} currentUserId={currentUser.id} />
     </div>
   );
 }

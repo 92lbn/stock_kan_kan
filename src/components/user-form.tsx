@@ -1,15 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createUser } from "@/lib/actions/users";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 
-export function UserForm() {
+export function UserForm({ onDone }: { onDone?: () => void }) {
   const [state, formAction, pending] = useActionState(createUser, undefined);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending && !state?.error) onDone?.();
+    wasPending.current = pending;
+  }, [pending, state, onDone]);
 
   return (
-    <form action={formAction} className="grid gap-3 sm:grid-cols-6">
+    <form action={formAction} className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-1">
         <Label htmlFor="identifier">Identifiant</Label>
         <Input id="identifier" name="identifier" required />
@@ -33,14 +38,14 @@ export function UserForm() {
         <Label htmlFor="hourlyRate">Taux horaire (€)</Label>
         <Input id="hourlyRate" name="hourlyRate" type="number" step="0.01" min="0" defaultValue="0" />
       </div>
-      <div className="sm:col-span-1 flex items-end">
+      <div className="flex items-end sm:col-span-2">
         <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Création..." : "Créer"}
+          {pending ? "Création..." : "Créer le compte"}
         </Button>
       </div>
 
       {state?.error && (
-        <p className="sm:col-span-6 text-sm text-danger">{state.error}</p>
+        <p className="text-sm text-danger sm:col-span-2">{state.error}</p>
       )}
     </form>
   );
