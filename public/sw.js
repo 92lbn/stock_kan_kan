@@ -4,7 +4,7 @@
 // Une cuisine a du wifi capricieux : les pages déjà visitées (stock, recettes…)
 // restent lisibles hors ligne à partir du dernier état connu.
 
-const CACHE = "kan-kan-v1";
+const CACHE = "kan-kan-v2";
 const OFFLINE_URL = "/offline";
 // Ressources de secours mises en cache à l'installation.
 const PRECACHE = ["/offline", "/icon-192.png", "/manifest.webmanifest"];
@@ -35,7 +35,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Actifs immuables : cache-first.
+  // On NE touche PAS aux données RSC de Next : laisser passer nativement pour
+  // préserver le préchargement / streaming (navigation quasi instantanée).
+  if (url.searchParams.has("_rsc") || request.headers.get("RSC")) return;
+
+  // Actifs immuables (JS/CSS/polices/icônes) : cache-first.
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.match(request).then((cached) => cached || fetchAndCache(request))
@@ -43,15 +47,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations et données RSC : stale-while-revalidate, repli hors ligne.
-  if (request.mode === "navigate" || url.searchParams.has("_rsc")) {
+  // Chargement complet d'une page (navigate) : réseau d'abord, repli hors ligne.
+  // On ne met PAS en cache (pages dynamiques par utilisateur) : juste un filet offline.
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetchAndCache(request).catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        if (request.mode === "navigate") return caches.match(OFFLINE_URL);
-        return Response.error();
-      })
+      fetch(request).catch(async () => (await caches.match(OFFLINE_URL)) || Response.error())
     );
   }
 });
