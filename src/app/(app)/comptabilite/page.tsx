@@ -1,12 +1,10 @@
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
-import { LedgerForm } from "@/components/ledger-form";
 import { DailyNetChart } from "@/components/daily-net-chart";
 import { RecordPayrollButton } from "@/components/record-payroll-button";
-import { ConfirmAction } from "@/components/confirm-action";
 import { MonthNav } from "@/components/month-nav";
-import { deleteLedgerEntry } from "@/lib/actions/ledger";
+import { LedgerEntries, type LedgerEntryVM } from "@/components/ledger-entries";
 import { addMoney, multiplyMoney, formatEUR } from "@/lib/money";
 import { sumShiftHours, computeTotalHours } from "@/lib/hours";
 import { computeLaborRatio, classifyLaborRatio } from "@/lib/labor";
@@ -108,6 +106,14 @@ export default async function ComptabilitePage({
     if (netByDay[day - 1]) netByDay[day - 1].net += signed;
   }
 
+  const entriesVM: LedgerEntryVM[] = entries.map((e) => ({
+    id: e.id,
+    dateLabel: formatDateFR(e.date),
+    type: e.type,
+    category: e.category ?? "",
+    amount: e.amount.toNumber(),
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -125,23 +131,23 @@ export default async function ComptabilitePage({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <p className="text-sm text-muted">Recettes du mois</p>
-          <p className="mt-1 text-2xl font-semibold text-positive">
-            +{formatEUR(totalRevenue)}
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="p-4">
+          <p className="kpi-label">Recettes</p>
+          <p className="num mt-1 text-lg font-semibold text-positive sm:text-2xl">
+            {formatEUR(totalRevenue)}
           </p>
         </Card>
-        <Card>
-          <p className="text-sm text-muted">Dépenses du mois</p>
-          <p className="mt-1 text-2xl font-semibold text-danger">
-            -{formatEUR(totalExpense)}
+        <Card className="p-4">
+          <p className="kpi-label">Dépenses</p>
+          <p className="num mt-1 text-lg font-semibold text-danger sm:text-2xl">
+            {formatEUR(totalExpense)}
           </p>
         </Card>
-        <Card>
-          <p className="text-sm text-muted">Solde net</p>
+        <Card className="p-4">
+          <p className="kpi-label">Solde</p>
           <p
-            className={`mt-1 text-2xl font-semibold ${net.gte(0) ? "text-ink" : "text-danger"}`}
+            className={`num mt-1 text-lg font-semibold sm:text-2xl ${net.gte(0) ? "text-positive" : "text-danger"}`}
           >
             {net.gte(0) ? "+" : ""}
             {formatEUR(net)}
@@ -168,49 +174,32 @@ export default async function ComptabilitePage({
           <p className="text-sm text-muted">Aucun employé.</p>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-line text-left text-xs uppercase text-muted">
-                    <th className="pb-2 font-medium">Employé</th>
-                    <th className="pb-2 font-medium">Taux</th>
-                    <th className="pb-2 font-medium">Planifié</th>
-                    <th className="pb-2 font-medium">Paye planifiée</th>
-                    <th className="pb-2 font-medium">Réel (pointé)</th>
-                    <th className="pb-2 font-medium">Paye réelle</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payroll.map((p) => (
-                    <tr key={p.id} className="border-b border-line">
-                      <td className="py-2 text-ink">{p.name}</td>
-                      <td className="py-2 text-muted">{formatEUR(p.hourlyRate)}/h</td>
-                      <td className="py-2 text-muted">{p.plannedHours.toFixed(1)} h</td>
-                      <td className="py-2 text-ink">
-                        {formatEUR(p.plannedPay)}
-                      </td>
-                      <td className="py-2 text-muted">{p.actualHours.toFixed(1)} h</td>
-                      <td className="py-2 font-medium text-ink">
-                        {formatEUR(p.actualPay)}
-                      </td>
-                    </tr>
-                  ))}
-                  <tr className="text-sm font-semibold">
-                    <td className="pt-3 text-ink">Total</td>
-                    <td className="pt-3"></td>
-                    <td className="pt-3"></td>
-                    <td className="pt-3 text-ink">
-                      {formatEUR(totalPlannedPay)}
-                    </td>
-                    <td className="pt-3"></td>
-                    <td className="pt-3 text-ink">
-                      {formatEUR(totalActualPay)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4">
+            <ul className="divide-y divide-line">
+              {payroll.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium text-ink">{p.name}</span>
+                    <span className="text-xs text-muted">
+                      <span className="num">{formatEUR(p.hourlyRate)}</span>/h ·{" "}
+                      <span className="num">{p.plannedHours.toFixed(1)}</span> h prévu
+                    </span>
+                  </span>
+                  <span className="text-right">
+                    <span className="num block text-sm font-semibold text-ink">
+                      {formatEUR(p.plannedPay)}
+                    </span>
+                    <span className="text-xs text-muted">
+                      réel <span className="num">{formatEUR(p.actualPay)}</span>
+                    </span>
+                  </span>
+                </li>
+              ))}
+              <li className="flex items-center justify-between py-3 text-sm font-semibold">
+                <span className="text-ink">Total planifié</span>
+                <span className="num text-ink">{formatEUR(totalPlannedPay)}</span>
+              </li>
+            </ul>
+            <div className="mt-3">
               <RecordPayrollButton
                 amount={totalActualPay.toNumber()}
                 label={`Salaires ${monthLabel} (heures pointées)`}
@@ -227,60 +216,7 @@ export default async function ComptabilitePage({
         monthlyRatio={monthlyRatio}
       />
 
-      <Card>
-        <h2 className="mb-3 font-semibold text-ink">Nouvelle entrée</h2>
-        <LedgerForm />
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold text-ink">
-          Entrées du mois
-        </h2>
-        {entries.length === 0 ? (
-          <p className="text-sm text-muted">Aucune entrée ce mois-ci.</p>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-xs uppercase text-muted">
-                <th className="pb-2 font-medium">Date</th>
-                <th className="pb-2 font-medium">Type</th>
-                <th className="pb-2 font-medium">Catégorie</th>
-                <th className="pb-2 font-medium">Montant</th>
-                <th className="pb-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-line">
-                  <td className="py-2 text-muted">{formatDateFR(entry.date)}</td>
-                  <td className="py-2 text-ink">
-                    {entry.type === "REVENUE" ? "Recette" : "Dépense"}
-                  </td>
-                  <td className="py-2 text-muted">{entry.category ?? "—"}</td>
-                  <td
-                    className={
-                      entry.type === "REVENUE"
-                        ? "py-2 text-positive"
-                        : "py-2 text-danger"
-                    }
-                  >
-                    {entry.type === "REVENUE" ? "+" : "-"}
-                    {formatEUR(entry.amount)}
-                  </td>
-                  <td className="py-2 text-right">
-                    <ConfirmAction
-                      action={deleteLedgerEntry.bind(null, entry.id)}
-                      message="L'entrée sera masquée (suppression réversible)."
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        )}
-      </Card>
+      <LedgerEntries entries={entriesVM} />
     </div>
   );
 }
