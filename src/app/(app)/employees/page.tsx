@@ -1,8 +1,21 @@
+import { Suspense } from "react";
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { EmployeesView, type UserVM } from "@/components/employees-view";
+import { ListSkeleton } from "@/components/ui/skeleton";
 
-export default async function EmployeesPage() {
+export default function EmployeesPage() {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold text-ink">Équipe</h1>
+      <Suspense fallback={<ListSkeleton rows={5} />}>
+        <EmployeesContent />
+      </Suspense>
+    </div>
+  );
+}
+
+async function EmployeesContent() {
   const currentUser = await requireAdmin();
 
   const rawUsers = await db.user.findMany({
@@ -19,12 +32,9 @@ export default async function EmployeesPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold text-ink">Équipe</h1>
-        <span className="num text-sm text-muted">{users.length} compte(s)</span>
-      </div>
+    <>
+      <p className="num text-sm text-muted">{users.length} compte(s)</p>
       <EmployeesView users={users} currentUserId={currentUser.id} />
-    </div>
+    </>
   );
 }

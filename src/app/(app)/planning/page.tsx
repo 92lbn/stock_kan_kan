@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { sumShiftHours } from "@/lib/hours";
 import { colorForId } from "@/lib/colors";
 import {
@@ -28,7 +30,36 @@ function shiftMonth(ym: string, delta: number) {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`;
 }
 
-export default async function PlanningPage({
+export default function PlanningPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vue?: string; semaine?: string; mois?: string }>;
+}) {
+  return (
+    <div className="space-y-4">
+      <Suspense fallback={<PlanningSkeleton />}>
+        <PlanningContent searchParams={searchParams} />
+      </Suspense>
+    </div>
+  );
+}
+
+function PlanningSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-9 w-44" />
+      </div>
+      <Skeleton className="mx-auto h-8 w-52" />
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-16 w-full rounded-xl" />
+      ))}
+    </div>
+  );
+}
+
+async function PlanningContent({
   searchParams,
 }: {
   searchParams: Promise<{ vue?: string; semaine?: string; mois?: string }>;
@@ -47,18 +78,21 @@ export default async function PlanningPage({
   const { start, end } = view === "semaine" ? weekRangeOf(weekParam) : monthRangeOf(month);
   const todayYmd = toYmd(dayRange().start);
 
-  const shifts = await db.shift.findMany({
-    where: { date: { gte: start, lt: end }, ...(isAdmin ? {} : { employeeId: user.id }) },
-    include: { employee: { select: { id: true, name: true } } },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }],
-  });
-  const employees = isAdmin
-    ? await db.user.findMany({
-        where: { role: "EMPLOYEE", deletedAt: null },
-        orderBy: { name: "asc" },
-        select: { id: true, name: true },
-      })
-    : [];
+  // Vague 2 : créneaux et employés en parallèle (au lieu d'une cascade).
+  const [shifts, employees] = await Promise.all([
+    db.shift.findMany({
+      where: { date: { gte: start, lt: end }, ...(isAdmin ? {} : { employeeId: user.id }) },
+      include: { employee: { select: { id: true, name: true } } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    }),
+    isAdmin
+      ? db.user.findMany({
+          where: { role: "EMPLOYEE", deletedAt: null },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([] as { id: string; name: string }[]),
+  ]);
 
   const shiftName = (s: (typeof shifts)[number]) => s.employee.name;
   const shiftColor = (s: (typeof shifts)[number]) => colorForId(s.employee.id);
@@ -119,7 +153,7 @@ export default async function PlanningPage({
       : `/planning?vue=mois&mois=${shiftMonth(month, 1)}`;
 
   return (
-    <div className="space-y-4">
+    <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ink">{isAdmin ? "Planning" : "Mon planning"}</h1>
         <div className="inline-flex rounded-lg border border-line bg-card p-0.5">
@@ -170,6 +204,6 @@ export default async function PlanningPage({
           </ul>
         </Card>
       )}
-    </div>
+    </>
   );
 }

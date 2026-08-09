@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import { IdeaBox } from "@/components/idea-box";
 import { SocialCalendar } from "@/components/social-calendar";
 import { PostsList, type PostVM } from "@/components/posts-list";
@@ -27,7 +29,18 @@ const statusLabels: Record<string, string> = {
   PUBLISHED: "Publié",
 };
 
-export default async function ReseauxPage() {
+export default function ReseauxPage() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-ink">Réseaux sociaux</h1>
+      <Suspense fallback={<PageSkeleton />}>
+        <ReseauxContent />
+      </Suspense>
+    </div>
+  );
+}
+
+async function ReseauxContent() {
   await requireAdmin();
 
   const [ideas, posts] = await Promise.all([
@@ -63,9 +76,7 @@ export default async function ReseauxPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-ink">Réseaux sociaux</h1>
-
+    <>
       <Card>
         <h2 className="mb-3 font-semibold text-ink">Boîte à idées</h2>
         <IdeaBox ideas={ideas} />
@@ -77,6 +88,6 @@ export default async function ReseauxPage() {
       </Card>
 
       <PostsList posts={postsVM} />
-    </div>
+    </>
   );
 }

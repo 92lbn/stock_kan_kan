@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { RecipesView } from "@/components/recipes-view";
+import { PageSkeleton } from "@/components/ui/skeleton";
 import {
   computeMaterialCost,
   computeFoodCostPercent,
@@ -9,7 +11,18 @@ import {
   mergeAllergens,
 } from "@/lib/foodcost";
 
-export default async function RecettesPage() {
+export default function RecettesPage() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold text-ink">Fichiers &amp; recettes</h1>
+      <Suspense fallback={<PageSkeleton />}>
+        <RecettesContent />
+      </Suspense>
+    </div>
+  );
+}
+
+async function RecettesContent() {
   // Ouverte à tous : les employés la consultent en lecture seule, l'admin peut éditer.
   const user = await getCurrentUser();
   const canEdit = user.role === "ADMIN";
@@ -70,10 +83,5 @@ export default async function RecettesPage() {
     };
   });
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-ink">Fichiers &amp; recettes</h1>
-      <RecipesView recipes={recipes} canEdit={canEdit} stockItems={stockItems} />
-    </div>
-  );
+  return <RecipesView recipes={recipes} canEdit={canEdit} stockItems={stockItems} />;
 }

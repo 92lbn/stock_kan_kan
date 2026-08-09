@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import { requireAdmin } from "@/lib/dal";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
+import { Skeleton, StatCardsSkeleton, ListSkeleton } from "@/components/ui/skeleton";
 import { DailyNetChart } from "@/components/daily-net-chart";
 import { RecordPayrollButton } from "@/components/record-payroll-button";
 import { MonthNav } from "@/components/month-nav";
@@ -12,7 +14,33 @@ import { monthRange, monthRangeOf, toYearMonth, formatMonthFR, formatDateFR } fr
 import { LaborRatioCard, type LaborRow } from "@/components/labor-ratio-card";
 import { Prisma } from "@/generated/prisma/client";
 
-export default async function ComptabilitePage({
+export default function ComptabilitePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mois?: string }>;
+}) {
+  return (
+    <Suspense fallback={<ComptaSkeleton />}>
+      <ComptaContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+function ComptaSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-9 w-40" />
+      </div>
+      <StatCardsSkeleton count={3} />
+      <Skeleton className="h-48 w-full rounded-xl" />
+      <ListSkeleton rows={4} />
+    </div>
+  );
+}
+
+async function ComptaContent({
   searchParams,
 }: {
   searchParams: Promise<{ mois?: string }>;
