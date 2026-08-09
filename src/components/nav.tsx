@@ -53,7 +53,7 @@ export function Nav({ role, name }: { role: Role; name: string }) {
     <>
       {/* ── Barre supérieure (bureau) ── */}
       <header className="sticky top-0 z-30 hidden border-b border-line bg-card/95 backdrop-blur sm:block">
-        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2.5">
+        <div className="mx-auto flex max-w-[1800px] items-center gap-2 px-4 py-2.5 lg:px-8">
           <span className="mr-2 flex items-center gap-2 font-semibold tracking-tight text-ink">
             <span className="grid h-7 w-7 place-items-center rounded-md bg-accent text-accent-ink text-sm">
               K
