@@ -5,7 +5,7 @@ import { createScheduledPost } from "@/lib/actions/social";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 
-export function PostForm() {
+export function PostForm({ onDone }: { onDone?: () => void }) {
   const [state, formAction, pending] = useActionState(createScheduledPost, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const wasPending = useRef(false);
@@ -13,9 +13,10 @@ export function PostForm() {
   useEffect(() => {
     if (wasPending.current && !pending && !state?.error) {
       formRef.current?.reset();
+      onDone?.();
     }
     wasPending.current = pending;
-  }, [pending, state]);
+  }, [pending, state, onDone]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
