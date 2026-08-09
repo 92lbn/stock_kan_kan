@@ -37,8 +37,19 @@ export function BarcodeScanner({
       try {
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
         const reader = new BrowserMultiFormatReader();
+        // Caméra arrière, haute résolution (petits codes-barres) + autofocus continu.
+        const constraints: MediaStreamConstraints = {
+          // `focusMode` est une contrainte expérimentale absente des types DOM :
+          // best-effort, ignorée par les navigateurs qui ne la supportent pas.
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            advanced: [{ focusMode: "continuous" }],
+          } as unknown as MediaTrackConstraints,
+        };
         controls = await reader.decodeFromConstraints(
-          { video: { facingMode: "environment" } },
+          constraints,
           videoRef.current!,
           (result, _err, ctrl) => {
             if (result && !done) {
@@ -48,6 +59,15 @@ export function BarcodeScanner({
             }
           }
         );
+        // Certains Android n'appliquent l'autofocus qu'après coup.
+        const track = (videoRef.current?.srcObject as MediaStream | null)?.getVideoTracks?.()[0];
+        try {
+          await track?.applyConstraints({
+            advanced: [{ focusMode: "continuous" }],
+          } as unknown as MediaTrackConstraints);
+        } catch {
+          /* focusMode non supporté : le système gère l'autofocus */
+        }
       } catch {
         const m = "Caméra indisponible ou accès refusé. Saisis le code à la main.";
         setMsg(m);

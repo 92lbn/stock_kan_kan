@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createShiftsBulk } from "@/lib/actions/planning";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
@@ -18,12 +18,23 @@ const WEEKDAYS = [
   { value: 0, label: "Dim" },
 ];
 
-export function BulkShiftForm({ employees }: { employees: Employee[] }) {
+export function BulkShiftForm({
+  employees,
+  onDone,
+}: {
+  employees: Employee[];
+  onDone?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(createShiftsBulk, undefined);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending && !state?.error) onDone?.();
+    wasPending.current = pending;
+  }, [pending, state, onDone]);
 
   return (
     <form action={formAction} className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="sm:col-span-1">
           <Label htmlFor="bulk-employee">Employé</Label>
           <Select id="bulk-employee" name="employeeId" required>
@@ -58,9 +69,9 @@ export function BulkShiftForm({ employees }: { employees: Employee[] }) {
           {WEEKDAYS.map((d) => (
             <label
               key={d.value}
-              className="flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-card dark:text-muted"
+              className="flex cursor-pointer items-center gap-1.5 rounded-md border border-line px-3 py-1.5 text-sm text-ink hover:bg-card-2"
             >
-              <input type="checkbox" name="weekdays" value={d.value} className="accent-accent" />
+              <input type="checkbox" name="weekdays" value={d.value} className="accent-[var(--accent)]" />
               {d.label}
             </label>
           ))}

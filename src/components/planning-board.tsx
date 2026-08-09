@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { deleteShift } from "@/lib/actions/planning";
 import { MonthCalendar, type CalendarEvent } from "@/components/month-calendar";
 import { ShiftForm } from "@/components/shift-form";
+import { BulkShiftForm } from "@/components/bulk-shift-form";
 import { Sheet } from "@/components/ui/sheet";
 import { ConfirmAction } from "@/components/confirm-action";
 
@@ -37,10 +38,12 @@ export function PlanningBoard({
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState<string | undefined>(undefined);
+  const [addMode, setAddMode] = useState<"single" | "bulk">("single");
   const [, startTransition] = useTransition();
 
   function openAdd(date?: string) {
     setAddDate(date);
+    setAddMode("single");
     setAddOpen(true);
   }
 
@@ -149,12 +152,38 @@ export function PlanningBoard({
           </button>
 
           <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nouveau créneau">
-            <div className="pb-2">
-              <ShiftForm
-                employees={employees}
-                defaultDate={addDate}
-                onDone={() => setAddOpen(false)}
-              />
+            <div className="space-y-3 pb-2">
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-line p-1">
+                <button
+                  type="button"
+                  onClick={() => setAddMode("single")}
+                  className={cn(
+                    "rounded-md py-2 text-sm font-medium",
+                    addMode === "single" ? "bg-accent text-accent-ink" : "text-muted"
+                  )}
+                >
+                  Un jour
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddMode("bulk")}
+                  className={cn(
+                    "rounded-md py-2 text-sm font-medium",
+                    addMode === "bulk" ? "bg-accent text-accent-ink" : "text-muted"
+                  )}
+                >
+                  Plusieurs jours
+                </button>
+              </div>
+              {addMode === "single" ? (
+                <ShiftForm
+                  employees={employees}
+                  defaultDate={addDate}
+                  onDone={() => setAddOpen(false)}
+                />
+              ) : (
+                <BulkShiftForm employees={employees} onDone={() => setAddOpen(false)} />
+              )}
             </div>
           </Sheet>
         </>
