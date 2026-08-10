@@ -8,32 +8,44 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: stock_kan_kan_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/stock_kan_kan_test
+      DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:5432/stock_kan_kan_test
+      SESSION_SECRET: ci-build-only-dummy-secret-with-more-than-32-characters
+      SEED_ADMIN_IDENTIFIER: admin
+      SEED_ADMIN_PASSWORD: Admin-test-2026!
+      E2E_ADMIN_IDENTIFIER: admin
+      E2E_ADMIN_PASSWORD: Admin-test-2026!
+      CRON_SECRET: ci-cron-secret
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      # `postinstall` lance `prisma generate` ; on s'assure que le client existe.
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Tests unitaires (Vitest)
-        run: npm test
-
-      - name: Build de production
-        run: npm run build
-        env:
-          # Secret factice pour le build (aucune connexion base requise au build).
-          SESSION_SECRET: ci-build-only-dummy-secret-32chars-minimum
+      - run: npm ci
+      - run: npm run db:deploy
+      - run: npm run db:seed
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

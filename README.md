@@ -1,62 +1,72 @@
-# Gestion Restaurant
+# stock_kan_kan
 
-> **Migration monorepo en cours.** L'application historique reste temporairement à la racine
-> afin de conserver le déploiement actuel fonctionnel. Le dépôt utilise désormais npm
-> workspaces (`apps/*`, `packages/*`) et Turborepo. Les futures applications seront
-> `apps/planning` et `apps/stock`, avec les packages partagés dans `packages/`.
+Monorepo de deux applications internes de restaurant, en français et pensées pour un usage mobile en cuisine.
 
-## Organisation transitoire du monorepo
+## Applications
 
-```text
-apps/       # futures applications Next.js planning et stock
-packages/   # packages partagés db, auth, lib et ui
-src/        # application historique, conservée pendant la migration
-packages/db/prisma/ # schéma, migrations, seed et import Prisma
-```
+- `apps/planning` — planning, pointage et administration des comptes. Port local `3000`.
+- `apps/stock` — inventaire par lots/DLC, sorties FEFO, mouvements et notes. Port local `3001`.
+- `packages/db` — schéma Prisma, client généré et migrations pour une base Supabase unique.
+- `packages/auth` — session JWT, gardes serveur et logique commune des proxies.
+- `packages/lib` — dates Europe/Paris, Decimal, heures, FEFO, CSV et audit.
+- `packages/ui` — composants et thème partagés.
 
-Les commandes habituelles (`npm run dev`, `npm run build`, `npm run lint`, `npm test`)
-continuent de cibler l'application historique. Les scripts `npm run mono:*` sont prêts pour
-orchestrer les workspaces à mesure de leur création.
+Les comptes sont communs aux deux apps. Tous les employés accèdent à Planning. Stock exige le droit `canStock`; les administrateurs sont autorisés implicitement.
 
-L'extraction des packages ne demande aucune migration Prisma ni modification du projet Vercel
-existant. Le runtime utilise `DATABASE_URL`; le CLI Prisma exige `DIRECT_URL`.
+## Installation locale
 
-Outil interne de gestion pour restaurant : stock &amp; inventaire, planning &amp; pointage des équipes. Les modules Fichiers/Recettes et Social Media Planner arrivent dans une prochaine étape.
+Prérequis : Node 24, npm 10 et PostgreSQL.
 
-## Stack
+1. Copier `.env.example` vers `.env` et remplacer toutes les valeurs d’exemple.
+2. Installer et générer Prisma : `npm install`.
+3. Appliquer les migrations sur la base locale : `npm run db:migrate`.
+4. Créer le superadmin : `npm run db:seed`.
+5. Lancer les deux apps : `npm run dev`.
 
-- [Next.js 16](https://nextjs.org) (App Router, Server Actions, TypeScript)
-- [Prisma 7](https://www.prisma.io) + adaptateur `@prisma/adapter-pg`
-- [Supabase](https://supabase.com) Postgres en `eu-west-1`
-- Auth maison par session (cookie httpOnly signé avec `jose`), sans dépendance externe
-- Déploiement visé : [Vercel](https://vercel.com)
+Commandes de contrôle : `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` et `npm run e2e`.
 
-## Démarrage local
+## Connexions Supabase
 
-1. Copier `.env.example` en `.env` et renseigner `DATABASE_URL` (une base Postgres locale ou Neon) et `SESSION_SECRET` (`openssl rand -base64 32`).
-2. Installer les dépendances : `npm install`
-3. Appliquer les migrations : `npm run db:migrate`
-4. Créer le compte admin initial : `npm run db:seed`
-5. Lancer le serveur de développement : `npm run dev`
-6. Se connecter sur [http://localhost:3000/login](http://localhost:3000/login) avec l'identifiant/mot de passe définis dans `.env` (`SEED_ADMIN_IDENTIFIER` / `SEED_ADMIN_PASSWORD`).
+- `DATABASE_URL` : Supavisor transaction pooler, port `6543`, avec `pgbouncer=true&connection_limit=5`. Runtime uniquement.
+- `DIRECT_URL` : session pooler, port `5432`. Prisma CLI, migrations, seed et import uniquement.
 
-## Déploiement (Vercel + Neon)
+Les commandes Prisma échouent volontairement si `DIRECT_URL` manque. Les deux projets Vercel utilisent les mêmes valeurs et la même base Supabase en `eu-west-1`.
 
-1. Créer un projet [Neon](https://neon.com), récupérer la **connection string poolée** et la mettre dans la variable d'environnement `DATABASE_URL` du projet Vercel.
-2. Définir `SESSION_SECRET` dans les variables d'environnement Vercel.
-3. Déployer sur Vercel (le script `postinstall` lance automatiquement `prisma generate`).
-4. Appliquer les migrations sur la base Neon : `npx prisma migrate deploy` (en local, avec `DATABASE_URL` pointant vers Neon), puis lancer `npm run db:seed` une fois pour créer le premier compte admin.
+## Déploiement Vercel
 
-## Modules disponibles (MVP)
+Créer deux projets depuis ce même dépôt :
 
-- **Stock & Inventaire** (`/stock`, admin uniquement) : articles multi-catégories (matériel, consommables, alimentaire), seuil d'alerte, mouvements d'entrée/sortie, alerte visible sur le tableau de bord dès qu'un article atteint son seuil.
-- **Planning** (`/planning`) : l'admin assigne des créneaux par employé, total d'heures prévues calculé automatiquement par mois. Chaque employé voit uniquement son propre planning.
-- **Pointage** (`/pointage`) : bouton pointer arrivée/départ pour l'employé connecté, total d'heures réelles calculé automatiquement à partir des pointages. Le QR code / badge NFC est prévu pour une itération future (décision à prendre plus tard).
-- **Employés** (`/employees`, admin uniquement) : création des comptes (identifiant + mot de passe), rôle admin ou employé.
+| Projet | Root Directory | Région | Commande de build |
+| --- | --- | --- | --- |
+| Planning | `apps/planning` | `dub1` | `npm run build` |
+| Stock | `apps/stock` | `dub1` | `npm run build` |
 
-## Prochaines étapes
+Dans les deux projets, définir `DATABASE_URL`, `DIRECT_URL` et le même `SESSION_SECRET` (32 caractères aléatoires minimum). Dans Stock, ajouter aussi les variables VAPID et `CRON_SECRET`. Fluid Compute peut rester activé.
 
-- Module Fichiers du restaurant & Recettes (menu, boissons, marinades).
-- Module Social Media Planner (idées, banque de médias sur Cloudflare R2, calendrier éditorial).
-- Notifications de réapprovisionnement par email (actuellement l'alerte est visible uniquement dans l'app).
-- Pointage par QR code / NFC (actuellement pointage manuel par bouton, suffisant pour la v1).
+Le cookie de session est partagé uniquement si les deux apps sont publiées sous le même domaine parent avec une configuration de cookie adaptée. Sur deux domaines Vercel distincts, les comptes restent communs mais chaque app demande sa propre connexion.
+
+## Migrations : sauvegarde obligatoire
+
+Ne jamais modifier une migration déjà appliquée et ne jamais lancer une migration de production automatiquement depuis ce dépôt.
+
+Les migrations suivantes sont en attente de déploiement :
+
+- `20260810230000_stock_access` — droit `canStock`.
+- `20260810233000_stock_lots_fefo` — lots, DLC, index et reprise des quantités existantes.
+- `20260810234500_login_attempt_ip` — limitation de connexion par IP.
+- `20260810235000_note_push_claim` — claim/retry des rappels.
+- `20260811001000_remove_out_of_scope_modules` — **destructive** : supprime compta, recettes et réseaux sociaux.
+
+Procédure production :
+
+1. Faire et vérifier une sauvegarde Supabase.
+2. Relire le SQL de toutes les migrations ci-dessus, surtout la migration destructive.
+3. Exporter `DIRECT_URL` vers le pooler session `5432`.
+4. Exécuter manuellement `npm run db:deploy`.
+5. Déployer Planning et Stock, puis tester connexion, pointage, création de créneau et mouvement de stock.
+
+## CI et sécurité
+
+GitHub Actions démarre un PostgreSQL isolé, applique les migrations, seed un admin, puis exécute lint, typecheck, tests, builds des deux apps et quatre parcours Playwright critiques. La CI n’accède jamais à Supabase production.
+
+Le plan Vercel Hobby ne garantit qu’un cron quotidien à heure approximative. Les rappels plus fréquents exigent Vercel Pro ou un déclencheur externe.

@@ -13,6 +13,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
+    "e2e": "playwright test",
     "postinstall": "npm run generate --workspace @stock-kan-kan/db",
     "db:migrate": "prisma migrate dev --config packages/db/prisma.config.ts",
     "db:deploy": "prisma migrate deploy --config packages/db/prisma.config.ts",
@@ -26,6 +27,7 @@
     "mono:test": "turbo run test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
