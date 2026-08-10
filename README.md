@@ -1,5 +1,26 @@
 # Gestion Restaurant
 
+> **Migration monorepo en cours.** L'application historique reste temporairement à la racine
+> afin de conserver le déploiement actuel fonctionnel. Le dépôt utilise désormais npm
+> workspaces (`apps/*`, `packages/*`) et Turborepo. Les futures applications seront
+> `apps/planning` et `apps/stock`, avec les packages partagés dans `packages/`.
+
+## Organisation transitoire du monorepo
+
+```text
+apps/       # futures applications Next.js planning et stock
+packages/   # futurs packages db, auth, lib et ui
+src/        # application historique, conservée pendant la migration
+prisma/     # schéma et migrations actuels, conservés jusqu'à l'extraction de packages/db
+```
+
+Les commandes habituelles (`npm run dev`, `npm run build`, `npm run lint`, `npm test`)
+continuent de cibler l'application historique. Les scripts `npm run mono:*` sont prêts pour
+orchestrer les workspaces à mesure de leur création.
+
+Cette première étape ne demande aucune migration Prisma ni modification du projet Vercel
+existant.
+
 Outil interne de gestion pour restaurant : stock &amp; inventaire, planning &amp; pointage des équipes. Les modules Fichiers/Recettes et Social Media Planner arrivent dans une prochaine étape.
 
 ## Stack

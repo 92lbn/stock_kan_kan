@@ -2,6 +2,11 @@
   "name": "stock_kan_kan",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.3",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +20,12 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:import-inventory": "tsx prisma/import-inventory.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "mono:dev": "turbo run dev",
+    "mono:build": "turbo run build",
+    "mono:lint": "turbo run lint",
+    "mono:typecheck": "turbo run typecheck",
+    "mono:test": "turbo run test"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -47,6 +57,7 @@
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
+    "turbo": "^2.10.9",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }
