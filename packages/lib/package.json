@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./action": "./src/action.ts",
     "./audit": "./src/audit.ts",
     "./colors": "./src/colors.ts",
     "./csv": "./src/csv.ts",
