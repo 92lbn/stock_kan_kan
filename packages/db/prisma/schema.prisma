@@ -32,9 +32,6 @@ model User {
   shifts       Shift[]
   timeEntries  TimeEntry[]
   stockAlertsAck StockMovement[]
-  ideas        ContentIdea[]     @relation("IdeaAuthor")
-  mediaUploads MediaAsset[]      @relation("MediaUploader")
-  ledgerEntries LedgerEntry[]
   notes        Note[]
   pushSubscriptions PushSubscription[]
 
@@ -53,7 +50,7 @@ model LoginAttempt {
   @@map("login_attempts")
 }
 
-// Journal d'audit : toute écriture sur stock, ledger et users.
+// Journal d'audit : écritures sensibles sur le stock et les utilisateurs.
 model AuditLog {
   id        String   @id @default(cuid())
   userId    String? // auteur de l'action (null si système)
@@ -138,13 +135,11 @@ model StockItem {
 
   movements         StockMovement[]
   lots              StockLot[]
-  recipeIngredients RecipeIngredient[]
 
   @@index([category])
   @@index([deletedAt])
   @@map("stock_items")
 }
-
 model StockLot {
   id          String    @id @default(cuid())
   stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
@@ -176,9 +171,6 @@ model StockMovement {
   createdAt   DateTime          @default(now())
   createdBy   User?             @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdById String?
-  // Dépense compta correspondante (un achat IN peut générer une LedgerEntry).
-  ledgerEntry   LedgerEntry?    @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
-  ledgerEntryId String?
 
   @@index([stockItemId])
   @@index([createdAt])
@@ -217,135 +209,4 @@ model TimeEntry {
 
   @@index([employeeId, timestamp])
   @@map("time_entries")
-}
-
-// ---------- Module 3 : Fichiers du restaurant & Recettes ----------
-
-enum RecipeCategory {
-  MENU
-  BOISSON
-  MARINADE
-}
-
-model Recipe {
-  id           String         @id @default(cuid())
-  title        String
-  category     RecipeCategory
-  ingredients  String // texte libre conservé (migration douce vers RecipeIngredient)
-  steps        String // texte libre, une étape par ligne
-  sellingPrice Decimal? @db.Decimal(12, 2) // prix de vente TTC pour le food cost %
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  recipeIngredients RecipeIngredient[]
-
-  @@index([category])
-  @@map("recipes")
-}
-
-// Ingrédient structuré d'une recette, relié à un article de stock (fiche technique,
-// food cost, production, faisabilité).
-model RecipeIngredient {
-  id          String    @id @default(cuid())
-  recipe      Recipe    @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  recipeId    String
-  stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
-  stockItemId String
-  quantity    Decimal   @db.Decimal(12, 3) // quantité par portion, dans l'unité du stock
-  unit        String
-
-  @@unique([recipeId, stockItemId])
-  @@index([recipeId])
-  @@index([stockItemId])
-  @@map("recipe_ingredients")
-}
-
-// ---------- Module 4 : Réseaux sociaux ----------
-
-enum SocialPlatform {
-  TIKTOK
-  SNAPCHAT
-  INSTAGRAM
-}
-
-model ContentIdea {
-  id        String   @id @default(cuid())
-  text      String
-  author    User     @relation("IdeaAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  String
-  createdAt DateTime @default(now())
-
-  @@map("content_ideas")
-}
-
-model MediaAsset {
-  id         String   @id @default(cuid())
-  url        String // clé/URL sur Cloudflare R2
-  fileName   String
-  uploader   User     @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
-  uploaderId String
-  createdAt  DateTime @default(now())
-
-  post       ScheduledPost?
-
-  @@map("media_assets")
-}
-
-enum PostStatus {
-  IDEA
-  READY
-  SCHEDULED
-  PUBLISHED
-}
-
-model ScheduledPost {
-  id          String         @id @default(cuid())
-  platform    SocialPlatform
-  caption     String?
-  status      PostStatus     @default(READY)
-  scheduledAt DateTime?
-  media       MediaAsset?    @relation(fields: [mediaId], references: [id], onDelete: SetNull)
-  mediaId     String?        @unique
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  @@index([scheduledAt])
-  @@map("scheduled_posts")
-}
-
-// CA prévisionnel par jour, pour le ratio masse salariale / CA (liaison compta ↔ planning).
-model DailyForecast {
-  id              String   @id @default(cuid())
-  date            DateTime @unique @db.Date
-  expectedRevenue Decimal  @db.Decimal(12, 2)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@map("daily_forecasts")
-}
-
-// ---------- Suivi recettes / dépenses (comptabilité légère) ----------
-
-enum LedgerEntryType {
-  REVENUE
-  EXPENSE
-}
-
-model LedgerEntry {
-  id          String          @id @default(cuid())
-  date        DateTime        @db.Date
-  type        LedgerEntryType
-  amount      Decimal         @db.Decimal(12, 2)
-  category    String?
-  note        String?
-  deletedAt   DateTime? // suppression réversible (soft delete)
-  createdBy   User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById String?
-  createdAt   DateTime        @default(now())
-
-  stockMovements StockMovement[]
-
-  @@index([date])
-  @@index([deletedAt])
-  @@map("ledger_entries")
 }
