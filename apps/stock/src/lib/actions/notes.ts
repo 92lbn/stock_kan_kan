@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@stock-kan-kan/db";
 import { requireStockAccess } from "@stock-kan-kan/auth/dal";
 import type { ActionState } from "@/lib/actions/stock";
+import { wallTimeParisToUtc } from "@stock-kan-kan/lib/date";
 
 const NoteSchema = z.object({
   content: z.string().trim().min(1, { error: "Note vide." }),
@@ -26,7 +27,12 @@ export async function createNote(
     return { error: "La note ne peut pas être vide." };
   }
 
-  const remindAt = parsed.data.remindAt ? new Date(parsed.data.remindAt) : null;
+  let remindAt: Date | null = null;
+  try {
+    remindAt = parsed.data.remindAt ? wallTimeParisToUtc(parsed.data.remindAt) : null;
+  } catch {
+    return { error: "Date ou heure de rappel invalide." };
+  }
 
   await db.note.create({
     data: {

@@ -13,8 +13,8 @@ export default function OfflinePage() {
         Hors ligne
       </h1>
       <p className="max-w-xs text-sm text-muted">
-        Cette application nécessite une connexion pour protéger les données du restaurant.
-        Reconnecte-toi pour consulter le dernier état du stock et tes notes.
+        Cette application ne stocke pas les données du restaurant hors ligne. Reconnecte-toi
+        pour consulter le stock et tes notes en toute sécurité.
       </p>
     </div>
   );

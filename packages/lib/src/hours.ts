@@ -31,11 +31,29 @@ export function shiftsOverlap(
 ) {
   const aStart = toMinutes(a.startTime);
   let aEnd = toMinutes(a.endTime);
-  if (aEnd <= aStart) aEnd += 24 * 60;
+  if (aEnd < aStart) aEnd += 24 * 60;
   const bStart = toMinutes(b.startTime);
   let bEnd = toMinutes(b.endTime);
-  if (bEnd <= bStart) bEnd += 24 * 60;
+  if (bEnd < bStart) bEnd += 24 * 60;
+  if (aEnd === aStart || bEnd === bStart) return false;
   return aStart < bEnd && bStart < aEnd;
+}
+
+export function datedShiftsOverlap(
+  a: { date: string; startTime: string; endTime: string },
+  b: { date: string; startTime: string; endTime: string }
+) {
+  const interval = (shift: typeof a) => {
+    const day = Date.parse(`${shift.date}T00:00:00Z`) / 60000;
+    const start = day + toMinutes(shift.startTime);
+    let end = day + toMinutes(shift.endTime);
+    if (end < start) end += 1440;
+    return { start, end };
+  };
+  const ia = interval(a);
+  const ib = interval(b);
+  if (ia.start === ia.end || ib.start === ib.end) return false;
+  return ia.start < ib.end && ib.start < ia.end;
 }
 
 export function sumShiftHours(shifts: { startTime: string; endTime: string }[]) {

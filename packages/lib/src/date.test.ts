@@ -7,6 +7,7 @@ import {
   toYearMonth,
   daysInMonth,
   formatDateFR,
+  wallTimeParisToUtc,
 } from "./date";
 
 describe("date (Europe/Paris)", () => {
@@ -55,5 +56,14 @@ describe("date (Europe/Paris)", () => {
 
   it("formatDateFR d'une colonne @db.Date affiche le bon jour", () => {
     expect(formatDateFR(new Date("2026-07-15T00:00:00.000Z"))).toBe("15/07/2026");
+  });
+
+  it("convertit explicitement les heures murales d'été et d'hiver en UTC", () => {
+    expect(wallTimeParisToUtc("2026-07-15T12:00").toISOString()).toBe("2026-07-15T10:00:00.000Z");
+    expect(wallTimeParisToUtc("2026-01-15T12:00").toISOString()).toBe("2026-01-15T11:00:00.000Z");
+  });
+
+  it("refuse une heure inexistante au passage à l'heure d'été", () => {
+    expect(() => wallTimeParisToUtc("2026-03-29T02:30")).toThrow(/n’existe pas/);
   });
 });

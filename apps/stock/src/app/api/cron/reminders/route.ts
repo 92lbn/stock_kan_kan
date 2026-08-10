@@ -1,5 +1,6 @@
 import { db } from "@stock-kan-kan/db";
 import { sendPushToUser } from "@/lib/push";
+import { Prisma } from "@stock-kan-kan/db/client";
 
 export const dynamic = "force-dynamic";
 // web-push nécessite le runtime Node (crypto natif).
@@ -22,6 +23,7 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
+  const staleClaim = new Date(now.getTime() - 10 * 60 * 1000);
   let reminderCount = 0;
   let stockAlertCount = 0;
 
@@ -30,26 +32,37 @@ export async function GET(request: Request) {
     where: {
       remindAt: { lte: now },
       notifiedAt: null,
+      OR: [{ notificationClaimedAt: null }, { notificationClaimedAt: { lt: staleClaim } }],
       done: false,
     },
   });
 
   for (const note of dueNotes) {
-    await sendPushToUser(note.authorId, {
+    const claim = await db.note.updateMany({
+      where: { id: note.id, notifiedAt: null, OR: [{ notificationClaimedAt: null }, { notificationClaimedAt: { lt: staleClaim } }] },
+      data: { notificationClaimedAt: now, notificationAttempts: { increment: 1 } },
+    });
+    if (claim.count !== 1) continue;
+    const result = await sendPushToUser(note.authorId, {
       title: "Rappel",
       body: note.content.slice(0, 120),
       url: "/notes",
       tag: `note-${note.id}`,
     });
-    await db.note.update({ where: { id: note.id }, data: { notifiedAt: now } });
-    reminderCount++;
+    if (result.sent > 0) {
+      await db.note.update({ where: { id: note.id }, data: { notifiedAt: now, notificationClaimedAt: null, lastNotificationError: null } });
+      reminderCount++;
+    } else {
+      await db.note.update({ where: { id: note.id }, data: { notificationClaimedAt: null, lastNotificationError: result.configured ? "Aucun appareil livré." : "Web Push non configuré." } });
+    }
   }
 
   // 2. Low-stock alerts sent to all admins (once per run).
-  const stockItems = await db.stockItem.findMany({ where: { deletedAt: null } });
-  const lowStock = stockItems.filter(
-    (item) => item.minThreshold.gt(0) && item.quantity.lte(item.minThreshold)
-  );
+  const stockItems = await db.stockItem.findMany({ where: { deletedAt: null }, include: { lots: { where: { quantity: { gt: 0 } } } } });
+  const lowStock = stockItems.filter((item) => {
+    const quantity = item.lots.reduce((sum, lot) => sum.plus(lot.quantity), new Prisma.Decimal(0));
+    return item.minThreshold.gt(0) && quantity.lte(item.minThreshold);
+  });
 
   if (lowStock.length > 0) {
     const admins = await db.user.findMany({
@@ -59,13 +72,13 @@ export async function GET(request: Request) {
     const names = lowStock.slice(0, 5).map((i) => i.name).join(", ");
     const extra = lowStock.length > 5 ? ` +${lowStock.length - 5} autres` : "";
     for (const admin of admins) {
-      await sendPushToUser(admin.id, {
+      const result = await sendPushToUser(admin.id, {
         title: `${lowStock.length} article(s) à réapprovisionner`,
         body: `${names}${extra}`,
         url: "/stock",
         tag: "low-stock",
       });
-      stockAlertCount++;
+      if (result.sent > 0) stockAlertCount++;
     }
   }
 

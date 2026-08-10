@@ -9,7 +9,7 @@ import { requireStockAccess } from "@stock-kan-kan/auth/dal";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 import { formatQuantity } from "@stock-kan-kan/lib/money";
 import { planFefo } from "@stock-kan-kan/lib/stock-lots";
-import { logAudit } from "@stock-kan-kan/lib/audit";
+import { auditData, logAudit } from "@stock-kan-kan/lib/audit";
 
 class MovementError extends Error {}
 
@@ -150,13 +150,13 @@ export async function recordStockMovement(stockItemId: string, _state: ActionSta
         await tx.stockItem.update({ where: { id: stockItemId }, data: { quantity } });
       }
       await tx.stockMovement.create({ data: { stockItemId, type: parsed.data.type, quantity, unitCost: parsed.data.unitCost, note: parsed.data.note, createdById: actor.id } });
+      await tx.auditLog.create({ data: auditData({ userId: actor.id, action: `stock.movement.${parsed.data.type.toLowerCase()}`, entity: "StockItem", entityId: stockItemId, after: parsed.data }) });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
     if (error instanceof MovementError) return { error: error.message };
     console.error("stock_movement_failed", error);
     return { error: "Le mouvement n’a pas pu être enregistré. Réessaie." };
   }
-  await logAudit({ userId: actor.id, action: `stock.movement.${parsed.data.type.toLowerCase()}`, entity: "StockItem", entityId: stockItemId, after: parsed.data });
   revalidateStock();
 }
 

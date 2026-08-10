@@ -45,9 +45,11 @@ model User {
 model LoginAttempt {
   id         String   @id @default(cuid())
   identifier String
+  ip         String?
   createdAt  DateTime @default(now())
 
   @@index([identifier, createdAt])
+  @@index([ip, createdAt])
   @@map("login_attempts")
 }
 
@@ -76,12 +78,16 @@ model Note {
   content    String
   remindAt   DateTime? // date/heure du rappel (optionnel)
   notifiedAt DateTime? // renseigné une fois la notification push envoyée
+  notificationClaimedAt DateTime?
+  notificationAttempts  Int       @default(0)
+  lastNotificationError String?
   done       Boolean   @default(false)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
   @@index([authorId])
   @@index([remindAt])
+  @@index([notificationClaimedAt])
   @@map("notes")
 }
 

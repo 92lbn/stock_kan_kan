@@ -26,24 +26,33 @@ type PushPayload = {
 // Sends a push notification to every device subscribed by the given user.
 // Cleans up subscriptions that have expired (410 / 404).
 export async function sendPushToUser(userId: string, payload: PushPayload) {
-  if (!ensureConfigured()) return;
+  if (!ensureConfigured()) return { sent: 0, failed: 1, expired: 0, configured: false } as const;
 
   const subs = await db.pushSubscription.findMany({ where: { userId } });
   const body = JSON.stringify(payload);
 
-  await Promise.all(
+  const results = await Promise.all(
     subs.map(async (sub) => {
       try {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
           body
         );
+        return "sent" as const;
       } catch (error: unknown) {
         const statusCode = (error as { statusCode?: number })?.statusCode;
         if (statusCode === 404 || statusCode === 410) {
           await db.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+          return "expired" as const;
         }
+        return "failed" as const;
       }
     })
   );
+  return {
+    sent: results.filter((result) => result === "sent").length,
+    failed: results.filter((result) => result === "failed").length,
+    expired: results.filter((result) => result === "expired").length,
+    configured: true,
+  } as const;
 }

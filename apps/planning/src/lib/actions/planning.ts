@@ -4,16 +4,17 @@ import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@stock-kan-kan/db";
 import { requireAdmin, getCurrentUser } from "@stock-kan-kan/auth/dal";
-import { parseDateInput } from "@stock-kan-kan/lib/date";
-import { shiftsOverlap } from "@stock-kan-kan/lib/hours";
+import { addDays, parseDateInput, toYmd } from "@stock-kan-kan/lib/date";
+import { datedShiftsOverlap } from "@stock-kan-kan/lib/hours";
+import { DateInputSchema, IdSchema, TimeInputSchema } from "@stock-kan-kan/lib/schemas";
 import { TimeEntryType } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 
 const ShiftSchema = z.object({
-  employeeId: z.string().min(1),
-  date: z.string().min(1),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  employeeId: IdSchema,
+  date: DateInputSchema,
+  startTime: TimeInputSchema,
+  endTime: TimeInputSchema,
   note: z.string().trim().optional(),
 });
 
@@ -38,13 +39,13 @@ export async function createShift(
   const date = parseDateInput(parsed.data.date);
 
   // Refus des créneaux qui se chevauchent pour le même employé ce jour-là.
-  const sameDay = await db.shift.findMany({
-    where: { employeeId: parsed.data.employeeId, date },
-    select: { startTime: true, endTime: true },
+  const nearby = await db.shift.findMany({
+    where: { employeeId: parsed.data.employeeId, date: { gte: addDays(date, -1), lte: addDays(date, 1) } },
+    select: { date: true, startTime: true, endTime: true },
   });
-  const candidate = { startTime: parsed.data.startTime, endTime: parsed.data.endTime };
-  if (sameDay.some((s) => shiftsOverlap(s, candidate))) {
-    return { error: "Ce créneau en chevauche un autre pour cet employé ce jour-là." };
+  const candidate = { date: parsed.data.date, startTime: parsed.data.startTime, endTime: parsed.data.endTime };
+  if (nearby.some((s) => datedShiftsOverlap({ ...s, date: toYmd(s.date) }, candidate))) {
+    return { error: "Ce créneau en chevauche un autre, y compris un service de nuit adjacent." };
   }
 
   await db.shift.create({
@@ -61,11 +62,11 @@ export async function createShift(
 }
 
 const BulkShiftSchema = z.object({
-  employeeId: z.string().min(1),
-  startDate: z.string().min(1),
-  endDate: z.string().min(1),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
-  endTime: z.string().regex(/^\d{2}:\d{2}$/),
+  employeeId: IdSchema,
+  startDate: DateInputSchema,
+  endDate: DateInputSchema,
+  startTime: TimeInputSchema,
+  endTime: TimeInputSchema,
   // Selected weekdays, 0 = Sunday ... 6 = Saturday
   weekdays: z.array(z.coerce.number().min(0).max(6)).min(1),
 });
@@ -114,6 +115,19 @@ export async function createShiftsBulk(
 
   if (dates.length === 0) {
     return { error: "Aucun jour ne correspond dans cette période." };
+  }
+
+  const candidates = dates.map((date) => ({ date: toYmd(date), startTime, endTime }));
+  const existing = await db.shift.findMany({
+    where: { employeeId, date: { gte: addDays(start, -1), lte: addDays(end, 1) } },
+    select: { date: true, startTime: true, endTime: true },
+  });
+  const normalizedExisting = existing.map((shift) => ({ ...shift, date: toYmd(shift.date) }));
+  if (candidates.some((candidate) => normalizedExisting.some((shift) => datedShiftsOverlap(shift, candidate)))) {
+    return { error: "Au moins un créneau chevauche un service existant, y compris de nuit." };
+  }
+  if (candidates.some((candidate, index) => candidates.slice(index + 1).some((other) => datedShiftsOverlap(candidate, other)))) {
+    return { error: "Les créneaux du lot se chevauchent entre eux." };
   }
 
   await db.shift.createMany({

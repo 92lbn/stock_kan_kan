@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sumShiftHours, shiftsOverlap } from "./hours";
+import { datedShiftsOverlap, sumShiftHours, shiftsOverlap } from "./hours";
 
 describe("shiftsOverlap", () => {
   it("détecte un chevauchement", () => {
@@ -21,6 +21,22 @@ describe("shiftsOverlap", () => {
     expect(
       shiftsOverlap({ startTime: "18:00", endTime: "02:00" }, { startTime: "23:00", endTime: "23:30" })
     ).toBe(true);
+  });
+});
+
+describe("datedShiftsOverlap", () => {
+  it("détecte un chevauchement avec le service de nuit de la veille", () => {
+    expect(datedShiftsOverlap(
+      { date: "2026-08-10", startTime: "22:00", endTime: "02:00" },
+      { date: "2026-08-11", startTime: "01:00", endTime: "04:00" }
+    )).toBe(true);
+  });
+
+  it("considère début égal fin comme un créneau nul", () => {
+    expect(shiftsOverlap(
+      { startTime: "12:00", endTime: "12:00" },
+      { startTime: "11:00", endTime: "13:00" }
+    )).toBe(false);
   });
 });
 

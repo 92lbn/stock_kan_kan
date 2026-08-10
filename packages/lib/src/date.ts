@@ -79,6 +79,28 @@ export function toDateOnly(input: string | Date, tz: string = TZ): Date {
 
 export const parseDateInput = toDateOnly;
 
+// Convertit une saisie datetime-local (heure murale de Paris) en instant UTC.
+// Refuse les heures inexistantes pendant le passage à l'heure d'été.
+export function wallTimeParisToUtc(input: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(input);
+  if (!match) throw new Error("Date et heure invalides.");
+  const [, y, mo, d, h, mi] = match;
+  const wanted = { year: +y, month: +mo, day: +d, hour: +h, minute: +mi };
+  if (wanted.hour > 23 || wanted.minute > 59) throw new Error("Date et heure invalides.");
+  const wallAsUtc = Date.UTC(wanted.year, wanted.month - 1, wanted.day, wanted.hour, wanted.minute);
+  let candidate = new Date(wallAsUtc);
+  for (let i = 0; i < 3; i++) {
+    const actual = partsInTZ(candidate, TZ);
+    const actualAsUtc = Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute);
+    candidate = new Date(candidate.getTime() + wallAsUtc - actualAsUtc);
+  }
+  const check = partsInTZ(candidate, TZ);
+  if (check.year !== wanted.year || check.month !== wanted.month || check.day !== wanted.day || check.hour !== wanted.hour || check.minute !== wanted.minute) {
+    throw new Error("Cette heure n’existe pas en Europe/Paris à cause du changement d’heure.");
+  }
+  return candidate;
+}
+
 // "YYYY-MM-DD" d'une Date (à minuit UTC, colonnes @db.Date).
 export function toYmd(date: Date): string {
   return date.toISOString().slice(0, 10);
