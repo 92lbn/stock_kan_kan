@@ -27,9 +27,9 @@ const CATEGORIES = [
   { value: "CONSOMMABLES_EMBALLAGES", label: "Consommables / Emballages" },
 ];
 
-const fr = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 3 });
+const fr = (value: string) => Number(value).toLocaleString("fr-FR", { maximumFractionDigits: 3 });
 
-type Found = { id: string; name: string; unit: string; quantity: number };
+type Found = { id: string; name: string; unit: string; quantity: string };
 
 export function StockScan() {
   const [open, setOpen] = useState(false);
@@ -170,10 +170,10 @@ function FoundForm({ found, code, onDone }: { found: Found; code: string; onDone
         <Label htmlFor="scan-cost">Coût unitaire (€) — optionnel</Label>
         <Input id="scan-cost" name="unitCost" type="number" inputMode="decimal" step="0.01" min="0" />
       </div>
-      <label className="flex items-center gap-2 text-sm text-muted">
-        <input type="checkbox" name="createExpense" className="h-4 w-4 accent-[var(--accent)]" />
-        Enregistrer l&apos;achat en dépense &amp; recalculer le PMP
-      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <div><Label htmlFor="scan-expiry">DLC</Label><Input id="scan-expiry" name="expiryDate" type="date" required /></div>
+        <div><Label htmlFor="scan-lot">N° de lot</Label><Input id="scan-lot" name="lotNumber" /></div>
+      </div>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "…" : "Ajouter au stock"}
@@ -243,6 +243,14 @@ function UnknownForm({
         <div>
           <Label htmlFor="u-alg">Allergènes</Label>
           <Input id="u-alg" name="allergens" placeholder="gluten…" />
+        </div>
+        <div>
+          <Label htmlFor="u-expiry">DLC du stock initial</Label>
+          <Input id="u-expiry" name="expiryDate" type="date" />
+        </div>
+        <div>
+          <Label htmlFor="u-lot">N° de lot</Label>
+          <Input id="u-lot" name="lotNumber" />
         </div>
       </div>
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}

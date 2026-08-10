@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { requireStockAccess } from "@stock-kan-kan/auth/dal";
 import { db } from "@stock-kan-kan/db";
+import { Prisma } from "@stock-kan-kan/db/client";
+import { dayRange, toYmd } from "@stock-kan-kan/lib/date";
 import { formatEUR } from "@stock-kan-kan/lib/money";
 import { StockView, type StockItem } from "@/components/stock-view";
 import { StockScan } from "@/components/stock-scan";
@@ -45,26 +47,37 @@ async function StockContent() {
   await requireStockAccess();
 
   const [rawItems, valuation] = await Promise.all([
-    db.stockItem.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
+    db.stockItem.findMany({
+      where: { deletedAt: null },
+      orderBy: { name: "asc" },
+      include: { lots: { where: { quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } } },
+    }),
     // Valorisation du stock (quantité × PMP) en SQL.
     db.$queryRaw<{ value: string | null }[]>`
-      SELECT COALESCE(SUM(quantity * "costPrice"), 0) AS value
-      FROM stock_items WHERE "deletedAt" IS NULL
+      SELECT COALESCE(SUM(l.quantity * i."costPrice"), 0) AS value
+      FROM stock_lots l JOIN stock_items i ON i.id = l."stockItemId"
+      WHERE i."deletedAt" IS NULL AND l.quantity > 0
     `,
   ]);
   const stockValue = valuation[0]?.value ?? 0;
 
-  // Decimal n'est pas sérialisable vers un composant client : on ramène en Number.
+  // Decimal traverse la frontière serveur/client sous forme de chaîne exacte.
   const items: StockItem[] = rawItems.map((item) => ({
     id: item.id,
     name: item.name,
     category: item.category,
     unit: item.unit,
-    quantity: item.quantity.toNumber(),
-    minThreshold: item.minThreshold.toNumber(),
-    costPrice: item.costPrice.toNumber(),
+    quantity: item.lots.reduce((sum, lot) => sum.plus(lot.quantity), new Prisma.Decimal(0)).toString(),
+    minThreshold: item.minThreshold.toString(),
+    costPrice: item.costPrice.toString(),
     allergens: item.allergens ?? "",
     barcode: item.barcode ?? "",
+    lots: item.lots.map((lot) => ({
+      id: lot.id,
+      lotNumber: lot.lotNumber ?? "",
+      expiryDate: lot.expiryDate.toISOString().slice(0, 10),
+      quantity: lot.quantity.toString(),
+    })),
   }));
 
   return (
@@ -73,7 +86,7 @@ async function StockContent() {
         <span className="num">{items.length}</span> article(s) · valeur{" "}
         <span className="num font-medium text-ink">{formatEUR(stockValue)}</span>
       </p>
-      <StockView items={items} />
+      <StockView items={items} today={toYmd(dayRange().start)} />
     </>
   );
 }

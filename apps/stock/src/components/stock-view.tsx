@@ -14,17 +14,19 @@ import { Sheet } from "@stock-kan-kan/ui/sheet";
 import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@stock-kan-kan/lib/utils";
+import { classifyExpiry, daysUntilExpiry, type ExpiryGroup } from "@stock-kan-kan/lib/expiry";
 
 export type StockItem = {
   id: string;
   name: string;
   category: string;
   unit: string;
-  quantity: number;
-  minThreshold: number;
-  costPrice: number;
+  quantity: string;
+  minThreshold: string;
+  costPrice: string;
   allergens: string;
   barcode: string;
+  lots: { id: string; lotNumber: string; expiryDate: string; quantity: string }[];
 };
 
 const CATEGORIES = [
@@ -37,19 +39,20 @@ const CATEGORIES = [
 ];
 const catLabel = (v: string) => CATEGORIES.find((c) => c.value === v)?.short ?? v;
 
-const fr = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 3 });
+const fr = (value: string) => Number(value).toLocaleString("fr-FR", { maximumFractionDigits: 3 });
 
 type Status = "out" | "low" | "ok";
 function statusOf(item: StockItem): Status {
-  if (item.quantity <= 0) return "out";
-  if (item.minThreshold > 0 && item.quantity <= item.minThreshold) return "low";
+  if (Number(item.quantity) <= 0) return "out";
+  if (Number(item.minThreshold) > 0 && Number(item.quantity) <= Number(item.minThreshold)) return "low";
   return "ok";
 }
 
-export function StockView({ items }: { items: StockItem[] }) {
+export function StockView({ items, today }: { items: StockItem[]; today: string }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [sort, setSort] = useState("name");
+  const [expiry, setExpiry] = useState<"" | ExpiryGroup>("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -60,19 +63,21 @@ export function StockView({ items }: { items: StockItem[] }) {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    let r = items.filter(
-      (i) => (!cat || i.category === cat) && (!needle || i.name.toLowerCase().includes(needle))
+    let r = items.filter((i) =>
+      (!cat || i.category === cat) &&
+      (!needle || i.name.toLowerCase().includes(needle)) &&
+      (!expiry || i.lots.some((lot) => classifyExpiry(lot.expiryDate, today) === expiry))
     );
     r = [...r].sort((a, b) => {
       if (sort === "low") {
         const rank = (x: StockItem) => (statusOf(x) === "out" ? 0 : statusOf(x) === "low" ? 1 : 2);
         return rank(a) - rank(b) || a.name.localeCompare(b.name, "fr");
       }
-      if (sort === "qty") return a.quantity - b.quantity;
+      if (sort === "qty") return Number(a.quantity) - Number(b.quantity);
       return a.name.localeCompare(b.name, "fr");
     });
     return r;
-  }, [items, q, cat, sort]);
+  }, [items, q, cat, sort, expiry, today]);
 
   const lowCount = useMemo(() => items.filter((i) => statusOf(i) !== "ok").length, [items]);
   // openItem est dérivé : si l'article est supprimé (revalidation), il devient null
@@ -121,6 +126,11 @@ export function StockView({ items }: { items: StockItem[] }) {
             </Chip>
           ))}
         </div>
+        <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+          {([['', 'Toutes les DLC'], ['expired', 'Périmé'], ['urgent', 'À consommer vite'], ['soon', 'Sous 7 jours']] as const).map(([value, label]) => (
+            <Chip key={value} active={expiry === value} onClick={() => setExpiry(value)}>{label}</Chip>
+          ))}
+        </div>
       </div>
 
       {/* Liste */}
@@ -145,7 +155,7 @@ export function StockView({ items }: { items: StockItem[] }) {
       </button>
 
       <Sheet open={!!openItem} onClose={() => setOpenId(null)} title={openItem?.name}>
-        {openItem && <ItemActions item={openItem} onClose={() => setOpenId(null)} />}
+        {openItem && <ItemActions item={openItem} today={today} onClose={() => setOpenId(null)} />}
       </Sheet>
 
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nouvel article">
@@ -225,7 +235,7 @@ const MOVEMENTS = [
   { value: "ADJUSTMENT", label: "Correction" },
 ];
 
-function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }) {
+function ItemActions({ item, today, onClose }: { item: StockItem; today: string; onClose: () => void }) {
   const [type, setType] = useState("IN");
   const [editing, setEditing] = useState(false);
 
@@ -253,6 +263,23 @@ function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }
         <span className="num text-3xl font-bold text-ink">
           {fr(item.quantity)} <span className="text-base font-normal text-muted">{item.unit}</span>
         </span>
+      </div>
+
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-ink">Lots par DLC</h3>
+        {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
+          <ul className="divide-y divide-line rounded-md border border-line">
+            {item.lots.map((lot) => {
+              const days = daysUntilExpiry(lot.expiryDate, today);
+              const group = classifyExpiry(lot.expiryDate, today);
+              const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
+              return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
+                <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
+                <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
+              </li>;
+            })}
+          </ul>
+        )}
       </div>
 
       {/* Mouvement rapide */}
@@ -296,12 +323,10 @@ function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }
             />
           )}
         </div>
-        {type === "IN" && (
-          <label className="flex items-center gap-2 text-sm text-muted">
-            <input type="checkbox" name="createExpense" className="h-4 w-4 accent-[var(--accent)]" />
-            Enregistrer l&apos;achat en dépense &amp; recalculer le PMP
-          </label>
-        )}
+        {type !== "OUT" && <div className="grid grid-cols-2 gap-2">
+          <div><Label htmlFor={`expiry-${item.id}`}>DLC</Label><Input id={`expiry-${item.id}`} name="expiryDate" type="date" required /></div>
+          <div><Label htmlFor={`lot-${item.id}`}>N° de lot</Label><Input id={`lot-${item.id}`} name="lotNumber" /></div>
+        </div>}
         {moveState?.error && <p className="text-sm text-danger">{moveState.error}</p>}
         <Button type="submit" disabled={movePending} className="w-full">
           {movePending ? "…" : "Valider le mouvement"}
@@ -331,16 +356,8 @@ function ItemActions({ item, onClose }: { item: StockItem; onClose: () => void }
               <Input id={`e-unit-${item.id}`} name="unit" defaultValue={item.unit} required />
             </div>
             <div>
-              <Label htmlFor={`e-qty-${item.id}`}>Quantité</Label>
-              <Input id={`e-qty-${item.id}`} name="quantity" type="number" step="any" min="0" defaultValue={item.quantity} required />
-            </div>
-            <div>
               <Label htmlFor={`e-thr-${item.id}`}>Seuil</Label>
               <Input id={`e-thr-${item.id}`} name="minThreshold" type="number" step="any" min="0" defaultValue={item.minThreshold} required />
-            </div>
-            <div>
-              <Label htmlFor={`e-cost-${item.id}`}>Coût unit. (€)</Label>
-              <Input id={`e-cost-${item.id}`} name="costPrice" type="number" step="0.01" min="0" defaultValue={item.costPrice} />
             </div>
             <div>
               <Label htmlFor={`e-alg-${item.id}`}>Allergènes</Label>
@@ -419,6 +436,14 @@ function AddForm({ onClose }: { onClose: () => void }) {
         <div>
           <Label htmlFor="a-cost">Coût unit. (€)</Label>
           <Input id="a-cost" name="costPrice" type="number" step="0.01" min="0" defaultValue="0" />
+        </div>
+        <div>
+          <Label htmlFor="a-expiry">DLC du stock initial</Label>
+          <Input id="a-expiry" name="expiryDate" type="date" />
+        </div>
+        <div>
+          <Label htmlFor="a-lot">N° de lot</Label>
+          <Input id="a-lot" name="lotNumber" />
         </div>
         <div>
           <Label htmlFor="a-alg">Allergènes</Label>

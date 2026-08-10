@@ -131,11 +131,26 @@ model StockItem {
   updatedAt    DateTime      @updatedAt
 
   movements         StockMovement[]
+  lots              StockLot[]
   recipeIngredients RecipeIngredient[]
 
   @@index([category])
   @@index([deletedAt])
   @@map("stock_items")
+}
+
+model StockLot {
+  id          String    @id @default(cuid())
+  stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+  stockItemId String
+  lotNumber   String?
+  expiryDate  DateTime  @db.Date
+  quantity    Decimal   @db.Decimal(12, 3)
+  createdAt   DateTime  @default(now())
+
+  @@index([stockItemId, expiryDate])
+  @@index([expiryDate])
+  @@map("stock_lots")
 }
 
 enum StockMovementType {
@@ -160,6 +175,7 @@ model StockMovement {
   ledgerEntryId String?
 
   @@index([stockItemId])
+  @@index([createdAt])
   @@map("stock_movements")
 }
 

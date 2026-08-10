@@ -9,9 +9,11 @@
     "./colors": "./src/colors.ts",
     "./csv": "./src/csv.ts",
     "./date": "./src/date.ts",
+    "./expiry": "./src/expiry.ts",
     "./hours": "./src/hours.ts",
     "./money": "./src/money.ts",
     "./schemas": "./src/schemas.ts",
+    "./stock-lots": "./src/stock-lots.ts",
     "./utils": "./src/utils.ts"
   },
   "scripts": {
