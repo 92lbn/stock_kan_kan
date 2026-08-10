@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/dal";
-import { db } from "@/lib/db";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
 import { RecipesView } from "@/components/recipes-view";
-import { PageSkeleton } from "@/components/ui/skeleton";
+import { PageSkeleton } from "@stock-kan-kan/ui/skeleton";
 import {
   computeMaterialCost,
   computeFoodCostPercent,

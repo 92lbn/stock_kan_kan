@@ -1,5 +1,5 @@
-import { Prisma } from "@/generated/prisma/client";
-import { addMoney, multiplyMoney, type DecimalInput } from "@/lib/money";
+import { Prisma } from "@stock-kan-kan/db/client";
+import { addMoney, multiplyMoney, type DecimalInput } from "@stock-kan-kan/lib/money";
 
 // Calculs métier de la liaison Recettes ↔ Stock. Fonctions pures et testées.
 

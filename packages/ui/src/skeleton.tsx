@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-md bg-card-2", className)} aria-hidden />;

@@ -2,8 +2,8 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/dal";
+import { db } from "@stock-kan-kan/db";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
 import type { ActionState } from "@/lib/actions/stock";
 
 const NoteSchema = z.object({

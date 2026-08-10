@@ -1,7 +1,7 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { getCurrentUser } from "@/lib/dal";
+import { db } from "@stock-kan-kan/db";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
 import { sendPushToUser } from "@/lib/push";
 
 type SubscriptionInput = {

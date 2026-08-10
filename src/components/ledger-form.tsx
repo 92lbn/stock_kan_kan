@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { createLedgerEntry } from "@/lib/actions/ledger";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 
 export function LedgerForm({ onDone }: { onDone?: () => void }) {
   const [state, formAction, pending] = useActionState(createLedgerEntry, undefined);

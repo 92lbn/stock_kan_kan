@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { deleteScheduledPost } from "@/lib/actions/social";
 import { PostForm } from "@/components/post-form";
-import { Badge } from "@/components/ui/card";
-import { Sheet } from "@/components/ui/sheet";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Badge } from "@stock-kan-kan/ui/card";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 
 export type PostVM = {
   id: string;

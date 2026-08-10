@@ -4,7 +4,9 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { REAL_INVENTORY, OLD_SAMPLE_NAMES } from "./inventory-data";
 
 // Scripts CLI : session pooler (DIRECT_URL), pas le transaction pooler.
-const adapter = new PrismaPg(process.env.DIRECT_URL ?? process.env.DATABASE_URL!);
+const directUrl = process.env.DIRECT_URL;
+if (!directUrl) throw new Error("DIRECT_URL est requis pour importer l'inventaire.");
+const adapter = new PrismaPg(directUrl);
 const db = new PrismaClient({ adapter });
 
 async function main() {

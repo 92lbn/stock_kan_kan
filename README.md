@@ -9,17 +9,17 @@
 
 ```text
 apps/       # futures applications Next.js planning et stock
-packages/   # futurs packages db, auth, lib et ui
+packages/   # packages partagés db, auth, lib et ui
 src/        # application historique, conservée pendant la migration
-prisma/     # schéma et migrations actuels, conservés jusqu'à l'extraction de packages/db
+packages/db/prisma/ # schéma, migrations, seed et import Prisma
 ```
 
 Les commandes habituelles (`npm run dev`, `npm run build`, `npm run lint`, `npm test`)
 continuent de cibler l'application historique. Les scripts `npm run mono:*` sont prêts pour
 orchestrer les workspaces à mesure de leur création.
 
-Cette première étape ne demande aucune migration Prisma ni modification du projet Vercel
-existant.
+L'extraction des packages ne demande aucune migration Prisma ni modification du projet Vercel
+existant. Le runtime utilise `DATABASE_URL`; le CLI Prisma exige `DIRECT_URL`.
 
 Outil interne de gestion pour restaurant : stock &amp; inventaire, planning &amp; pointage des équipes. Les modules Fichiers/Recettes et Social Media Planner arrivent dans une prochaine étape.
 
@@ -27,7 +27,7 @@ Outil interne de gestion pour restaurant : stock &amp; inventaire, planning &amp
 
 - [Next.js 16](https://nextjs.org) (App Router, Server Actions, TypeScript)
 - [Prisma 7](https://www.prisma.io) + adaptateur `@prisma/adapter-pg`
-- [Neon](https://neon.tech) (Postgres serverless) en production
+- [Supabase](https://supabase.com) Postgres en `eu-west-1`
 - Auth maison par session (cookie httpOnly signé avec `jose`), sans dépendance externe
 - Déploiement visé : [Vercel](https://vercel.com)
 

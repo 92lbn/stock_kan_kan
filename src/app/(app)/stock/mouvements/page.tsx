@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { formatEUR, formatQuantity } from "@/lib/money";
-import { formatDateFR, formatTimeFR } from "@/lib/date";
-import { Card, Badge } from "@/components/ui/card";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { formatEUR, formatQuantity } from "@stock-kan-kan/lib/money";
+import { formatDateFR, formatTimeFR } from "@stock-kan-kan/lib/date";
+import { Card, Badge } from "@stock-kan-kan/ui/card";
 
 const PAGE_SIZE = 50;
 

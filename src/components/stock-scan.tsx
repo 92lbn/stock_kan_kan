@@ -8,9 +8,9 @@ import {
   createStockItem,
   type ActionState,
 } from "@/lib/actions/stock";
-import { Sheet } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 
 // ZXing chargé uniquement à l'ouverture du scanner (chunk séparé).
 const BarcodeScanner = dynamic(

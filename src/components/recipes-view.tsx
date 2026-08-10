@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+import { cn } from "@stock-kan-kan/lib/utils";
+import { Card } from "@stock-kan-kan/ui/card";
 import { RecipeForm } from "@/components/recipe-form";
 import { RecipeCard } from "@/components/recipe-card";
 import type { FoodCostRating } from "@/lib/foodcost";

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatMonthFR } from "@/lib/date";
+import { formatMonthFR } from "@stock-kan-kan/lib/date";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

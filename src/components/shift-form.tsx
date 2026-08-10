@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { createShift } from "@/lib/actions/planning";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 
 type Employee = { id: string; name: string };
 

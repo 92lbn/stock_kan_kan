@@ -1,4 +1,4 @@
-import type { TimeEntryModel } from "@/generated/prisma/models";
+import type { TimeEntryModel } from "@stock-kan-kan/db/models";
 
 // Pairs consecutive CLOCK_IN/CLOCK_OUT entries (already sorted ascending by timestamp)
 // and sums the duration in hours. An unmatched trailing CLOCK_IN is ignored.

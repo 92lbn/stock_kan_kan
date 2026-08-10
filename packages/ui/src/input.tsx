@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 // Champs : fond légèrement contrasté, bordure nette, anneau d'accent au focus

@@ -1,9 +1,9 @@
 "use client";
 
 import { setDailyForecast } from "@/lib/actions/forecast";
-import { Card, Badge } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Card, Badge } from "@stock-kan-kan/ui/card";
+import { Input } from "@stock-kan-kan/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
 
 const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 

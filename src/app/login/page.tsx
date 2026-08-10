@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { login } from "@/lib/actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input, Label } from "@/components/ui/input";
+import { login } from "@stock-kan-kan/auth/actions";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label } from "@stock-kan-kan/ui/input";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined);

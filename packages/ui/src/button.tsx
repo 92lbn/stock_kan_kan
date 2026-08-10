@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 import Link from "next/link";
 import type { ButtonHTMLAttributes } from "react";
 

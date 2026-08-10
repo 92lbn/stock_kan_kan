@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { recordPayrollAsExpense } from "@/lib/actions/ledger";
-import { Button } from "@/components/ui/button";
+import { Button } from "@stock-kan-kan/ui/button";
 
 export function RecordPayrollButton({ amount, label }: { amount: number; label: string }) {
   const [done, setDone] = useState(false);

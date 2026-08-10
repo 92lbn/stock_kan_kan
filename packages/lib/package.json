@@ -1,0 +1,31 @@
+{
+  "name": "@stock-kan-kan/lib",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./audit": "./src/audit.ts",
+    "./colors": "./src/colors.ts",
+    "./csv": "./src/csv.ts",
+    "./date": "./src/date.ts",
+    "./hours": "./src/hours.ts",
+    "./money": "./src/money.ts",
+    "./schemas": "./src/schemas.ts",
+    "./utils": "./src/utils.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0"
+  },
+  "dependencies": {
+    "@stock-kan-kan/db": "*",
+    "clsx": "^2.1.1",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
+  }
+}

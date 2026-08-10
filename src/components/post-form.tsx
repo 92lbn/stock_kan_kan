@@ -2,8 +2,8 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { createScheduledPost } from "@/lib/actions/social";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select, Textarea } from "@/components/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select, Textarea } from "@stock-kan-kan/ui/input";
 
 export function PostForm({ onDone }: { onDone?: () => void }) {
   const [state, formAction, pending] = useActionState(createScheduledPost, undefined);

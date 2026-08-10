@@ -2,9 +2,9 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { createIdea, deleteIdea } from "@/lib/actions/social";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input } from "@stock-kan-kan/ui/input";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 
 type Idea = { id: string; text: string };
 

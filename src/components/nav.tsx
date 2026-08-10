@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { logout } from "@/lib/actions/auth";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Icon } from "@/components/icons";
-import type { Role } from "@/generated/prisma/enums";
+import { cn } from "@stock-kan-kan/lib/utils";
+import { logout } from "@stock-kan-kan/auth/actions";
+import { ThemeToggle } from "@stock-kan-kan/ui/theme-toggle";
+import { Icon } from "@stock-kan-kan/ui/icons";
+import type { Role } from "@stock-kan-kan/db/enums";
 
 type Item = { href: string; label: string; icon: Parameters<typeof Icon>[0]["name"] };
 

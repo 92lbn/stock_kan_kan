@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { requireAdmin } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { formatEUR } from "@/lib/money";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { formatEUR } from "@stock-kan-kan/lib/money";
 import { StockView, type StockItem } from "@/components/stock-view";
 import { StockScan } from "@/components/stock-scan";
-import { Skeleton, ListSkeleton } from "@/components/ui/skeleton";
+import { Skeleton, ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 
 // Shell instantané : titre + actions statiques. Seul l'inventaire est en <Suspense>.
 export default function StockPage() {

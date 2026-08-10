@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { savePushSubscription, removePushSubscription, sendTestPush } from "@/lib/actions/push";
-import { Button } from "@/components/ui/button";
+import { Button } from "@stock-kan-kan/ui/button";
 
 // Détection du support push sans setState synchrone dans un effet : snapshot serveur
 // optimiste (true) puis vraie valeur côté client, géré proprement par React à l'hydratation.

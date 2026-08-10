@@ -8,12 +8,12 @@ import {
   recordStockMovement,
   type ActionState,
 } from "@/lib/actions/stock";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select } from "@/components/ui/input";
-import { Sheet } from "@/components/ui/sheet";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select } from "@stock-kan-kan/ui/input";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { BarcodeField } from "@/components/barcode-field";
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 
 export type StockItem = {
   id: string;

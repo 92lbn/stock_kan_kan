@@ -2,9 +2,9 @@
 
 import { useOptimistic, useTransition } from "react";
 import { toggleNoteDone, deleteNote } from "@/lib/actions/notes";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Badge } from "@stock-kan-kan/ui/card";
+import { cn } from "@stock-kan-kan/lib/utils";
 
 type Note = {
   id: string;

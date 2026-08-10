@@ -1,26 +1,8 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { decryptSession } from "@/lib/session";
-import { SESSION_COOKIE_NAME } from "@/lib/session";
-
-const publicRoutes = ["/login", "/offline"];
+import { protectAppRequest } from "@stock-kan-kan/auth/proxy";
 
 export default async function proxy(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const isPublicRoute = publicRoutes.includes(path);
-
-  const cookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const session = await decryptSession(cookie);
-
-  if (!isPublicRoute && !session?.userId) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (isPublicRoute && session?.userId) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
-
-  return NextResponse.next();
+  return protectAppRequest(request);
 }
 
 export const config = {

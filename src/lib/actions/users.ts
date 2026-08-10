@@ -3,10 +3,10 @@
 import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
-import { logAudit } from "@/lib/audit";
-import { Role } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { logAudit } from "@stock-kan-kan/lib/audit";
+import { Role } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 const CreateUserSchema = z.object({

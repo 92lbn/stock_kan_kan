@@ -1,18 +1,18 @@
 import { Suspense } from "react";
-import { requireAdmin } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
-import { Skeleton, StatCardsSkeleton, ListSkeleton } from "@/components/ui/skeleton";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { Card } from "@stock-kan-kan/ui/card";
+import { Skeleton, StatCardsSkeleton, ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 import { DailyNetChart } from "@/components/daily-net-chart";
 import { RecordPayrollButton } from "@/components/record-payroll-button";
 import { MonthNav } from "@/components/month-nav";
 import { LedgerEntries, type LedgerEntryVM } from "@/components/ledger-entries";
-import { addMoney, multiplyMoney, formatEUR } from "@/lib/money";
-import { sumShiftHours, computeTotalHours } from "@/lib/hours";
+import { addMoney, multiplyMoney, formatEUR } from "@stock-kan-kan/lib/money";
+import { sumShiftHours, computeTotalHours } from "@stock-kan-kan/lib/hours";
 import { computeLaborRatio, classifyLaborRatio } from "@/lib/labor";
-import { monthRange, monthRangeOf, toYearMonth, formatMonthFR, formatDateFR } from "@/lib/date";
+import { monthRange, monthRangeOf, toYearMonth, formatMonthFR, formatDateFR } from "@stock-kan-kan/lib/date";
 import { LaborRatioCard, type LaborRow } from "@/components/labor-ratio-card";
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@stock-kan-kan/db/client";
 
 export default function ComptabilitePage({
   searchParams,

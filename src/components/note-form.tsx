@@ -2,8 +2,8 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { createNote } from "@/lib/actions/notes";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Textarea } from "@stock-kan-kan/ui/input";
 
 export function NoteForm() {
   const [state, formAction, pending] = useActionState(createNote, undefined);

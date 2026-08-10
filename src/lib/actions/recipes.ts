@@ -2,11 +2,11 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
-import { formatQuantity } from "@/lib/money";
-import { logAudit } from "@/lib/audit";
-import { RecipeCategory } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { formatQuantity } from "@stock-kan-kan/lib/money";
+import { logAudit } from "@stock-kan-kan/lib/audit";
+import { RecipeCategory } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 class ProductionError extends Error {}

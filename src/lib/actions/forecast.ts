@@ -2,9 +2,9 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
-import { parseDateInput } from "@/lib/date";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { parseDateInput } from "@stock-kan-kan/lib/date";
 
 const ForecastSchema = z.object({
   expectedRevenue: z.coerce.number().min(0),

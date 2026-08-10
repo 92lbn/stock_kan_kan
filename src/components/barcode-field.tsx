@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Sheet } from "@/components/ui/sheet";
+import { Input } from "@stock-kan-kan/ui/input";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
 
 // ZXing chargé seulement à l'ouverture du scanner.
 const BarcodeScanner = dynamic(

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { clockAction } from "@/lib/actions/planning";
-import { Button } from "@/components/ui/button";
+import { Button } from "@stock-kan-kan/ui/button";
 
 export function ClockButton({ isClockedIn }: { isClockedIn: boolean }) {
   const [error, setError] = useState<string | null>(null);

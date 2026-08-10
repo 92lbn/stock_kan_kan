@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
-import { ListSkeleton } from "@/components/ui/skeleton";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { Card } from "@stock-kan-kan/ui/card";
+import { ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 import { NoteForm } from "@/components/note-form";
 import { NoteItem } from "@/components/note-item";
 import { PushToggle } from "@/components/push-toggle";

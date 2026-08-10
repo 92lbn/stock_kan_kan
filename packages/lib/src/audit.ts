@@ -1,6 +1,6 @@
 import "server-only";
 
-import { db } from "@/lib/db";
+import { db } from "@stock-kan-kan/db";
 
 // Journalise une écriture dans AuditLog. `before`/`after` doivent être des objets
 // JSON-sérialisables : on convertit Decimal/Date via ce helper avant de passer ici.

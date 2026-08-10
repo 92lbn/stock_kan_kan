@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { requireAdmin } from "@/lib/dal";
-import { db } from "@/lib/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
 import { EmployeesView, type UserVM } from "@/components/employees-view";
-import { ListSkeleton } from "@/components/ui/skeleton";
+import { ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 
 export default function EmployeesPage() {
   return (

@@ -1,7 +1,7 @@
 import "server-only";
 
 import webpush from "web-push";
-import { db } from "@/lib/db";
+import { db } from "@stock-kan-kan/db";
 
 let configured = false;
 

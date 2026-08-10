@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { deleteLedgerEntry } from "@/lib/actions/ledger";
 import { LedgerForm } from "@/components/ledger-form";
-import { Sheet } from "@/components/ui/sheet";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 
 const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" });
 

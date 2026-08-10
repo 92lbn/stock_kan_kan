@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { sumShiftHours } from "@/lib/hours";
-import { colorForId } from "@/lib/colors";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { Card } from "@stock-kan-kan/ui/card";
+import { Skeleton } from "@stock-kan-kan/ui/skeleton";
+import { sumShiftHours } from "@stock-kan-kan/lib/hours";
+import { colorForId } from "@stock-kan-kan/lib/colors";
 import {
   monthRangeOf,
   toYearMonth,
@@ -19,7 +19,7 @@ import {
   formatWeekLabel,
   frenchWeekday,
   dayRange,
-} from "@/lib/date";
+} from "@stock-kan-kan/lib/date";
 import { PlanningBoard, type BoardDay } from "@/components/planning-board";
 import type { CalendarEvent } from "@/components/month-calendar";
 

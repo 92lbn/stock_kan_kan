@@ -1,0 +1,26 @@
+{
+  "name": "@stock-kan-kan/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
+    "./confirm-action": "./src/confirm-action.tsx",
+    "./globals.css": "./src/globals.css",
+    "./icons": "./src/icons.tsx",
+    "./input": "./src/input.tsx",
+    "./sheet": "./src/sheet.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./theme-toggle": "./src/theme-toggle.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0"
+  },
+  "dependencies": {
+    "@stock-kan-kan/lib": "*",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}

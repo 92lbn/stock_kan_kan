@@ -2,13 +2,13 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { Prisma } from "@/generated/prisma/client";
-import { requireAdmin } from "@/lib/dal";
-import { formatQuantity } from "@/lib/money";
-import { toDateOnly } from "@/lib/date";
-import { logAudit } from "@/lib/audit";
-import { StockCategory, StockMovementType } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { Prisma } from "@stock-kan-kan/db/client";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { formatQuantity } from "@stock-kan-kan/lib/money";
+import { toDateOnly } from "@stock-kan-kan/lib/date";
+import { logAudit } from "@stock-kan-kan/lib/audit";
+import { StockCategory, StockMovementType } from "@stock-kan-kan/db/enums";
 
 // Erreur métier propagée hors de la transaction interactive pour un retour typé.
 class MovementError extends Error {}

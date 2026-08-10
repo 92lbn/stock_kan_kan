@@ -2,11 +2,11 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
-import { parseDateInput, toDateOnly } from "@/lib/date";
-import { logAudit } from "@/lib/audit";
-import { LedgerEntryType } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { parseDateInput, toDateOnly } from "@stock-kan-kan/lib/date";
+import { logAudit } from "@stock-kan-kan/lib/audit";
+import { LedgerEntryType } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 const LedgerEntrySchema = z.object({

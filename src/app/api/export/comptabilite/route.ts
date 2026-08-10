@@ -1,7 +1,7 @@
-import { db } from "@/lib/db";
-import { getApiUser } from "@/lib/dal";
-import { toCsv, csvResponse } from "@/lib/csv";
-import { monthRange, monthRangeOf, toYearMonth, formatDateFR } from "@/lib/date";
+import { db } from "@stock-kan-kan/db";
+import { getApiUser } from "@stock-kan-kan/auth/dal";
+import { toCsv, csvResponse } from "@stock-kan-kan/lib/csv";
+import { monthRange, monthRangeOf, toYearMonth, formatDateFR } from "@stock-kan-kan/lib/date";
 
 export const dynamic = "force-dynamic";
 

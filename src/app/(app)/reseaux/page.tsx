@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { requireAdmin } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
-import { PageSkeleton } from "@/components/ui/skeleton";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { Card } from "@stock-kan-kan/ui/card";
+import { PageSkeleton } from "@stock-kan-kan/ui/skeleton";
 import { IdeaBox } from "@/components/idea-box";
 import { SocialCalendar } from "@/components/social-calendar";
 import { PostsList, type PostVM } from "@/components/posts-list";

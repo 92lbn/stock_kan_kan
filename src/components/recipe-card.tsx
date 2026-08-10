@@ -2,10 +2,10 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { updateRecipe, deleteRecipe } from "@/lib/actions/recipes";
-import { Button } from "@/components/ui/button";
-import { Input, Label, Select, Textarea } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Button } from "@stock-kan-kan/ui/button";
+import { Input, Label, Select, Textarea } from "@stock-kan-kan/ui/input";
+import { Card } from "@stock-kan-kan/ui/card";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { RecipeFiche } from "@/components/recipe-fiche";
 import type { RecipeVM, StockItemLite } from "@/components/recipes-view";
 

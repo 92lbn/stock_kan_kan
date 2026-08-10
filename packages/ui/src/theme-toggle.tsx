@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 
 type Theme = "light" | "dark" | "system";
 

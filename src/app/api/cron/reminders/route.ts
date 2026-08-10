@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@stock-kan-kan/db";
 import { sendPushToUser } from "@/lib/push";
 
 export const dynamic = "force-dynamic";

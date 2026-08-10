@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@stock-kan-kan/lib/utils";
 import { deleteShift } from "@/lib/actions/planning";
 import { MonthCalendar, type CalendarEvent } from "@/components/month-calendar";
 import { ShiftForm } from "@/components/shift-form";
 import { BulkShiftForm } from "@/components/bulk-shift-form";
-import { Sheet } from "@/components/ui/sheet";
-import { ConfirmAction } from "@/components/confirm-action";
+import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 
 export type BoardShift = {
   id: string;

@@ -1,8 +1,8 @@
-import { getCurrentUser } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { Card } from "@/components/ui/card";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { Card } from "@stock-kan-kan/ui/card";
 import { ClockButton } from "@/components/clock-button";
-import { computeTotalHours } from "@/lib/hours";
+import { computeTotalHours } from "@stock-kan-kan/lib/hours";
 
 function monthRange(date = new Date()) {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);

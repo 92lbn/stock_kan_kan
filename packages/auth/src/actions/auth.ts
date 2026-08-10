@@ -3,8 +3,8 @@
 import * as z from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { createSession, deleteSession } from "@/lib/session";
+import { db } from "@stock-kan-kan/db";
+import { createSession, deleteSession } from "@stock-kan-kan/auth/session";
 
 const LoginSchema = z.object({
   identifier: z.string().trim().min(1, { error: "Identifiant requis." }).toLowerCase(),

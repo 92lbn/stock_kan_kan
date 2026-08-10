@@ -2,11 +2,11 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin, getCurrentUser } from "@/lib/dal";
-import { parseDateInput } from "@/lib/date";
-import { shiftsOverlap } from "@/lib/hours";
-import { TimeEntryType } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin, getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { parseDateInput } from "@stock-kan-kan/lib/date";
+import { shiftsOverlap } from "@stock-kan-kan/lib/hours";
+import { TimeEntryType } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 const ShiftSchema = z.object({

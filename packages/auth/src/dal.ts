@@ -2,8 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import { decryptSession, getSessionToken, deleteSession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { decryptSession, getSessionToken, deleteSession } from "@stock-kan-kan/auth/session";
+import { db } from "@stock-kan-kan/db";
 
 // Une seule requête base par rendu, mise en cache par React `cache`. Elle relit le
 // rôle et la version de session pour révoquer un JWT encore valide après un

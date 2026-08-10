@@ -1,6 +1,6 @@
-import { Prisma } from "@/generated/prisma/client";
-import { multiplyMoney, type DecimalInput } from "@/lib/money";
-import { sumShiftHours } from "@/lib/hours";
+import { Prisma } from "@stock-kan-kan/db/client";
+import { multiplyMoney, type DecimalInput } from "@stock-kan-kan/lib/money";
+import { sumShiftHours } from "@stock-kan-kan/lib/hours";
 
 // Ratio masse salariale / CA (liaison compta ↔ planning). Cible ~30 %.
 

@@ -1,4 +1,4 @@
-import { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@stock-kan-kan/db/client";
 
 // Source unique pour tout calcul et formatage monétaire / de quantité.
 // Aucun montant en euros ne doit être manipulé en Number brut ailleurs dans le code :

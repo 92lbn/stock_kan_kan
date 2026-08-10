@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Prisma } from "@/generated/prisma/client";
-import { getCurrentUser } from "@/lib/dal";
-import { db } from "@/lib/db";
-import { formatEUR, formatQuantity } from "@/lib/money";
-import { monthRange, dayRange, formatDateFR } from "@/lib/date";
-import { Card, Badge } from "@/components/ui/card";
-import { Skeleton, StatCardsSkeleton, ListSkeleton } from "@/components/ui/skeleton";
+import { Prisma } from "@stock-kan-kan/db/client";
+import { getCurrentUser } from "@stock-kan-kan/auth/dal";
+import { db } from "@stock-kan-kan/db";
+import { formatEUR, formatQuantity } from "@stock-kan-kan/lib/money";
+import { monthRange, dayRange, formatDateFR } from "@stock-kan-kan/lib/date";
+import { Card, Badge } from "@stock-kan-kan/ui/card";
+import { Skeleton, StatCardsSkeleton, ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 import { DueRemindersBanner } from "@/components/due-reminders-banner";
 
 // Notes with a reminder that is due now or earlier, still to do.

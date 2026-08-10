@@ -2,9 +2,9 @@
 
 import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { requireAdmin } from "@/lib/dal";
-import { SocialPlatform, PostStatus } from "@/generated/prisma/enums";
+import { db } from "@stock-kan-kan/db";
+import { requireAdmin } from "@stock-kan-kan/auth/dal";
+import { SocialPlatform, PostStatus } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@/lib/actions/stock";
 
 // ----- Boîte à idées -----

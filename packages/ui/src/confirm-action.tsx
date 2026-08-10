@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@stock-kan-kan/ui/button";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
