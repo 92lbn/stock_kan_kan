@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -26,9 +26,14 @@ export function ConfirmAction({
   triggerClassName?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
-  const close = () => ref.current?.close();
+  const close = () => {
+    setError(null);
+    ref.current?.close();
+  };
 
   return (
     <>
@@ -37,6 +42,7 @@ export function ConfirmAction({
         size="sm"
         variant={triggerVariant}
         className={triggerClassName}
+        aria-label={triggerLabel === "✕" ? confirmLabel : undefined}
         onClick={() => ref.current?.showModal()}
       >
         {triggerLabel}
@@ -44,7 +50,7 @@ export function ConfirmAction({
 
       <dialog
         ref={ref}
-        aria-labelledby="confirm-title"
+        aria-labelledby={titleId}
         className="m-auto w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-line bg-card p-0 text-ink shadow-lg backdrop:bg-black/50"
         onClick={(e) => {
           // Clic sur le fond (backdrop) : ferme la modale.
@@ -52,10 +58,11 @@ export function ConfirmAction({
         }}
       >
         <div className="p-5">
-          <h2 id="confirm-title" className="text-base font-semibold">
+          <h2 id={titleId} className="text-base font-semibold">
             {title}
           </h2>
           <p className="mt-2 text-sm text-muted">{message}</p>
+          {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           <div className="mt-5 flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={close} className="h-11">
               Annuler
@@ -67,8 +74,13 @@ export function ConfirmAction({
               className="h-11"
               onClick={() =>
                 startTransition(async () => {
-                  await action();
-                  close();
+                  // Ne fermer qu'en cas de succès ; afficher un refus serveur typé.
+                  const res = (await action()) as { error?: string } | void;
+                  if (res && typeof res === "object" && res.error) {
+                    setError(res.error);
+                  } else {
+                    close();
+                  }
                 })
               }
             >

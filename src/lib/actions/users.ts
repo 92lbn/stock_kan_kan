@@ -147,6 +147,19 @@ export async function changeUserPassword(
     return { error: "Mot de passe trop court (8 caractères minimum)." };
   }
 
+  // Un compte superadmin ne peut voir son mot de passe changé que par lui-même :
+  // un admin ordinaire ne doit pas pouvoir prendre le contrôle du compte protégé.
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { isSuperAdmin: true, deletedAt: true },
+  });
+  if (!target || target.deletedAt) {
+    return { error: "Compte introuvable." };
+  }
+  if (target.isSuperAdmin && admin.id !== userId) {
+    return { error: "Le mot de passe d'un superadmin ne peut être changé que par lui-même." };
+  }
+
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   // Changer le mot de passe révoque les JWT existants de ce compte.
   await db.user.update({

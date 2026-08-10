@@ -31,3 +31,9 @@ jobs:
 
       - name: Tests unitaires (Vitest)
         run: npm test
+
+      - name: Build de production
+        run: npm run build
+        env:
+          # Secret factice pour le build (aucune connexion base requise au build).
+          SESSION_SECRET: ci-build-only-dummy-secret-32chars-minimum

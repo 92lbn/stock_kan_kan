@@ -12,6 +12,10 @@ function getSecretKey() {
   if (!secret) {
     throw new Error("SESSION_SECRET is not set");
   }
+  // Un secret trop court affaiblit tous les JWT : on refuse au démarrage.
+  if (secret.length < 32 || /change[-_]?me/i.test(secret)) {
+    throw new Error("SESSION_SECRET must be a strong random string of at least 32 characters.");
+  }
   return new TextEncoder().encode(secret);
 }
 

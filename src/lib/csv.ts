@@ -1,6 +1,9 @@
 // Génère un CSV (séparateur ';' pour Excel FR) à partir d'un en-tête et de lignes.
 function escapeCell(value: unknown): string {
-  const s = value === null || value === undefined ? "" : String(value);
+  let s = value === null || value === undefined ? "" : String(value);
+  // Anti-injection de formule : une cellule commençant par = + - @ (ou tab/CR) est
+  // exécutée par Excel/LibreOffice. On la neutralise avec une apostrophe.
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   if (/[";\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }

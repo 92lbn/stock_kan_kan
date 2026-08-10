@@ -10,8 +10,15 @@ const db = new PrismaClient({ adapter });
 
 async function seedAdmin() {
   const identifier = process.env.SEED_ADMIN_IDENTIFIER ?? "admin";
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "changeme123";
+  const password = process.env.SEED_ADMIN_PASSWORD;
   const name = process.env.SEED_ADMIN_NAME ?? "Responsable";
+
+  // Jamais de mot de passe par défaut : refuser sans SEED_ADMIN_PASSWORD explicite.
+  if (!password || password.length < 8) {
+    throw new Error(
+      "SEED_ADMIN_PASSWORD manquant ou trop court (>= 8 caractères). Définissez-le avant le seed."
+    );
+  }
 
   const existing = await db.user.findUnique({ where: { identifier } });
   if (existing) {
@@ -29,9 +36,8 @@ async function seedAdmin() {
     data: { identifier, name, passwordHash, role: "ADMIN", isSuperAdmin: true },
   });
 
-  console.log(`Compte admin créé : identifiant="${identifier}", mot de passe="${password}"`);
+  console.log(`Compte admin créé : identifiant="${identifier}" (mot de passe non affiché).`);
   console.log("Ce compte est protégé (superadmin) : il ne peut pas être supprimé.");
-  console.log("Pensez à changer ce mot de passe après votre première connexion.");
 }
 
 const DEFAULT_RECIPES = [
