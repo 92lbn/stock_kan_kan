@@ -25,6 +25,7 @@ const getVerifiedUser = cache(async () => {
       identifier: true,
       name: true,
       role: true,
+      canStock: true,
       sessionVersion: true,
       deletedAt: true,
     },
@@ -51,6 +52,7 @@ export const getCurrentUser = cache(async () => {
     identifier: user.identifier,
     name: user.name,
     role: user.role,
+    canStock: user.canStock,
   };
 });
 
@@ -70,6 +72,19 @@ export async function requireSession() {
   return { userId: user.id, role: user.role };
 }
 
+export async function requireStockAccess() {
+  const user = await getVerifiedUser();
+  if (user.role !== "ADMIN" && !user.canStock) {
+    redirect("/acces-refuse");
+  }
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    canStock: user.canStock,
+  };
+}
+
 // Pour les route handlers (exports…) : renvoie l'utilisateur vérifié ou null,
 // sans rediriger — le handler décide du code HTTP (403).
 export async function getApiUser() {
@@ -78,8 +93,8 @@ export async function getApiUser() {
   if (!session?.userId) return null;
   const user = await db.user.findUnique({
     where: { id: session.userId },
-    select: { id: true, role: true, sessionVersion: true, deletedAt: true },
+    select: { id: true, role: true, canStock: true, sessionVersion: true, deletedAt: true },
   });
   if (!user || user.deletedAt || user.sessionVersion !== session.sessionVersion) return null;
-  return { id: user.id, role: user.role };
+  return { id: user.id, role: user.role, canStock: user.canStock };
 }

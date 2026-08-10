@@ -22,6 +22,7 @@ model User {
   passwordHash  String
   role          Role     @default(EMPLOYEE)
   isSuperAdmin  Boolean  @default(false) // compte protégé, non supprimable par personne
+  canStock      Boolean  @default(false) // accès explicite à l'app Stock ; ADMIN autorisé implicitement
   hourlyRate    Decimal  @default(0) @db.Decimal(12, 2) // taux horaire en € pour le calcul de la paye
   sessionVersion Int     @default(0) // incrémenté pour révoquer les JWT existants (rôle/mdp/suppression)
   deletedAt     DateTime? // suppression réversible (soft delete)
