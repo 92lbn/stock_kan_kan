@@ -16,7 +16,7 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
       <Link
         href={`${basePath}?mois=${shiftMonth(month, -1)}`}
         aria-label="Mois précédent"
-        className="rounded-md border border-line px-2 py-1 text-sm text-muted hover:bg-card dark:text-muted"
+        className="grid h-11 w-11 place-items-center rounded-lg border border-line text-xl text-muted hover:bg-card dark:text-muted"
       >
         ‹
       </Link>
@@ -26,7 +26,7 @@ export function MonthNav({ month, basePath }: { month: string; basePath: string 
       <Link
         href={`${basePath}?mois=${shiftMonth(month, 1)}`}
         aria-label="Mois suivant"
-        className="rounded-md border border-line px-2 py-1 text-sm text-muted hover:bg-card dark:text-muted"
+        className="grid h-11 w-11 place-items-center rounded-lg border border-line text-xl text-muted hover:bg-card dark:text-muted"
       >
         ›
       </Link>

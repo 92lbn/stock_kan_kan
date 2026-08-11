@@ -88,7 +88,7 @@ export function PlanningBoard({
                         type="button"
                         onClick={() => openAdd(day.ymd)}
                         aria-label={`Ajouter un créneau ${day.label}`}
-                        className="grid h-7 w-7 place-items-center rounded-md border border-line text-muted hover:bg-card-2 hover:text-ink"
+                        className="grid h-11 w-11 place-items-center rounded-lg border border-line text-lg text-muted hover:bg-card-2 hover:text-ink"
                       >
                         +
                       </button>
@@ -158,7 +158,7 @@ export function PlanningBoard({
                   type="button"
                   onClick={() => setAddMode("single")}
                   className={cn(
-                    "rounded-md py-2 text-sm font-medium",
+                    "min-h-11 rounded-md py-2 text-sm font-medium",
                     addMode === "single" ? "bg-accent text-accent-ink" : "text-muted"
                   )}
                 >
@@ -168,7 +168,7 @@ export function PlanningBoard({
                   type="button"
                   onClick={() => setAddMode("bulk")}
                   className={cn(
-                    "rounded-md py-2 text-sm font-medium",
+                    "min-h-11 rounded-md py-2 text-sm font-medium",
                     addMode === "bulk" ? "bg-accent text-accent-ink" : "text-muted"
                   )}
                 >

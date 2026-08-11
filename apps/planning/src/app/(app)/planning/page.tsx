@@ -140,9 +140,9 @@ async function PlanningContent({
   const periodLabel = view === "semaine" ? formatWeekLabel(weekParam) : formatMonthFR(month);
 
   const seg = (active: boolean) =>
-    `rounded-md px-3 py-1.5 text-sm font-medium ${active ? "bg-accent text-accent-ink" : "text-muted"}`;
+    `inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium ${active ? "bg-accent text-accent-ink" : "text-muted"}`;
   const navBtn =
-    "grid h-9 w-9 place-items-center rounded-md border border-line text-muted hover:bg-card-2 hover:text-ink";
+    "grid h-11 w-11 place-items-center rounded-md border border-line text-xl text-muted hover:bg-card-2 hover:text-ink";
   const prevHref =
     view === "semaine"
       ? `/planning?vue=semaine&semaine=${toYmd(addDays(weekStartOfYmd(weekParam), -7))}`

@@ -1,1 +1,64 @@
 @import "@stock-kan-kan/ui/globals.css";
+
+.planning-shell {
+  background-image:
+    radial-gradient(circle at 8% 4%, color-mix(in srgb, var(--accent) 8%, transparent) 0, transparent 24rem),
+    radial-gradient(circle at 92% 40%, color-mix(in srgb, var(--accent) 5%, transparent) 0, transparent 28rem);
+}
+
+.planning-hero {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--card) 94%, var(--accent)) 0%, var(--card) 65%);
+}
+
+.planning-orbit {
+  position: absolute;
+  width: 19rem;
+  height: 19rem;
+  right: -6rem;
+  top: -8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 9999px;
+  box-shadow:
+    0 0 0 2.75rem color-mix(in srgb, var(--accent) 5%, transparent),
+    0 0 0 5.5rem color-mix(in srgb, var(--accent) 3%, transparent);
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.planning-login {
+  background-image:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%),
+    radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28rem);
+}
+
+.planning-login-intro {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--card) 91%, var(--accent)), var(--card));
+  border-right: 1px solid var(--line);
+}
+
+.planning-login-orbit {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 9999px;
+}
+
+.planning-login-orbit-left {
+  width: 28rem;
+  height: 28rem;
+  left: -18rem;
+  bottom: -11rem;
+}
+
+.planning-login-orbit-right {
+  width: 22rem;
+  height: 22rem;
+  right: -12rem;
+  top: -10rem;
+}

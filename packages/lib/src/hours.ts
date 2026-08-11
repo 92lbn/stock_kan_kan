@@ -66,6 +66,48 @@ export function computeTotalHoursIncludingOpen(
   return totalMs / 3_600_000;
 }
 
+export type TimeSession = {
+  clockIn: Date;
+  clockOut: Date | null;
+  durationHours: number;
+  isOpen: boolean;
+};
+
+// Transforme le journal de pointage en services lisibles. Les entrées sont
+// triées ici pour que l'affichage reste correct quel que soit l'ordre reçu.
+export function buildTimeSessions(
+  entries: Pick<TimeEntryModel, "type" | "timestamp">[],
+  now: Date = new Date()
+): TimeSession[] {
+  const sessions: TimeSession[] = [];
+  let clockIn: Date | null = null;
+
+  for (const entry of [...entries].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())) {
+    if (entry.type === "CLOCK_IN") {
+      clockIn = entry.timestamp;
+    } else if (clockIn) {
+      sessions.push({
+        clockIn,
+        clockOut: entry.timestamp,
+        durationHours: Math.max(0, entry.timestamp.getTime() - clockIn.getTime()) / 3_600_000,
+        isOpen: false,
+      });
+      clockIn = null;
+    }
+  }
+
+  if (clockIn) {
+    sessions.push({
+      clockIn,
+      clockOut: null,
+      durationHours: Math.max(0, now.getTime() - clockIn.getTime()) / 3_600_000,
+      isOpen: true,
+    });
+  }
+
+  return sessions;
+}
+
 export function datedShiftsOverlap(
   a: { date: string; startTime: string; endTime: string },
   b: { date: string; startTime: string; endTime: string }

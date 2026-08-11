@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildTimeSessions,
   computeTotalHoursIncludingOpen,
   datedShiftsOverlap,
   expectedClockAction,
@@ -90,5 +91,20 @@ describe("pointage kiosk", () => {
       { type: "CLOCK_IN" as const, timestamp: new Date("2026-08-11T11:00:00Z") },
     ];
     expect(computeTotalHoursIncludingOpen(entries, new Date("2026-08-11T12:30:00Z"))).toBe(3.5);
+  });
+
+  it("regroupe les pointages en services lisibles, y compris un service ouvert", () => {
+    const sessions = buildTimeSessions(
+      [
+        { type: "CLOCK_OUT" as const, timestamp: new Date("2026-08-11T12:00:00Z") },
+        { type: "CLOCK_IN" as const, timestamp: new Date("2026-08-11T08:00:00Z") },
+        { type: "CLOCK_IN" as const, timestamp: new Date("2026-08-11T18:00:00Z") },
+      ],
+      new Date("2026-08-11T20:30:00Z")
+    );
+
+    expect(sessions).toHaveLength(2);
+    expect(sessions[0]).toMatchObject({ durationHours: 4, isOpen: false });
+    expect(sessions[1]).toMatchObject({ durationHours: 2.5, isOpen: true, clockOut: null });
   });
 });

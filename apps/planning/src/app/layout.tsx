@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "kan·kan Planning",
-  description: "Planning et pointage de l’équipe",
+  description: "Planning et suivi des heures de l’équipe",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

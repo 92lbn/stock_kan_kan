@@ -16,13 +16,12 @@ test("connexion à l'application Planning", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Bonjour/ })).toBeVisible();
 });
 
-test("pointage arrivée puis départ", async ({ page }) => {
+test("historique de pointage en lecture seule", async ({ page }) => {
   await login(page, "http://127.0.0.1:3000");
   await page.goto("http://127.0.0.1:3000/pointage");
-  const button = page.getByRole("button", { name: /Pointer (l'arrivée|le départ)/ });
-  const initial = await button.textContent();
-  await button.click();
-  await expect(button).not.toHaveText(initial ?? "");
+  await expect(page.getByRole("heading", { name: /Historique/ })).toBeVisible();
+  await expect(page.getByText("Le pointage se fait sur la tablette")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Pointer (l'arrivée|le départ)/ })).toHaveCount(0);
 });
 
 test("pointage kiosk par PIN sur la tablette", async ({ page }) => {

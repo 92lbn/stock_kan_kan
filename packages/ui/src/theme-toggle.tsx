@@ -51,7 +51,7 @@ export function ThemeToggle() {
     <div
       role="group"
       aria-label="Thème"
-      className="inline-flex items-center gap-0.5 border border-line p-0.5"
+      className="inline-flex items-center gap-0.5 rounded-xl border border-line p-0.5"
     >
       {options.map((o) => (
         <button
@@ -62,7 +62,7 @@ export function ThemeToggle() {
           title={o.label}
           onClick={() => setThemePref(o.value)}
           className={cn(
-            "flex h-8 w-8 items-center justify-center text-sm",
+            "flex h-11 w-11 items-center justify-center rounded-lg text-sm",
             theme === o.value ? "bg-accent text-accent-ink" : "text-muted hover:bg-card"
           )}
         >

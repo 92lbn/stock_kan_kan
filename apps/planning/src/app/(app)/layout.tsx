@@ -5,9 +5,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const user = await getCurrentUser();
 
   return (
-    <div className="flex flex-1 flex-col bg-surface">
+    <div className="planning-shell flex flex-1 flex-col bg-surface">
       <Nav name={user.name} isAdmin={user.role === "ADMIN"} />
-      <main className="has-tabbar mx-auto w-full max-w-[1800px] flex-1 px-4 py-6 lg:px-8">
+      <main className="has-tabbar mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-5 sm:py-8 lg:px-6">
         {children}
       </main>
     </div>
