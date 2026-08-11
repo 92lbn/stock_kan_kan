@@ -26,6 +26,8 @@ node_modules/
 
 # production
 /build
+/.local-backups/
+/.local-tools/
 
 # misc
 .DS_Store
