@@ -32,6 +32,21 @@ export function UserForm({ onDone }: { onDone?: () => void }) {
         <Input id="password" name="password" type="password" required />
       </div>
       <div className="sm:col-span-1">
+        <Label htmlFor="pin">PIN de pointage (optionnel)</Label>
+        <Input
+          id="pin"
+          name="pin"
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          pattern="[0-9]{4,6}"
+          minLength={4}
+          maxLength={6}
+          aria-describedby="pin-help"
+        />
+        <p id="pin-help" className="mt-1 text-xs text-muted">4 à 6 chiffres, jamais affiché ensuite.</p>
+      </div>
+      <div className="sm:col-span-1">
         <Label htmlFor="role">Rôle</Label>
         <Select id="role" name="role" defaultValue="EMPLOYEE">
           <option value="EMPLOYEE">Employé</option>

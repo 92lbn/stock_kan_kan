@@ -25,6 +25,31 @@ test("pointage arrivée puis départ", async ({ page }) => {
   await expect(button).not.toHaveText(initial ?? "");
 });
 
+test("pointage kiosk par PIN sur la tablette", async ({ page }) => {
+  await login(page, "http://127.0.0.1:3000");
+  await page.goto("http://127.0.0.1:3000/employees");
+  await page.getByRole("button", { name: "Ajouter un compte" }).click();
+  const suffix = Date.now().toString();
+  const employeeName = `Kiosk E2E ${suffix}`;
+  await page.getByLabel("Identifiant").fill(`kiosk-${suffix}`);
+  await page.getByLabel("Nom").fill(employeeName);
+  await page.getByLabel("Mot de passe").fill("Employe-test-2026!");
+  await page.getByLabel("PIN de pointage (optionnel)").fill("2468");
+  await page.getByRole("button", { name: "Créer le compte" }).click();
+  await expect(page.getByText(employeeName)).toBeVisible();
+
+  await page.goto("http://127.0.0.1:3001/pointage");
+  await page.getByRole("button", { name: new RegExp(employeeName) }).click();
+  await page.getByLabel("PIN personnel").fill("2468");
+  await page.getByRole("button", { name: "Pointer l’arrivée" }).click();
+  await expect(page.getByText(`Arrivée de ${employeeName} enregistrée.`)).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(employeeName) }).click();
+  await page.getByLabel("PIN personnel").fill("2468");
+  await page.getByRole("button", { name: "Pointer le départ" }).click();
+  await expect(page.getByText(`Départ de ${employeeName} enregistré.`)).toBeVisible();
+});
+
 test("création d'un article puis mouvement de stock", async ({ page }) => {
   await login(page, "http://127.0.0.1:3001");
   await page.goto("http://127.0.0.1:3001/stock");

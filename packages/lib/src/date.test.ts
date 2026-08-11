@@ -8,6 +8,7 @@ import {
   daysInMonth,
   formatDateFR,
   wallTimeParisToUtc,
+  parisDayRange,
 } from "./date";
 
 describe("date (Europe/Paris)", () => {
@@ -65,5 +66,17 @@ describe("date (Europe/Paris)", () => {
 
   it("refuse une heure inexistante au passage à l'heure d'été", () => {
     expect(() => wallTimeParisToUtc("2026-03-29T02:30")).toThrow(/n’existe pas/);
+  });
+
+  it("donne les bornes UTC d'une journée parisienne en été", () => {
+    const { start, end } = parisDayRange(new Date("2026-07-15T12:00:00Z"));
+    expect(start.toISOString()).toBe("2026-07-14T22:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-07-15T22:00:00.000Z");
+  });
+
+  it("donne les bornes UTC d'une journée parisienne en hiver", () => {
+    const { start, end } = parisDayRange(new Date("2026-01-15T12:00:00Z"));
+    expect(start.toISOString()).toBe("2026-01-14T23:00:00.000Z");
+    expect(end.toISOString()).toBe("2026-01-15T23:00:00.000Z");
   });
 });

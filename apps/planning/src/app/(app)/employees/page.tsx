@@ -29,6 +29,7 @@ async function EmployeesContent() {
     role: u.role,
     isSuperAdmin: u.isSuperAdmin,
     canStock: u.canStock,
+    hasPin: Boolean(u.pinHash),
     hourlyRate: u.hourlyRate.toNumber(),
   }));
 

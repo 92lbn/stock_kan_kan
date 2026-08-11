@@ -68,6 +68,20 @@ export function dayRange(date: Date = new Date(), tz: string = TZ) {
   };
 }
 
+// Bornes UTC [début, fin) du jour civil parisien contenant l'instant fourni.
+// À utiliser pour filtrer les colonnes timestamp (pointages, createdAt), dont les
+// bornes changent avec l'heure d'été/hiver.
+export function parisDayRange(date: Date = new Date()) {
+  const { year, month, day } = partsInTZ(date, TZ);
+  const ymd = `${year}-${pad(month)}-${pad(day)}`;
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  const nextYmd = `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+  return {
+    start: wallTimeParisToUtc(`${ymd}T00:00`),
+    end: wallTimeParisToUtc(`${nextYmd}T00:00`),
+  };
+}
+
 // "YYYY-MM-DD" (ou Date) → Date à minuit UTC, pour stocker une colonne @db.Date.
 export function toDateOnly(input: string | Date, tz: string = TZ): Date {
   if (typeof input === "string") {

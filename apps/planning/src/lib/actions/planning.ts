@@ -7,7 +7,7 @@ import { requireAdmin, getCurrentUser } from "@stock-kan-kan/auth/dal";
 import { addDays, parseDateInput, toYmd } from "@stock-kan-kan/lib/date";
 import { datedShiftsOverlap } from "@stock-kan-kan/lib/hours";
 import { DateInputSchema, IdSchema, TimeInputSchema } from "@stock-kan-kan/lib/schemas";
-import { TimeEntryType } from "@stock-kan-kan/db/enums";
+import { performAuthenticatedClock } from "@stock-kan-kan/auth/kiosk";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 
 const ShiftSchema = z.object({
@@ -153,20 +153,12 @@ export async function deleteShift(shiftId: string) {
 
 export async function clockAction(type: "CLOCK_IN" | "CLOCK_OUT") {
   const user = await getCurrentUser();
-
-  const last = await db.timeEntry.findFirst({
-    where: { employeeId: user.id },
-    orderBy: { timestamp: "desc" },
-  });
-
-  const expected: TimeEntryType = last?.type === "CLOCK_IN" ? "CLOCK_OUT" : "CLOCK_IN";
-  if (type !== expected) {
-    return { error: `Action invalide : vous devez d'abord ${expected === "CLOCK_IN" ? "pointer l'arrivée" : "pointer le départ"}.` };
-  }
-
-  await db.timeEntry.create({
-    data: { employeeId: user.id, type },
-  });
+  const parsed = z.enum(["CLOCK_IN", "CLOCK_OUT"]).safeParse(type);
+  if (!parsed.success) return { error: "Action de pointage invalide." };
+  const error = await performAuthenticatedClock({ employeeId: user.id, type: parsed.data });
+  if (error) return { error };
 
   revalidatePath("/pointage");
+  revalidatePath("/");
+  return undefined;
 }

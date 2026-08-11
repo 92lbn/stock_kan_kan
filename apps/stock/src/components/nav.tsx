@@ -9,6 +9,7 @@ import { ThemeToggle } from "@stock-kan-kan/ui/theme-toggle";
 
 const links = [
   { href: "/", label: "Accueil", icon: "home" as const },
+  { href: "/pointage", label: "Pointage", icon: "clock" as const },
   { href: "/stock", label: "Stock", icon: "box" as const },
   { href: "/notes", label: "Notes", icon: "note" as const },
 ];
@@ -33,7 +34,7 @@ export function Nav({ name }: { name: string }) {
           <form action={logout}><button className="min-h-11 px-3 text-sm text-muted" type="submit">Déconnexion</button></form>
         </div>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-line bg-card sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-card sm:hidden">
         {links.map((link) => {
           const active = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
           return <Link key={link.href} href={link.href} aria-current={active ? "page" : undefined}

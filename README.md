@@ -5,7 +5,8 @@ Monorepo de deux applications internes de restaurant, en français et pensées p
 ## Applications
 
 - `apps/planning` — planning, pointage et administration des comptes. Port local `3000`.
-- `apps/stock` — inventaire par lots/DLC, sorties FEFO, mouvements et notes. Port local `3001`.
+- `apps/stock` — poste tablette partagé : pointage kiosk par PIN, inventaire par lots/DLC,
+  sorties FEFO, mouvements et notes. Port local `3001`.
 - `packages/db` — schéma Prisma, client généré et migrations pour une base Supabase unique.
 - `packages/auth` — session JWT, gardes serveur et logique commune des proxies.
 - `packages/lib` — dates Europe/Paris, Decimal, heures, FEFO, CSV et audit.
@@ -55,6 +56,7 @@ Les migrations suivantes sont en attente de déploiement :
 - `20260810233000_stock_lots_fefo` — lots, DLC, index et reprise des quantités existantes.
 - `20260810234500_login_attempt_ip` — limitation de connexion par IP.
 - `20260810235000_note_push_claim` — claim/retry des rappels.
+- `20260811130000_user_pin_hash` — PIN de pointage haché, sans modification des comptes existants.
 - `20260811001000_remove_out_of_scope_modules` — **destructive** : supprime compta, recettes et réseaux sociaux.
 
 Procédure production :

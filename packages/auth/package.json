@@ -6,6 +6,7 @@
   "exports": {
     "./session": "./src/session.ts",
     "./dal": "./src/dal.ts",
+    "./kiosk": "./src/kiosk.ts",
     "./actions": "./src/actions/auth.ts",
     "./proxy": "./src/proxy.ts"
   },
@@ -15,6 +16,7 @@
   },
   "dependencies": {
     "@stock-kan-kan/db": "*",
+    "@stock-kan-kan/lib": "*",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "next": "16.2.10",

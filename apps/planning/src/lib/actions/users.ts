@@ -5,7 +5,8 @@ import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { db } from "@stock-kan-kan/db";
 import { requireAdmin } from "@stock-kan-kan/auth/dal";
-import { logAudit } from "@stock-kan-kan/lib/audit";
+import { auditData, logAudit } from "@stock-kan-kan/lib/audit";
+import { IdSchema, PinInputSchema } from "@stock-kan-kan/lib/schemas";
 import { Role } from "@stock-kan-kan/db/enums";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 
@@ -16,6 +17,7 @@ const CreateUserSchema = z.object({
   role: z.enum(Role),
   hourlyRate: z.coerce.number().min(0).default(0),
   canStock: z.literal("on").optional().transform(Boolean),
+  pin: PinInputSchema.optional(),
 });
 
 export async function createUser(
@@ -31,6 +33,7 @@ export async function createUser(
     role: formData.get("role"),
     hourlyRate: formData.get("hourlyRate") || 0,
     canStock: formData.get("canStock") || undefined,
+    pin: formData.get("pin") || undefined,
   });
 
   if (!parsed.success) {
@@ -46,25 +49,75 @@ export async function createUser(
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
-  const created = await db.user.create({
-    data: {
-      identifier: parsed.data.identifier,
-      name: parsed.data.name,
-      role: parsed.data.role,
-      hourlyRate: parsed.data.hourlyRate,
-      canStock: parsed.data.canStock,
-      passwordHash,
-    },
-  });
-  await logAudit({
-    userId: admin.id,
-    action: "user.create",
-    entity: "User",
-    entityId: created.id,
-    after: { identifier: created.identifier, name: created.name, role: created.role },
+  const pinHash = parsed.data.pin ? await bcrypt.hash(parsed.data.pin, 10) : null;
+  await db.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: {
+        identifier: parsed.data.identifier,
+        name: parsed.data.name,
+        role: parsed.data.role,
+        hourlyRate: parsed.data.hourlyRate,
+        canStock: parsed.data.canStock,
+        passwordHash,
+        pinHash,
+      },
+    });
+    await tx.auditLog.create({
+      data: auditData({
+        userId: admin.id,
+        action: "user.create",
+        entity: "User",
+        entityId: created.id,
+        after: {
+          identifier: created.identifier,
+          name: created.name,
+          role: created.role,
+          hasPin: Boolean(created.pinHash),
+        },
+      }),
+    });
   });
 
   revalidatePath("/employees");
+}
+
+const UpdatePinSchema = z.object({
+  userId: IdSchema,
+  pin: z.union([PinInputSchema, z.literal("")]),
+});
+
+export async function updateUserPin(
+  userId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  const parsed = UpdatePinSchema.safeParse({ userId, pin: formData.get("pin") });
+  if (!parsed.success) return { error: "Le PIN doit contenir 4 à 6 chiffres." };
+
+  const target = await db.user.findFirst({
+    where: { id: parsed.data.userId, role: "EMPLOYEE", deletedAt: null },
+    select: { id: true, pinHash: true },
+  });
+  if (!target) return { error: "Employé introuvable." };
+
+  const pinHash = parsed.data.pin ? await bcrypt.hash(parsed.data.pin, 10) : null;
+  await db.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: target.id }, data: { pinHash } });
+    await tx.loginAttempt.deleteMany({ where: { identifier: `kiosk:${target.id}` } });
+    await tx.auditLog.create({
+      data: auditData({
+        userId: admin.id,
+        action: pinHash ? "user.setPin" : "user.removePin",
+        entity: "User",
+        entityId: target.id,
+        before: { hasPin: Boolean(target.pinHash) },
+        after: { hasPin: Boolean(pinHash) },
+      }),
+    });
+  });
+  revalidatePath("/employees");
+  return undefined;
 }
 
 const StockAccessSchema = z.object({

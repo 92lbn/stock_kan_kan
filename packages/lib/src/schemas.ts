@@ -13,3 +13,8 @@ export const DecimalInputSchema = z
   .trim()
   .regex(/^-?\d+(?:[.,]\d+)?$/, "Nombre décimal invalide.")
   .transform((value) => value.replace(",", "."));
+
+export const PinInputSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4,6}$/, "Le PIN doit contenir 4 à 6 chiffres.");

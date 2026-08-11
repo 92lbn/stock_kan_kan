@@ -8,7 +8,14 @@ export default function StockHomePage() {
         <p className="text-sm font-medium text-accent">kan·kan stock</p>
         <h1 className="text-3xl font-semibold text-ink">Stock et notes</h1>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <h2 className="text-lg font-semibold text-ink">Pointage</h2>
+          <p className="mt-1 text-sm text-muted">Pointer une arrivée ou un départ avec un PIN personnel.</p>
+          <Link className="mt-4 inline-flex min-h-11 items-center font-medium text-accent" href="/pointage">
+            Ouvrir le pointage
+          </Link>
+        </Card>
         <Card>
           <h2 className="text-lg font-semibold text-ink">Inventaire</h2>
           <p className="mt-1 text-sm text-muted">Consulter les niveaux et enregistrer un mouvement.</p>

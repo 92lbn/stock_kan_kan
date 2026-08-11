@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { changeUserPassword, deleteUser, updateHourlyRate, updateStockAccess } from "@/lib/actions/users";
+import { changeUserPassword, deleteUser, updateHourlyRate, updateStockAccess, updateUserPin } from "@/lib/actions/users";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label } from "@stock-kan-kan/ui/input";
 import { Badge } from "@stock-kan-kan/ui/card";
@@ -16,6 +16,7 @@ export type UserVM = {
   role: string;
   isSuperAdmin: boolean;
   canStock: boolean;
+  hasPin: boolean;
   hourlyRate: number;
 };
 
@@ -96,6 +97,10 @@ function UserActions({ user, isCurrentUser }: { user: UserVM; isCurrentUser: boo
     changeUserPassword.bind(null, user.id),
     undefined
   );
+  const [pinState, pinAction, pinPending] = useActionState(
+    updateUserPin.bind(null, user.id),
+    undefined
+  );
 
   return (
     <div className="space-y-4 pb-2">
@@ -105,7 +110,37 @@ function UserActions({ user, isCurrentUser }: { user: UserVM; isCurrentUser: boo
         </Badge>
         <span className="text-sm text-muted">{user.identifier}</span>
         {(user.role === "ADMIN" || user.canStock) && <Badge variant="success">Accès stock</Badge>}
+        {user.role === "EMPLOYEE" && (
+          <Badge variant={user.hasPin ? "success" : "warning"}>
+            {user.hasPin ? "PIN actif" : "PIN absent"}
+          </Badge>
+        )}
       </div>
+
+      {user.role === "EMPLOYEE" && (
+        <form action={pinAction} className="space-y-1">
+          <Label htmlFor={`pin-${user.id}`}>PIN de pointage</Label>
+          <div className="flex gap-2">
+            <Input
+              id={`pin-${user.id}`}
+              name="pin"
+              type="password"
+              inputMode="numeric"
+              autoComplete="off"
+              pattern="[0-9]{4,6}"
+              minLength={4}
+              maxLength={6}
+              placeholder={user.hasPin ? "Nouveau PIN" : "4 à 6 chiffres"}
+              className="flex-1"
+            />
+            <Button type="submit" variant="secondary" disabled={pinPending}>
+              {pinPending ? "…" : "Enregistrer"}
+            </Button>
+          </div>
+          <p className="text-xs text-muted">Laisser vide puis enregistrer pour retirer le PIN.</p>
+          {pinState?.error && <p className="text-sm text-danger" role="alert">{pinState.error}</p>}
+        </form>
+      )}
 
       {user.role !== "ADMIN" && (
         <form action={updateStockAccess.bind(null, user.id)}>

@@ -20,6 +20,7 @@ model User {
   identifier    String   @unique // identifiant unique de connexion (employé ou admin)
   name          String
   passwordHash  String
+  pinHash       String? // code personnel de pointage kiosk, toujours stocké haché
   role          Role     @default(EMPLOYEE)
   isSuperAdmin  Boolean  @default(false) // compte protégé, non supprimable par personne
   canStock      Boolean  @default(false) // accès explicite à l'app Stock ; ADMIN autorisé implicitement
@@ -47,6 +48,7 @@ model LoginAttempt {
 
   @@index([identifier, createdAt])
   @@index([ip, createdAt])
+  @@index([createdAt])
   @@map("login_attempts")
 }
 

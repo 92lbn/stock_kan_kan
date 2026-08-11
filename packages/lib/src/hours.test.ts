@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { datedShiftsOverlap, sumShiftHours, shiftsOverlap } from "./hours";
+import {
+  computeTotalHoursIncludingOpen,
+  datedShiftsOverlap,
+  expectedClockAction,
+  sumShiftHours,
+  shiftsOverlap,
+} from "./hours";
 
 describe("shiftsOverlap", () => {
   it("détecte un chevauchement", () => {
@@ -64,5 +70,25 @@ describe("sumShiftHours", () => {
         { startTime: "18:00", endTime: "02:00" }, // 8h
       ])
     ).toBe(16);
+  });
+});
+
+describe("pointage kiosk", () => {
+  it("attend une arrivée sans pointage précédent", () => {
+    expect(expectedClockAction(undefined)).toBe("CLOCK_IN");
+  });
+
+  it("alterne strictement arrivée puis départ", () => {
+    expect(expectedClockAction("CLOCK_IN")).toBe("CLOCK_OUT");
+    expect(expectedClockAction("CLOCK_OUT")).toBe("CLOCK_IN");
+  });
+
+  it("inclut le service ouvert dans le total du jour", () => {
+    const entries = [
+      { type: "CLOCK_IN" as const, timestamp: new Date("2026-08-11T08:00:00Z") },
+      { type: "CLOCK_OUT" as const, timestamp: new Date("2026-08-11T10:00:00Z") },
+      { type: "CLOCK_IN" as const, timestamp: new Date("2026-08-11T11:00:00Z") },
+    ];
+    expect(computeTotalHoursIncludingOpen(entries, new Date("2026-08-11T12:30:00Z"))).toBe(3.5);
   });
 });

@@ -39,6 +39,33 @@ export function shiftsOverlap(
   return aStart < bEnd && bStart < aEnd;
 }
 
+export function expectedClockAction(lastType?: "CLOCK_IN" | "CLOCK_OUT") {
+  return lastType === "CLOCK_IN" ? "CLOCK_OUT" : "CLOCK_IN";
+}
+
+export function computeTotalHoursIncludingOpen(
+  entries: Pick<TimeEntryModel, "type" | "timestamp">[],
+  now: Date = new Date()
+) {
+  let totalMs = 0;
+  let openClockIn: Date | null = null;
+
+  for (const entry of entries) {
+    if (entry.type === "CLOCK_IN") {
+      openClockIn = entry.timestamp;
+    } else if (openClockIn) {
+      totalMs += Math.max(0, entry.timestamp.getTime() - openClockIn.getTime());
+      openClockIn = null;
+    }
+  }
+
+  if (openClockIn) {
+    totalMs += Math.max(0, now.getTime() - openClockIn.getTime());
+  }
+
+  return totalMs / 3_600_000;
+}
+
 export function datedShiftsOverlap(
   a: { date: string; startTime: string; endTime: string },
   b: { date: string; startTime: string; endTime: string }

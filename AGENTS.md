@@ -51,5 +51,6 @@ le code concerné :
 ## Conventions de travail
 
 - Une phase du plan par session, un commit à la fin de chacune.
-- La fonctionnalité de **pointage est temporairement retirée de la navigation** : ne pas y
-  travailler, mais ne pas supprimer le code existant (marqué `[EN ATTENTE]` dans le plan).
+- La fonctionnalité de **pointage est active** : le mobile conserve le pointage personnel et
+  l'app tablette expose le kiosk par PIN. Toute évolution doit préserver l'anti-double action,
+  la limitation des essais et l'audit transactionnel.
