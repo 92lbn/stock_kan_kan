@@ -6,8 +6,8 @@ import {
   findStockItemByBarcode,
   recordStockMovement,
   createStockItem,
-  type ActionState,
 } from "@/lib/actions/stock";
+import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Sheet } from "@stock-kan-kan/ui/sheet";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";

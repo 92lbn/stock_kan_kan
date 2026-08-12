@@ -6,8 +6,8 @@ import {
   updateStockItem,
   deleteStockItem,
   recordStockMovement,
-  type ActionState,
 } from "@/lib/actions/stock";
+import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 import { Sheet } from "@stock-kan-kan/ui/sheet";

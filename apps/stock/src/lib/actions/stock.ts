@@ -165,5 +165,3 @@ function revalidateStock() {
   revalidatePath("/stock");
   revalidatePath("/stock/mouvements");
 }
-
-export type { ActionState };

@@ -4,7 +4,7 @@ import * as z from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@stock-kan-kan/db";
 import { requireStockAccess } from "@stock-kan-kan/auth/dal";
-import type { ActionState } from "@/lib/actions/stock";
+import type { ActionState } from "@stock-kan-kan/lib/action";
 import { wallTimeParisToUtc } from "@stock-kan-kan/lib/date";
 
 const NoteSchema = z.object({
