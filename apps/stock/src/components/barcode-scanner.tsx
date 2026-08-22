@@ -3,29 +3,40 @@
 import { useEffect, useRef, useState } from "react";
 import type { IScannerControls } from "@zxing/browser";
 
-type CameraRange = { min: number; max: number; step?: number };
 type CameraCapabilities = MediaTrackCapabilities & {
   focusMode?: string[];
-  zoom?: CameraRange;
 };
-type CameraSettings = MediaTrackSettings & { zoom?: number };
 type CameraFocusMode = "continuous" | "single-shot";
 
-function cameraConstraints(focusMode?: CameraFocusMode, zoom?: number): MediaTrackConstraints {
-  const cameraOptions: Record<string, string | number> = {};
+function cameraConstraints(focusMode?: CameraFocusMode, deviceId?: string, strictRear = true): MediaTrackConstraints {
+  const cameraOptions: Record<string, string> = {};
   if (focusMode) cameraOptions.focusMode = focusMode;
-  if (zoom !== undefined) cameraOptions.zoom = zoom;
 
   return {
-    facingMode: { ideal: "environment" },
+    ...(deviceId
+      ? { deviceId: { exact: deviceId } }
+      : { facingMode: strictRear ? { exact: "environment" } : { ideal: "environment" } }),
     width: { ideal: 1920 },
     height: { ideal: 1080 },
     ...(Object.keys(cameraOptions).length > 0 ? { advanced: [cameraOptions] } : {}),
   } as unknown as MediaTrackConstraints;
 }
 
-async function applyCameraSettings(track: MediaStreamTrack, focusMode?: CameraFocusMode, zoom?: number) {
-  await track.applyConstraints(cameraConstraints(focusMode, zoom));
+async function applyCameraSettings(track: MediaStreamTrack, focusMode?: CameraFocusMode) {
+  await track.applyConstraints(cameraConstraints(focusMode, track.getSettings().deviceId));
+}
+
+function findPrimaryRearCamera(devices: MediaDeviceInfo[], activeDeviceId?: string) {
+  const cameras = devices.filter((device) => device.kind === "videoinput");
+  const rearCameras = cameras.filter((device) => {
+    const label = device.label.toLocaleLowerCase();
+    return /back|rear|environment|arrière/.test(label) && !/front|user|avant/.test(label);
+  });
+  const preferred = rearCameras.find((device) => {
+    const label = device.label.toLocaleLowerCase();
+    return /camera2\s*0|main|primary|principal/.test(label) && !/ultra|tele|macro|depth/.test(label);
+  });
+  return preferred?.deviceId ?? activeDeviceId;
 }
 
 // Scan via la caméra du navigateur (getUserMedia) + décodage ZXing en JS.
@@ -41,15 +52,15 @@ export function BarcodeScanner({
   const videoRef = useRef<HTMLVideoElement>(null);
   const onDetectedRef = useRef(onDetected);
   const onErrorRef = useRef(onError);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const continuousFocusRef = useRef(false);
-  const zoomRef = useRef<number | undefined>(undefined);
   const focusTimerRef = useRef<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [canRefocus, setCanRefocus] = useState(false);
-  const [focusStatus, setFocusStatus] = useState<string | null>(null);
-  const [zoomRange, setZoomRange] = useState<CameraRange | null>(null);
-  const [zoom, setZoom] = useState<number | null>(null);
+  const [canUseTorch, setCanUseTorch] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState<string | null>(null);
 
   useEffect(() => {
     onDetectedRef.current = onDetected;
@@ -58,6 +69,7 @@ export function BarcodeScanner({
 
   useEffect(() => {
     let controls: IScannerControls | null = null;
+    let stream: MediaStream | null = null;
     let done = false;
 
     async function start() {
@@ -85,10 +97,35 @@ export function BarcodeScanner({
           delayBetweenScanAttempts: 80,
           delayBetweenScanSuccess: 500,
         });
-        // Caméra arrière, haute résolution (petits codes-barres) + autofocus continu.
-        const constraints: MediaStreamConstraints = { video: cameraConstraints("continuous") };
-        controls = await reader.decodeFromConstraints(
-          constraints,
+        // On ouvre strictement une caméra arrière pour obtenir les libellés, puis
+        // on privilégie le capteur principal quand Android l'identifie clairement.
+        let initialStream: MediaStream;
+        try {
+          initialStream = await navigator.mediaDevices.getUserMedia({
+            video: cameraConstraints("continuous"),
+          });
+        } catch {
+          // Ordinateurs et anciens navigateurs sans notion avant/arrière.
+          initialStream = await navigator.mediaDevices.getUserMedia({
+            video: cameraConstraints("continuous", undefined, false),
+          });
+        }
+        const initialTrack = initialStream.getVideoTracks()[0];
+        const activeDeviceId = initialTrack?.getSettings().deviceId;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const primaryDeviceId = findPrimaryRearCamera(devices, activeDeviceId);
+
+        if (primaryDeviceId && activeDeviceId && primaryDeviceId !== activeDeviceId) {
+          initialStream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: cameraConstraints("continuous", primaryDeviceId),
+          });
+        } else {
+          stream = initialStream;
+        }
+
+        controls = await reader.decodeFromStream(
+          stream,
           videoRef.current!,
           (result, _err, ctrl) => {
             if (result && !done) {
@@ -98,6 +135,8 @@ export function BarcodeScanner({
             }
           }
         );
+        controlsRef.current = controls;
+        setCanUseTorch(typeof controls.switchTorch === "function");
         // Après autorisation, on n'applique que les réglages réellement exposés
         // par la caméra. Les navigateurs plus anciens continuent avec leurs défauts.
         const track = (videoRef.current?.srcObject as MediaStream | null)?.getVideoTracks?.()[0];
@@ -109,23 +148,15 @@ export function BarcodeScanner({
             continuousFocusRef.current = focusModes.includes("continuous");
             setCanRefocus(focusModes.includes("single-shot"));
 
-            const zoomCapability = capabilities.zoom;
-            if (zoomCapability && zoomCapability.max > zoomCapability.min) {
-              const currentZoom = (track.getSettings() as CameraSettings).zoom ?? zoomCapability.min;
-              const boundedZoom = Math.min(zoomCapability.max, Math.max(zoomCapability.min, currentZoom));
-              zoomRef.current = boundedZoom;
-              setZoom(boundedZoom);
-              setZoomRange(zoomCapability);
-            }
-
             if (continuousFocusRef.current) {
-              await applyCameraSettings(track, "continuous", zoomRef.current);
+              await applyCameraSettings(track, "continuous");
             }
           }
         } catch {
           /* réglages avancés non supportés : la caméra conserve ses défauts */
         }
       } catch {
+        stream?.getTracks().forEach((mediaTrack) => mediaTrack.stop());
         const m = "Caméra indisponible ou accès refusé. Saisis le code à la main.";
         setMsg(m);
         onErrorRef.current?.(m);
@@ -136,38 +167,42 @@ export function BarcodeScanner({
     return () => {
       done = true;
       if (focusTimerRef.current !== null) window.clearTimeout(focusTimerRef.current);
+      controlsRef.current = null;
       trackRef.current = null;
       controls?.stop();
+      stream?.getTracks().forEach((mediaTrack) => mediaTrack.stop());
     };
   }, []);
 
   async function refocus() {
     const track = trackRef.current;
     if (!track) return;
-    setFocusStatus("Mise au point en cours…");
+    setCameraStatus("Mise au point en cours…");
     try {
-      await applyCameraSettings(track, "single-shot", zoomRef.current);
-      setFocusStatus("Mise au point relancée.");
+      await applyCameraSettings(track, "single-shot");
+      setCameraStatus("Mise au point relancée.");
       if (focusTimerRef.current !== null) window.clearTimeout(focusTimerRef.current);
       if (continuousFocusRef.current) {
         focusTimerRef.current = window.setTimeout(() => {
-          void applyCameraSettings(track, "continuous", zoomRef.current).catch(() => undefined);
+          void applyCameraSettings(track, "continuous").catch(() => undefined);
         }, 1200);
       }
     } catch {
-      setFocusStatus("La mise au point manuelle n’est pas disponible sur cet appareil.");
+      setCameraStatus("La mise au point manuelle n’est pas disponible sur cet appareil.");
     }
   }
 
-  async function updateZoom(nextZoom: number) {
-    const track = trackRef.current;
-    zoomRef.current = nextZoom;
-    setZoom(nextZoom);
-    if (!track) return;
+  async function toggleTorch() {
+    const switchTorch = controlsRef.current?.switchTorch;
+    if (!switchTorch) return;
+    const nextState = !torchOn;
+    setCameraStatus(nextState ? "Activation du flash…" : "Extinction du flash…");
     try {
-      await applyCameraSettings(track, continuousFocusRef.current ? "continuous" : undefined, nextZoom);
+      await switchTorch(nextState);
+      setTorchOn(nextState);
+      setCameraStatus(nextState ? "Flash activé." : "Flash éteint.");
     } catch {
-      setFocusStatus("Le zoom de la caméra n’a pas pu être modifié.");
+      setCameraStatus("Le flash n’est pas disponible sur cet appareil.");
     }
   }
 
@@ -193,7 +228,7 @@ export function BarcodeScanner({
           <p className="mt-2 text-center text-sm text-muted">
             Garde le code à environ 15–25 cm, à l’horizontale dans le cadre, puis reste immobile.
           </p>
-          {(canRefocus || (zoomRange && zoom !== null)) && (
+          {(canRefocus || canUseTorch) && (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {canRefocus && (
                 <button
@@ -204,28 +239,19 @@ export function BarcodeScanner({
                   Refaire la mise au point
                 </button>
               )}
-              {zoomRange && zoom !== null && (
-                <div className="rounded-md border border-line bg-card px-3 py-2">
-                  <label htmlFor="camera-zoom" className="flex items-center justify-between text-sm font-medium text-ink">
-                    <span>Zoom caméra</span>
-                    <span aria-hidden="true">×{zoom.toFixed(1)}</span>
-                  </label>
-                  <input
-                    id="camera-zoom"
-                    type="range"
-                    min={zoomRange.min}
-                    max={zoomRange.max}
-                    step={zoomRange.step && zoomRange.step > 0 ? zoomRange.step : 0.1}
-                    value={zoom}
-                    onChange={(event) => void updateZoom(Number(event.target.value))}
-                    className="min-h-11 w-full accent-[var(--accent)]"
-                    aria-valuetext={`Zoom ${zoom.toFixed(1)} fois`}
-                  />
-                </div>
+              {canUseTorch && (
+                <button
+                  type="button"
+                  onClick={() => void toggleTorch()}
+                  aria-pressed={torchOn}
+                  className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  {torchOn ? "Éteindre le flash" : "Activer le flash"}
+                </button>
               )}
             </div>
           )}
-          {focusStatus && <p role="status" className="mt-2 text-center text-sm text-muted">{focusStatus}</p>}
+          {cameraStatus && <p role="status" className="mt-2 text-center text-sm text-muted">{cameraStatus}</p>}
         </>
       )}
     </div>
