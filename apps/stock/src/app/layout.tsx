@@ -21,9 +21,6 @@ export const metadata: Metadata = {
     title: "Restaurant",
     statusBarStyle: "default",
   },
-  icons: {
-    apple: "/icon-192.png",
-  },
 };
 
 export const viewport = {

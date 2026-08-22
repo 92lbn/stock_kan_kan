@@ -1,13 +1,13 @@
 {
   "name": "kan·kan Stock",
   "short_name": "Stock",
-  "description": "Outil interne de gestion de stock, planning, pointage et réseaux",
+  "description": "Gestion du stock, pointage tablette et notes de cuisine",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#18181b",
+  "background_color": "#f4f6f7",
+  "theme_color": "#33888d",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/stock-icon-192-v2.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/stock-icon-512-v2.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
