@@ -1,1 +1,32 @@
 @import "@stock-kan-kan/ui/globals.css";
+
+.stock-login {
+  background-image:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 55%),
+    radial-gradient(circle at 85% 15%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28rem);
+}
+
+.stock-login-intro {
+  background: linear-gradient(150deg, color-mix(in srgb, var(--card) 91%, var(--accent)), var(--card));
+  border-right: 1px solid var(--line);
+}
+
+.stock-login-orbit {
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: 9999px;
+}
+
+.stock-login-orbit-left {
+  width: 28rem;
+  height: 28rem;
+  left: -18rem;
+  bottom: -11rem;
+}
+
+.stock-login-orbit-right {
+  width: 22rem;
+  height: 22rem;
+  right: -12rem;
+  top: -10rem;
+}
