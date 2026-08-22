@@ -15,6 +15,7 @@ import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@stock-kan-kan/lib/utils";
 import { classifyExpiry, daysUntilExpiry, type ExpiryGroup } from "@stock-kan-kan/lib/expiry";
+import { ProductPhotoField } from "@/components/product-photo-field";
 
 export type StockItem = {
   id: string;
@@ -26,6 +27,8 @@ export type StockItem = {
   costPrice: string;
   allergens: string;
   barcode: string;
+  hasImage: boolean;
+  imageVersion: string;
   lots: { id: string; lotNumber: string; expiryDate: string; quantity: string }[];
 };
 
@@ -40,6 +43,7 @@ const CATEGORIES = [
 const catLabel = (v: string) => CATEGORIES.find((c) => c.value === v)?.short ?? v;
 
 const fr = (value: string) => Number(value).toLocaleString("fr-FR", { maximumFractionDigits: 3 });
+const imageSrc = (item: StockItem) => `/api/stock-images/${item.id}?v=${item.imageVersion}`;
 
 type Status = "out" | "low" | "ok";
 function statusOf(item: StockItem): Status {
@@ -207,6 +211,15 @@ function StockLine({ item, onOpen }: { item: StockItem; onOpen: () => void }) {
                 : "transparent",
         }}
       >
+        <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-lg border border-line bg-card-2 text-muted">
+          {item.hasImage ? (
+            // Miniature authentifiée, chargée uniquement lorsque la ligne devient visible.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageSrc(item)} alt="" loading="lazy" width="48" height="48" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden="true">◇</span>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium text-ink">{item.name}</p>
           <p className="text-xs text-muted">{catLabel(item.category)}</p>
@@ -257,6 +270,12 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
 
   return (
     <div className="space-y-4 pb-2">
+      {item.hasImage && (
+        <div className="overflow-hidden rounded-xl border border-line bg-card-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={imageSrc(item)} alt={`Photo de ${item.name}`} className="max-h-56 w-full object-contain" />
+        </div>
+      )}
       {/* Quantité courante */}
       <div className="flex items-end justify-between rounded-lg bg-card-2 px-4 py-3">
         <span className="kpi-label">En stock</span>
@@ -368,6 +387,7 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
               <BarcodeField id={`e-bc-${item.id}`} name="barcode" defaultValue={item.barcode} />
             </div>
           </div>
+          <ProductPhotoField existingSrc={item.hasImage ? imageSrc(item) : undefined} />
           {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={editPending}>
@@ -454,6 +474,7 @@ function AddForm({ onClose }: { onClose: () => void }) {
           <BarcodeField id="a-bc" name="barcode" />
         </div>
       </div>
+      <ProductPhotoField />
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Ajout…" : "Ajouter l'article"}

@@ -35,8 +35,23 @@ export function BarcodeScanner({
         return;
       }
       try {
-        const { BrowserMultiFormatReader } = await import("@zxing/browser");
-        const reader = new BrowserMultiFormatReader();
+        const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([
+          import("@zxing/browser"),
+          import("@zxing/library"),
+        ]);
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+        ]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+        const reader = new BrowserMultiFormatReader(hints, {
+          delayBetweenScanAttempts: 80,
+          delayBetweenScanSuccess: 500,
+        });
         // Caméra arrière, haute résolution (petits codes-barres) + autofocus continu.
         const constraints: MediaStreamConstraints = {
           // `focusMode` est une contrainte expérimentale absente des types DOM :
@@ -87,20 +102,22 @@ export function BarcodeScanner({
       <div className="relative overflow-hidden rounded-lg bg-black">
         <video
           ref={videoRef}
-          className="aspect-[3/4] w-full object-cover"
+          className="aspect-video w-full object-cover"
           muted
           playsInline
         />
         {!msg && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
-            <div className="h-24 w-56 rounded-lg border-2 border-white/80 shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]" />
+            <div className="h-[120px] w-[min(300px,calc(100%-2rem))] rounded-lg border-2 border-white/90 shadow-[0_0_0_100vmax_rgba(0,0,0,0.4)]" />
           </div>
         )}
       </div>
       {msg ? (
         <p className="mt-2 text-sm text-danger">{msg}</p>
       ) : (
-        <p className="mt-2 text-center text-xs text-muted">Vise le code-barres du produit.</p>
+        <p className="mt-2 text-center text-sm text-muted">
+          Place le code-barres à l’horizontale dans le cadre et reste immobile.
+        </p>
       )}
     </div>
   );

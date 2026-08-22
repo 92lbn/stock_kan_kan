@@ -12,6 +12,7 @@
     "./expiry": "./src/expiry.ts",
     "./hours": "./src/hours.ts",
     "./money": "./src/money.ts",
+    "./product-image": "./src/product-image.ts",
     "./schemas": "./src/schemas.ts",
     "./stock-lots": "./src/stock-lots.ts",
     "./utils": "./src/utils.ts"

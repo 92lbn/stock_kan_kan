@@ -11,6 +11,7 @@ import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Sheet } from "@stock-kan-kan/ui/sheet";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";
+import { ProductPhotoField } from "@/components/product-photo-field";
 
 // ZXing chargé uniquement à l'ouverture du scanner (chunk séparé).
 const BarcodeScanner = dynamic(
@@ -87,7 +88,7 @@ export function StockScan() {
           reset();
           setOpen(true);
         }}
-        className="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2"
       >
         <span aria-hidden>▣</span> Scanner
       </button>
@@ -103,20 +104,25 @@ export function StockScan() {
               <BarcodeScanner onDetected={resolve} />
               <div className="flex items-center gap-2">
                 <div className="h-px flex-1 bg-line" />
-                <span className="text-xs text-muted">ou saisis le code</span>
+                <span className="text-xs text-muted">La caméra ne lit pas le code ?</span>
                 <div className="h-px flex-1 bg-line" />
               </div>
-              <div className="flex gap-2">
-                <Input
-                  inputMode="numeric"
-                  placeholder="Code-barres"
-                  value={manual}
-                  onChange={(e) => setManual(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="button" variant="secondary" disabled={busy} onClick={() => resolve(manual)}>
-                  OK
-                </Button>
+              <div>
+                <Label htmlFor="manual-barcode">Saisir le code EAN manuellement</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="manual-barcode"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="Ex. 3017620422003"
+                    value={manual}
+                    onChange={(e) => setManual(e.target.value.replace(/\D/g, ""))}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="secondary" disabled={busy || !manual} onClick={() => resolve(manual)}>
+                    Rechercher
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -253,6 +259,7 @@ function UnknownForm({
           <Input id="u-lot" name="lotNumber" />
         </div>
       </div>
+      <ProductPhotoField />
       {state?.error && <p className="text-sm text-danger">{state.error}</p>}
       <div className="flex gap-2">
         <Button type="button" variant="ghost" onClick={onBack}>

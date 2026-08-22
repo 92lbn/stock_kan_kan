@@ -122,18 +122,20 @@ enum StockCategory {
 }
 
 model StockItem {
-  id           String        @id @default(cuid())
-  name         String
-  category     StockCategory
-  unit         String // ex: "carton", "bouteille", "kg"
-  quantity     Decimal       @default(0) @db.Decimal(12, 3)
-  minThreshold Decimal       @default(0) @db.Decimal(12, 3)
-  costPrice    Decimal       @default(0) @db.Decimal(12, 2) // coût unitaire (base food cost / valorisation)
-  allergens    String? // allergènes portés par l'ingrédient (obligation légale FR)
-  barcode      String?       @unique // code-barres (EAN/UPC) pour le scan
-  deletedAt    DateTime? // suppression réversible (soft delete)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String        @id @default(cuid())
+  name          String
+  category      StockCategory
+  unit          String // ex: "carton", "bouteille", "kg"
+  quantity      Decimal       @default(0) @db.Decimal(12, 3)
+  minThreshold  Decimal       @default(0) @db.Decimal(12, 3)
+  costPrice     Decimal       @default(0) @db.Decimal(12, 2) // coût unitaire (base food cost / valorisation)
+  allergens     String? // allergènes portés par l'ingrédient (obligation légale FR)
+  barcode       String?       @unique // code-barres (EAN/UPC) pour le scan
+  imageData     Bytes? // photo compressée (max 350 ko), servie par une route authentifiée
+  imageMimeType String?
+  deletedAt     DateTime? // suppression réversible (soft delete)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   movements         StockMovement[]
   lots              StockLot[]

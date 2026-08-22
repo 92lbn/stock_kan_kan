@@ -10,6 +10,8 @@ import type { ActionState } from "@stock-kan-kan/lib/action";
 import { formatQuantity } from "@stock-kan-kan/lib/money";
 import { planFefo } from "@stock-kan-kan/lib/stock-lots";
 import { auditData, logAudit } from "@stock-kan-kan/lib/audit";
+import { parseProductImageDataUrl } from "@stock-kan-kan/lib/product-image";
+import { IdSchema } from "@stock-kan-kan/lib/schemas";
 
 class MovementError extends Error {}
 
@@ -28,6 +30,11 @@ const createSchema = metadataSchema.extend({
   costPrice: decimal2,
   expiryDate: z.iso.date().optional(),
   lotNumber: z.string().trim().max(80).optional(),
+  imageData: z.string().max(480_000).optional(),
+});
+const updateSchema = metadataSchema.extend({
+  imageData: z.string().max(480_000).optional(),
+  removeImage: z.enum(["true", "false"]),
 });
 const movementSchema = z.object({
   type: z.enum(StockMovementType),
@@ -60,9 +67,15 @@ export async function createStockItem(_state: ActionState, formData: FormData): 
     quantity: formData.get("quantity"), minThreshold: formData.get("minThreshold"),
     costPrice: formData.get("costPrice") || "0", allergens: formData.get("allergens") || undefined,
     barcode: formData.get("barcode") || undefined, expiryDate: formData.get("expiryDate") || undefined,
-    lotNumber: formData.get("lotNumber") || undefined,
+    lotNumber: formData.get("lotNumber") || undefined, imageData: formData.get("imageData") || undefined,
   });
   if (!parsed.success) return { error: "Champs invalides." };
+  let image;
+  try {
+    image = parseProductImageDataUrl(parsed.data.imageData);
+  } catch (reason) {
+    return { error: reason instanceof Error ? reason.message : "Photo invalide." };
+  }
   const quantity = new Prisma.Decimal(parsed.data.quantity);
   if (quantity.gt(0) && !parsed.data.expiryDate) return { error: "La DLC du stock initial est requise." };
   const created = await db.$transaction(async (tx) => {
@@ -70,7 +83,8 @@ export async function createStockItem(_state: ActionState, formData: FormData): 
       name: parsed.data.name, category: parsed.data.category, unit: parsed.data.unit,
       quantity, minThreshold: parsed.data.minThreshold, costPrice: parsed.data.costPrice,
       allergens: parsed.data.allergens, barcode: parsed.data.barcode,
-    }});
+      imageData: image?.bytes, imageMimeType: image?.mimeType,
+    }, select: { id: true, name: true, category: true, unit: true, quantity: true, minThreshold: true, costPrice: true, allergens: true, barcode: true, imageMimeType: true, createdAt: true, updatedAt: true }});
     if (quantity.gt(0)) {
       await tx.stockLot.create({ data: { stockItemId: item.id, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
       await tx.stockMovement.create({ data: { stockItemId: item.id, type: "IN", quantity, unitCost: parsed.data.costPrice, note: "Stock initial", createdById: actor.id } });
@@ -83,16 +97,40 @@ export async function createStockItem(_state: ActionState, formData: FormData): 
 
 export async function updateStockItem(itemId: string, _state: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireStockAccess();
-  const parsed = metadataSchema.safeParse({
+  const parsedId = IdSchema.safeParse(itemId);
+  if (!parsedId.success) return { error: "Article invalide." };
+  const parsed = updateSchema.safeParse({
     name: formData.get("name"), category: formData.get("category"), unit: formData.get("unit"),
     minThreshold: formData.get("minThreshold"), allergens: formData.get("allergens") || undefined,
-    barcode: formData.get("barcode") || undefined,
+    barcode: formData.get("barcode") || undefined, imageData: formData.get("imageData") || undefined,
+    removeImage: formData.get("removeImage") || "false",
   });
   if (!parsed.success) return { error: "Champs invalides." };
-  const before = await db.stockItem.findFirst({ where: { id: itemId, deletedAt: null } });
+  let image;
+  try {
+    image = parseProductImageDataUrl(parsed.data.imageData);
+  } catch (reason) {
+    return { error: reason instanceof Error ? reason.message : "Photo invalide." };
+  }
+  const itemSelect = { id: true, name: true, category: true, unit: true, quantity: true, minThreshold: true, costPrice: true, allergens: true, barcode: true, imageMimeType: true, deletedAt: true, createdAt: true, updatedAt: true } as const;
+  const before = await db.stockItem.findFirst({ where: { id: parsedId.data, deletedAt: null }, select: itemSelect });
   if (!before) return { error: "Article introuvable." };
-  const updated = await db.stockItem.update({ where: { id: itemId }, data: parsed.data });
-  await logAudit({ userId: actor.id, action: "stock.update", entity: "StockItem", entityId: itemId, before, after: updated });
+  const { removeImage } = parsed.data;
+  const updated = await db.stockItem.update({
+    where: { id: parsedId.data },
+    data: {
+      name: parsed.data.name,
+      category: parsed.data.category,
+      unit: parsed.data.unit,
+      minThreshold: parsed.data.minThreshold,
+      allergens: parsed.data.allergens,
+      barcode: parsed.data.barcode,
+      ...(image ? { imageData: image.bytes, imageMimeType: image.mimeType } : {}),
+      ...(removeImage === "true" ? { imageData: null, imageMimeType: null } : {}),
+    },
+    select: itemSelect,
+  });
+  await logAudit({ userId: actor.id, action: "stock.update", entity: "StockItem", entityId: parsedId.data, before, after: updated });
   revalidateStock();
 }
 

@@ -53,6 +53,7 @@ test("création d'un article puis mouvement de stock", async ({ page }) => {
   await login(page, "http://127.0.0.1:3001");
   await page.goto("http://127.0.0.1:3001/stock");
   await page.getByRole("button", { name: "Ajouter un article" }).click();
+  await expect(page.getByText("Photo du produit")).toBeVisible();
   const name = `Article E2E ${Date.now()}`;
   await page.getByLabel("Nom de l'article").fill(name);
   await page.getByLabel("Unité").fill("pièce");
@@ -65,6 +66,14 @@ test("création d'un article puis mouvement de stock", async ({ page }) => {
   await page.getByLabel("DLC", { exact: true }).fill("2099-12-31");
   await page.getByRole("button", { name: "Valider le mouvement" }).click();
   await expect(page.getByText(name)).toBeVisible();
+});
+
+test("saisie manuelle du code EAN disponible sans caméra", async ({ page }) => {
+  await login(page, "http://127.0.0.1:3001");
+  await page.goto("http://127.0.0.1:3001/stock");
+  await page.getByRole("button", { name: "Scanner" }).click();
+  await expect(page.getByLabel("Saisir le code EAN manuellement")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Rechercher" })).toBeDisabled();
 });
 
 test("création d'un employé puis d'un créneau", async ({ page }) => {

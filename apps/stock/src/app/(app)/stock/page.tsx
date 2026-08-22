@@ -50,7 +50,19 @@ async function StockContent() {
     db.stockItem.findMany({
       where: { deletedAt: null },
       orderBy: { name: "asc" },
-      include: { lots: { where: { quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } } },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        unit: true,
+        minThreshold: true,
+        costPrice: true,
+        allergens: true,
+        barcode: true,
+        imageMimeType: true,
+        updatedAt: true,
+        lots: { where: { quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } },
+      },
     }),
     // Valorisation du stock (quantité × PMP) en SQL.
     db.$queryRaw<{ value: string | null }[]>`
@@ -72,6 +84,8 @@ async function StockContent() {
     costPrice: item.costPrice.toString(),
     allergens: item.allergens ?? "",
     barcode: item.barcode ?? "",
+    hasImage: Boolean(item.imageMimeType),
+    imageVersion: item.updatedAt.getTime().toString(),
     lots: item.lots.map((lot) => ({
       id: lot.id,
       lotNumber: lot.lotNumber ?? "",
