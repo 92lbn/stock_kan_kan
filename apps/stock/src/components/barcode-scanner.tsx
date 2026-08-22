@@ -3,45 +3,44 @@
 import { useEffect, useRef, useState } from "react";
 import type { IScannerControls } from "@zxing/browser";
 
-type CameraCapabilities = MediaTrackCapabilities & {
-  focusMode?: string[];
-};
 type CameraFocusMode = "continuous" | "single-shot";
+type CameraCapabilities = MediaTrackCapabilities & { focusMode?: string[]; torch?: boolean };
+type CameraAdvancedConstraints = MediaTrackConstraintSet & {
+  focusMode?: CameraFocusMode;
+  torch?: boolean;
+};
 
-function cameraConstraints(focusMode?: CameraFocusMode, deviceId?: string, strictRear = true): MediaTrackConstraints {
-  const cameraOptions: Record<string, string> = {};
-  if (focusMode) cameraOptions.focusMode = focusMode;
+const SAVED_CAMERA_KEY = "kan-kan-stock-scanner-camera";
 
+function cameraConstraints(deviceId?: string, strictRear = true): MediaTrackConstraints {
   return {
     ...(deviceId
       ? { deviceId: { exact: deviceId } }
       : { facingMode: strictRear ? { exact: "environment" } : { ideal: "environment" } }),
     width: { ideal: 1920 },
     height: { ideal: 1080 },
-    ...(Object.keys(cameraOptions).length > 0 ? { advanced: [cameraOptions] } : {}),
-  } as unknown as MediaTrackConstraints;
+  };
 }
 
-async function applyCameraSettings(track: MediaStreamTrack, focusMode?: CameraFocusMode) {
-  await track.applyConstraints(cameraConstraints(focusMode, track.getSettings().deviceId));
+async function applyCameraSettings(
+  track: MediaStreamTrack,
+  settings: { focusMode?: CameraFocusMode; torch?: boolean },
+) {
+  const advanced: CameraAdvancedConstraints = {};
+  if (settings.focusMode) advanced.focusMode = settings.focusMode;
+  if (settings.torch !== undefined) advanced.torch = settings.torch;
+  if (Object.keys(advanced).length > 0) {
+    await track.applyConstraints({ advanced: [advanced] });
+  }
 }
 
-function findPrimaryRearCamera(devices: MediaDeviceInfo[], activeDeviceId?: string) {
-  const cameras = devices.filter((device) => device.kind === "videoinput");
-  const rearCameras = cameras.filter((device) => {
-    const label = device.label.toLocaleLowerCase();
-    return /back|rear|environment|arrière/.test(label) && !/front|user|avant/.test(label);
-  });
-  const preferred = rearCameras.find((device) => {
-    const label = device.label.toLocaleLowerCase();
-    return /camera2\s*0|main|primary|principal/.test(label) && !/ultra|tele|macro|depth/.test(label);
-  });
-  return preferred?.deviceId ?? activeDeviceId;
+function cameraLabel(camera: MediaDeviceInfo, index: number, activeCameraId: string | null) {
+  const base = camera.label.trim() || `Caméra ${index + 1}`;
+  return camera.deviceId === activeCameraId ? `${base} — utilisée` : base;
 }
 
-// Scan via la caméra du navigateur (getUserMedia) + décodage ZXing en JS.
-// Fonctionne sur iPhone/Safari comme sur Android, MAIS uniquement en contexte
-// sécurisé (HTTPS ou localhost) — sinon le navigateur bloque la caméra.
+// Le standard Web ne distingue pas l'objectif principal sur les mobiles
+// multi-capteurs : l'utilisateur peut choisir l'objectif et ce choix est mémorisé.
 export function BarcodeScanner({
   onDetected,
   onError,
@@ -58,9 +57,12 @@ export function BarcodeScanner({
   const focusTimerRef = useRef<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [canRefocus, setCanRefocus] = useState(false);
-  const [canUseTorch, setCanUseTorch] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [cameraStatus, setCameraStatus] = useState<string | null>(null);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [activeCameraId, setActiveCameraId] = useState<string | null>(null);
+  const [requestedCameraId, setRequestedCameraId] = useState<string | null>(null);
 
   useEffect(() => {
     onDetectedRef.current = onDetected;
@@ -72,13 +74,35 @@ export function BarcodeScanner({
     let stream: MediaStream | null = null;
     let done = false;
 
+    async function openCamera(deviceId?: string) {
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          video: cameraConstraints(deviceId),
+          audio: false,
+        });
+      } catch (error) {
+        if (deviceId) throw error;
+        return navigator.mediaDevices.getUserMedia({
+          video: cameraConstraints(undefined, false),
+          audio: false,
+        });
+      }
+    }
+
     async function start() {
+      setMsg(null);
+      setCameraReady(false);
+      setTorchOn(false);
+      setCanRefocus(false);
+      continuousFocusRef.current = false;
+
       if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
         const m = "La caméra nécessite HTTPS (ou localhost). En production (Vercel), le scan fonctionnera.";
         setMsg(m);
         onErrorRef.current?.(m);
         return;
       }
+
       try {
         const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([
           import("@zxing/browser"),
@@ -97,59 +121,56 @@ export function BarcodeScanner({
           delayBetweenScanAttempts: 80,
           delayBetweenScanSuccess: 500,
         });
-        // On ouvre strictement une caméra arrière pour obtenir les libellés, puis
-        // on privilégie le capteur principal quand Android l'identifie clairement.
-        let initialStream: MediaStream;
-        try {
-          initialStream = await navigator.mediaDevices.getUserMedia({
-            video: cameraConstraints("continuous"),
-          });
-        } catch {
-          // Ordinateurs et anciens navigateurs sans notion avant/arrière.
-          initialStream = await navigator.mediaDevices.getUserMedia({
-            video: cameraConstraints("continuous", undefined, false),
-          });
-        }
-        const initialTrack = initialStream.getVideoTracks()[0];
-        const activeDeviceId = initialTrack?.getSettings().deviceId;
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const primaryDeviceId = findPrimaryRearCamera(devices, activeDeviceId);
 
-        if (primaryDeviceId && activeDeviceId && primaryDeviceId !== activeDeviceId) {
-          initialStream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: cameraConstraints("continuous", primaryDeviceId),
-          });
-        } else {
-          stream = initialStream;
-        }
+        stream = await openCamera(requestedCameraId ?? undefined);
+        let availableCameras = (await navigator.mediaDevices.enumerateDevices()).filter(
+          (device) => device.kind === "videoinput",
+        );
 
-        controls = await reader.decodeFromStream(
-          stream,
-          videoRef.current!,
-          (result, _err, ctrl) => {
-            if (result && !done) {
-              done = true;
-              ctrl.stop();
-              onDetectedRef.current(result.getText());
+        if (!requestedCameraId) {
+          const savedCameraId = window.localStorage.getItem(SAVED_CAMERA_KEY);
+          if (savedCameraId && availableCameras.some((camera) => camera.deviceId === savedCameraId)) {
+            const currentId = stream.getVideoTracks()[0]?.getSettings().deviceId;
+            if (currentId !== savedCameraId) {
+              stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
+              stream = await openCamera(savedCameraId);
             }
           }
-        );
+        }
+
+        if (done) {
+          stream.getTracks().forEach((mediaTrack) => mediaTrack.stop());
+          return;
+        }
+
+        controls = await reader.decodeFromStream(stream, videoRef.current!, (result, _err, ctrl) => {
+          if (result && !done) {
+            done = true;
+            ctrl.stop();
+            onDetectedRef.current(result.getText());
+          }
+        });
         controlsRef.current = controls;
-        setCanUseTorch(typeof controls.switchTorch === "function");
-        // Après autorisation, on n'applique que les réglages réellement exposés
-        // par la caméra. Les navigateurs plus anciens continuent avec leurs défauts.
-        const track = (videoRef.current?.srcObject as MediaStream | null)?.getVideoTracks?.()[0];
-        trackRef.current = track ?? null;
+
+        const track = stream.getVideoTracks()[0] ?? null;
+        trackRef.current = track;
+        const selectedId = track?.getSettings().deviceId ?? null;
+        setActiveCameraId(selectedId);
+        setCameraReady(Boolean(track));
+
+        availableCameras = (await navigator.mediaDevices.enumerateDevices()).filter(
+          (device) => device.kind === "videoinput",
+        );
+        setCameras(availableCameras);
+
         try {
           if (track && typeof track.getCapabilities === "function") {
             const capabilities = track.getCapabilities() as CameraCapabilities;
             const focusModes = capabilities.focusMode ?? [];
             continuousFocusRef.current = focusModes.includes("continuous");
             setCanRefocus(focusModes.includes("single-shot"));
-
             if (continuousFocusRef.current) {
-              await applyCameraSettings(track, "continuous");
+              await applyCameraSettings(track, { focusMode: "continuous" });
             }
           }
         } catch {
@@ -163,7 +184,7 @@ export function BarcodeScanner({
       }
     }
 
-    start();
+    void start();
     return () => {
       done = true;
       if (focusTimerRef.current !== null) window.clearTimeout(focusTimerRef.current);
@@ -172,19 +193,27 @@ export function BarcodeScanner({
       controls?.stop();
       stream?.getTracks().forEach((mediaTrack) => mediaTrack.stop());
     };
-  }, []);
+  }, [requestedCameraId]);
+
+  function changeCamera(deviceId: string) {
+    if (!deviceId || deviceId === activeCameraId) return;
+    window.localStorage.setItem(SAVED_CAMERA_KEY, deviceId);
+    setCameraStatus("Changement de caméra…");
+    setCameraReady(false);
+    setRequestedCameraId(deviceId);
+  }
 
   async function refocus() {
     const track = trackRef.current;
     if (!track) return;
     setCameraStatus("Mise au point en cours…");
     try {
-      await applyCameraSettings(track, "single-shot");
+      await applyCameraSettings(track, { focusMode: "single-shot", torch: torchOn });
       setCameraStatus("Mise au point relancée.");
       if (focusTimerRef.current !== null) window.clearTimeout(focusTimerRef.current);
       if (continuousFocusRef.current) {
         focusTimerRef.current = window.setTimeout(() => {
-          void applyCameraSettings(track, "continuous").catch(() => undefined);
+          void applyCameraSettings(track, { focusMode: "continuous", torch: torchOn }).catch(() => undefined);
         }, 1200);
       }
     } catch {
@@ -193,28 +222,32 @@ export function BarcodeScanner({
   }
 
   async function toggleTorch() {
-    const switchTorch = controlsRef.current?.switchTorch;
-    if (!switchTorch) return;
+    const track = trackRef.current;
+    if (!track) return;
     const nextState = !torchOn;
     setCameraStatus(nextState ? "Activation du flash…" : "Extinction du flash…");
     try {
-      await switchTorch(nextState);
+      try {
+        await applyCameraSettings(track, {
+          focusMode: continuousFocusRef.current ? "continuous" : undefined,
+          torch: nextState,
+        });
+      } catch {
+        const switchTorch = controlsRef.current?.switchTorch;
+        if (!switchTorch) throw new Error("torch-unavailable");
+        await switchTorch(nextState);
+      }
       setTorchOn(nextState);
       setCameraStatus(nextState ? "Flash activé." : "Flash éteint.");
     } catch {
-      setCameraStatus("Le flash n’est pas disponible sur cet appareil.");
+      setCameraStatus("Cet objectif ne permet pas d’utiliser le flash. Essaie une autre caméra ci-dessus.");
     }
   }
 
   return (
     <div>
       <div className="relative overflow-hidden rounded-lg bg-black">
-        <video
-          ref={videoRef}
-          className="aspect-video w-full object-cover"
-          muted
-          playsInline
-        />
+        <video ref={videoRef} className="aspect-video w-full object-cover" muted playsInline />
         {!msg && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="h-[120px] w-[min(300px,calc(100%-2rem))] rounded-lg border-2 border-white/90 shadow-[0_0_0_100vmax_rgba(0,0,0,0.4)]" />
@@ -228,8 +261,30 @@ export function BarcodeScanner({
           <p className="mt-2 text-center text-sm text-muted">
             Garde le code à environ 15–25 cm, à l’horizontale dans le cadre, puis reste immobile.
           </p>
-          {(canRefocus || canUseTorch) && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {cameras.length > 1 && (
+            <div className="mt-3">
+              <label htmlFor="scanner-camera" className="mb-1 block text-sm font-medium text-ink">
+                Caméra utilisée
+              </label>
+              <select
+                id="scanner-camera"
+                value={activeCameraId ?? ""}
+                onChange={(event) => changeCamera(event.target.value)}
+                className="min-h-11 w-full rounded-md border border-line-strong bg-card px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                {cameras.map((camera, index) => (
+                  <option key={camera.deviceId} value={camera.deviceId}>
+                    {cameraLabel(camera, index, activeCameraId)}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-muted">
+                Choisis l’objectif net à courte distance : ce choix restera mémorisé sur cet appareil.
+              </p>
+            </div>
+          )}
+          {cameraReady && (
+            <div className={`mt-3 grid gap-3 ${canRefocus ? "sm:grid-cols-2" : ""}`}>
               {canRefocus && (
                 <button
                   type="button"
@@ -239,19 +294,21 @@ export function BarcodeScanner({
                   Refaire la mise au point
                 </button>
               )}
-              {canUseTorch && (
-                <button
-                  type="button"
-                  onClick={() => void toggleTorch()}
-                  aria-pressed={torchOn}
-                  className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                >
-                  {torchOn ? "Éteindre le flash" : "Activer le flash"}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => void toggleTorch()}
+                aria-pressed={torchOn}
+                className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                {torchOn ? "Éteindre le flash" : "Activer le flash"}
+              </button>
             </div>
           )}
-          {cameraStatus && <p role="status" className="mt-2 text-center text-sm text-muted">{cameraStatus}</p>}
+          {cameraStatus && (
+            <p role="status" className="mt-2 text-center text-sm text-muted">
+              {cameraStatus}
+            </p>
+          )}
         </>
       )}
     </div>
