@@ -44,15 +44,16 @@ const movementSchema = z.object({
   lotNumber: z.string().trim().max(80).optional(),
   note: z.string().trim().max(500).optional(),
 });
+const barcodeSchema = z.string().trim().min(1).max(64);
 
 const asDateOnly = (ymd: string) => new Date(`${ymd}T00:00:00.000Z`);
 
 export async function findStockItemByBarcode(barcode: string) {
   await requireStockAccess();
-  const code = barcode.trim();
-  if (!code) return null;
+  const parsed = barcodeSchema.safeParse(barcode);
+  if (!parsed.success) return null;
   const item = await db.stockItem.findFirst({
-    where: { barcode: code, deletedAt: null },
+    where: { barcode: parsed.data, deletedAt: null },
     select: { id: true, name: true, unit: true, category: true, lots: { where: { quantity: { gt: 0 } } } },
   });
   if (!item) return null;
@@ -136,15 +137,19 @@ export async function updateStockItem(itemId: string, _state: ActionState, formD
 
 export async function deleteStockItem(itemId: string) {
   const actor = await requireStockAccess();
-  const before = await db.stockItem.findFirst({ where: { id: itemId, deletedAt: null } });
-  if (!before) return;
-  await db.stockItem.update({ where: { id: itemId }, data: { deletedAt: new Date() } });
-  await logAudit({ userId: actor.id, action: "stock.delete", entity: "StockItem", entityId: itemId, before });
+  const parsedId = IdSchema.safeParse(itemId);
+  if (!parsedId.success) return { error: "Article invalide." };
+  const before = await db.stockItem.findFirst({ where: { id: parsedId.data, deletedAt: null } });
+  if (!before) return { error: "Article introuvable." };
+  await db.stockItem.update({ where: { id: parsedId.data }, data: { deletedAt: new Date() } });
+  await logAudit({ userId: actor.id, action: "stock.delete", entity: "StockItem", entityId: parsedId.data, before });
   revalidateStock();
 }
 
 export async function recordStockMovement(stockItemId: string, _state: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireStockAccess();
+  const parsedId = IdSchema.safeParse(stockItemId);
+  if (!parsedId.success) return { error: "Article invalide." };
   const parsed = movementSchema.safeParse({
     type: formData.get("type"), quantity: formData.get("quantity"), unitCost: formData.get("unitCost") || undefined,
     expiryDate: formData.get("expiryDate") || undefined, lotNumber: formData.get("lotNumber") || undefined,
@@ -153,42 +158,42 @@ export async function recordStockMovement(stockItemId: string, _state: ActionSta
   if (!parsed.success) return { error: "Quantité ou DLC invalide." };
   const quantity = new Prisma.Decimal(parsed.data.quantity);
   if (parsed.data.type !== "ADJUSTMENT" && quantity.eq(0)) return { error: "La quantité doit être positive." };
-  if ((parsed.data.type === "IN" || parsed.data.type === "ADJUSTMENT") && !parsed.data.expiryDate) {
+  if ((parsed.data.type === "IN" || (parsed.data.type === "ADJUSTMENT" && quantity.gt(0))) && !parsed.data.expiryDate) {
     return { error: "La DLC est requise pour une entrée ou une correction." };
   }
   try {
     await db.$transaction(async (tx) => {
-      const item = await tx.stockItem.findFirst({ where: { id: stockItemId, deletedAt: null }, select: { name: true, unit: true, quantity: true, costPrice: true } });
+      const item = await tx.stockItem.findFirst({ where: { id: parsedId.data, deletedAt: null }, select: { name: true, unit: true, quantity: true, costPrice: true } });
       if (!item) throw new MovementError("Article introuvable.");
       if (parsed.data.type === "OUT") {
-        const lots = await tx.stockLot.findMany({ where: { stockItemId, quantity: { gt: 0 } }, orderBy: [{ expiryDate: "asc" }, { createdAt: "asc" }] });
+        const lots = await tx.stockLot.findMany({ where: { stockItemId: parsedId.data, quantity: { gt: 0 } }, orderBy: [{ expiryDate: "asc" }, { createdAt: "asc" }] });
         const plan = planFefo(lots, quantity);
         if (plan.missing.gt(0)) {
           const available = quantity.minus(plan.missing);
           throw new MovementError(`Stock insuffisant : ${formatQuantity(available)} ${item.unit} disponible(s).`);
         }
-        const itemUpdate = await tx.stockItem.updateMany({ where: { id: stockItemId, deletedAt: null, quantity: { gte: quantity } }, data: { quantity: { decrement: quantity } } });
+        const itemUpdate = await tx.stockItem.updateMany({ where: { id: parsedId.data, deletedAt: null, quantity: { gte: quantity } }, data: { quantity: { decrement: quantity } } });
         if (itemUpdate.count !== 1) throw new MovementError("Le stock vient d’être modifié. Réessaie.");
         for (const allocation of plan.allocations) {
           const updated = await tx.stockLot.updateMany({ where: { id: allocation.lotId, quantity: { gte: allocation.quantity } }, data: { quantity: { decrement: allocation.quantity } } });
           if (updated.count !== 1) throw new MovementError("Le stock vient d’être modifié. Réessaie.");
         }
       } else if (parsed.data.type === "IN") {
-        await tx.stockLot.create({ data: { stockItemId, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
+        await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
         const data: Prisma.StockItemUpdateManyMutationInput = { quantity: { increment: quantity } };
         if (parsed.data.unitCost) {
           const newQty = item.quantity.plus(quantity);
           data.costPrice = item.quantity.times(item.costPrice).plus(quantity.times(parsed.data.unitCost)).div(newQty).toDecimalPlaces(2);
         }
-        const updated = await tx.stockItem.updateMany({ where: { id: stockItemId, deletedAt: null }, data });
+        const updated = await tx.stockItem.updateMany({ where: { id: parsedId.data, deletedAt: null }, data });
         if (updated.count !== 1) throw new MovementError("Article introuvable.");
       } else {
-        await tx.stockLot.updateMany({ where: { stockItemId }, data: { quantity: new Prisma.Decimal(0) } });
-        if (quantity.gt(0)) await tx.stockLot.create({ data: { stockItemId, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
-        await tx.stockItem.update({ where: { id: stockItemId }, data: { quantity } });
+        await tx.stockLot.updateMany({ where: { stockItemId: parsedId.data }, data: { quantity: new Prisma.Decimal(0) } });
+        if (quantity.gt(0)) await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
+        await tx.stockItem.update({ where: { id: parsedId.data }, data: { quantity } });
       }
-      await tx.stockMovement.create({ data: { stockItemId, type: parsed.data.type, quantity, unitCost: parsed.data.unitCost, note: parsed.data.note, createdById: actor.id } });
-      await tx.auditLog.create({ data: auditData({ userId: actor.id, action: `stock.movement.${parsed.data.type.toLowerCase()}`, entity: "StockItem", entityId: stockItemId, after: parsed.data }) });
+      await tx.stockMovement.create({ data: { stockItemId: parsedId.data, type: parsed.data.type, quantity, unitCost: parsed.data.unitCost, note: parsed.data.note, createdById: actor.id } });
+      await tx.auditLog.create({ data: auditData({ userId: actor.id, action: `stock.movement.${parsed.data.type.toLowerCase()}`, entity: "StockItem", entityId: parsedId.data, after: parsed.data }) });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {
     if (error instanceof MovementError) return { error: error.message };

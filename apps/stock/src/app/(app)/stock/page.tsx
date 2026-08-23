@@ -16,7 +16,6 @@ export default function StockPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ink">Stock</h1>
         <div className="flex items-center gap-3 text-sm">
-          <StockScan />
           <Link href="/stock/mouvements" className="font-medium text-accent hover:underline">
             Historique
           </Link>
@@ -96,6 +95,7 @@ async function StockContent() {
 
   return (
     <>
+      <StockScan items={items} />
       <p className="text-sm text-muted">
         <span className="num">{items.length}</span> article(s) · valeur{" "}
         <span className="num font-medium text-ink">{formatEUR(stockValue)}</span>
