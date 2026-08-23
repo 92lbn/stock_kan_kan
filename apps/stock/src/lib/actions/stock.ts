@@ -12,8 +12,11 @@ import { planFefo } from "@stock-kan-kan/lib/stock-lots";
 import { auditData, logAudit } from "@stock-kan-kan/lib/audit";
 import { parseProductImageDataUrl } from "@stock-kan-kan/lib/product-image";
 import { IdSchema } from "@stock-kan-kan/lib/schemas";
+import { internalBarcodeForItemId } from "@/lib/code128";
 
 class MovementError extends Error {}
+
+export type BarcodeActionState = { error?: string; barcode?: string } | undefined;
 
 const decimal3 = z.string().trim().regex(/^\d{1,9}(?:[.,]\d{1,3})?$/).transform((v) => v.replace(",", "."));
 const decimal2 = z.string().trim().regex(/^\d{1,10}(?:[.,]\d{1,2})?$/).transform((v) => v.replace(",", "."));
@@ -59,6 +62,54 @@ export async function findStockItemByBarcode(barcode: string) {
   if (!item) return null;
   const quantity = item.lots.reduce((sum, lot) => sum.plus(lot.quantity), new Prisma.Decimal(0));
   return { id: item.id, name: item.name, unit: item.unit, category: item.category as string, quantity: quantity.toString() };
+}
+
+export async function createInternalBarcode(
+  itemId: string,
+  _state: BarcodeActionState,
+  _formData: FormData,
+): Promise<BarcodeActionState> {
+  const actor = await requireStockAccess();
+  void _state;
+  void _formData;
+  const parsedId = IdSchema.safeParse(itemId);
+  if (!parsedId.success) return { error: "Article invalide." };
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const before = await tx.stockItem.findFirst({
+        where: { id: parsedId.data, deletedAt: null },
+        select: { id: true, name: true, barcode: true },
+      });
+      if (!before) return { error: "Article introuvable." };
+      if (before.barcode?.startsWith("KAN-")) return { barcode: before.barcode };
+      if (before.barcode) return { error: "Ce produit possède déjà un code-barres fabricant." };
+
+      const barcode = internalBarcodeForItemId(before.id);
+      const updated = await tx.stockItem.updateMany({
+        where: { id: before.id, deletedAt: null, barcode: null },
+        data: { barcode },
+      });
+      if (updated.count !== 1) return { error: "La fiche vient d’être modifiée. Réessaie." };
+      await tx.auditLog.create({
+        data: auditData({
+          userId: actor.id,
+          action: "stock.internal_barcode.create",
+          entity: "StockItem",
+          entityId: before.id,
+          before,
+          after: { ...before, barcode },
+        }),
+      });
+      return { barcode };
+    });
+    if (result.error) return { error: result.error };
+    revalidateStock();
+    return { barcode: result.barcode };
+  } catch (error) {
+    console.error("stock_internal_barcode_failed", error);
+    return { error: "L’étiquette n’a pas pu être créée. Réessaie." };
+  }
 }
 
 export async function createStockItem(_state: ActionState, formData: FormData): Promise<ActionState> {

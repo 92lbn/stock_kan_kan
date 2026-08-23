@@ -16,6 +16,7 @@ import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@stock-kan-kan/lib/utils";
 import { classifyExpiry, daysUntilExpiry, type ExpiryGroup } from "@stock-kan-kan/lib/expiry";
 import { ProductPhotoField } from "@/components/product-photo-field";
+import { InternalBarcodeLabel } from "@/components/internal-barcode-label";
 
 export type StockItem = {
   id: string;
@@ -283,6 +284,10 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
           {fr(item.quantity)} <span className="text-base font-normal text-muted">{item.unit}</span>
         </span>
       </div>
+
+      {(!item.barcode || item.barcode.startsWith("KAN-")) && (
+        <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
+      )}
 
       <div className="space-y-2">
         <h3 className="text-sm font-semibold text-ink">Lots par DLC</h3>

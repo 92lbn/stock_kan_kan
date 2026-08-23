@@ -30,3 +30,29 @@
   right: -12rem;
   top: -10rem;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  .barcode-print-area,
+  .barcode-print-area * {
+    visibility: visible !important;
+  }
+
+  .barcode-print-area {
+    position: fixed !important;
+    inset: 0 auto auto 0 !important;
+    width: 80mm !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  @page {
+    size: 80mm 40mm;
+    margin: 3mm;
+  }
+}
