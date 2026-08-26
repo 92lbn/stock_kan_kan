@@ -142,7 +142,7 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
       {filtered.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted">Aucun article ne correspond.</p>
       ) : (
-        <ul className="mt-2 overflow-hidden rounded-xl border border-line bg-card shadow-sm">
+        <ul className="mt-2 grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-sm lg:grid-cols-2 lg:gap-2 lg:overflow-visible lg:border-0 lg:bg-transparent lg:shadow-none 2xl:grid-cols-3">
           {filtered.map((item) => (
             <StockLine key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
           ))}
@@ -198,11 +198,11 @@ function Chip({
 function StockLine({ item, onOpen }: { item: StockItem; onOpen: () => void }) {
   const status = statusOf(item);
   return (
-    <li>
+    <li className="bg-card lg:overflow-hidden lg:rounded-lg lg:border lg:border-line lg:shadow-sm">
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full items-center gap-3 border-l-2 px-3 py-3 text-left transition-colors hover:bg-card-2"
+        className="flex min-h-16 w-full items-center gap-3 border-l-2 px-3 py-2 text-left transition-colors hover:bg-card-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
         style={{
           borderLeftColor:
             status === "out"

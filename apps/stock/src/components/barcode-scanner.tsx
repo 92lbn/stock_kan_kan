@@ -245,72 +245,80 @@ export function BarcodeScanner({
   }
 
   return (
-    <div>
-      <div className="relative overflow-hidden rounded-lg bg-black">
-        <video ref={videoRef} className="aspect-video w-full object-cover" muted playsInline />
+    <div className="stock-scanner-layout">
+      <div className="stock-scanner-preview relative overflow-hidden rounded-lg bg-black">
+        <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
         {!msg && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="h-[120px] w-[min(300px,calc(100%-2rem))] rounded-lg border-2 border-white/90 shadow-[0_0_0_100vmax_rgba(0,0,0,0.4)]" />
           </div>
         )}
       </div>
-      {msg ? (
-        <p className="mt-2 text-sm text-danger">{msg}</p>
-      ) : (
-        <>
-          <p className="mt-2 text-center text-sm text-muted">
-            Garde le code à environ 15–25 cm, à l’horizontale dans le cadre, puis reste immobile.
-          </p>
-          {cameras.length > 1 && (
-            <div className="mt-3">
-              <label htmlFor="scanner-camera" className="mb-1 block text-sm font-medium text-ink">
-                Caméra utilisée
-              </label>
-              <select
-                id="scanner-camera"
-                value={activeCameraId ?? ""}
-                onChange={(event) => changeCamera(event.target.value)}
-                className="min-h-11 w-full rounded-md border border-line-strong bg-card px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                {cameras.map((camera, index) => (
-                  <option key={camera.deviceId} value={camera.deviceId}>
-                    {cameraLabel(camera, index, activeCameraId)}
-                  </option>
-                ))}
-              </select>
+      <div className="stock-scanner-help">
+        {msg ? (
+          <div className="rounded-lg border border-danger/30 bg-card-2 p-4">
+            <p className="font-medium text-danger">Caméra indisponible</p>
+            <p className="mt-1 text-sm text-muted">{msg}</p>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-lg border border-line bg-card-2 p-3">
+              <p className="font-medium text-ink">Bien positionner le code</p>
               <p className="mt-1 text-sm text-muted">
-                Choisis l’objectif net à courte distance : ce choix restera mémorisé sur cet appareil.
+                Garde-le à environ 15–25 cm, à l’horizontale dans le cadre, puis reste immobile.
               </p>
             </div>
-          )}
-          {cameraReady && (
-            <div className={`mt-3 grid gap-3 ${canRefocus ? "sm:grid-cols-2" : ""}`}>
-              {canRefocus && (
+            {cameras.length > 1 && (
+              <div className="mt-3">
+                <label htmlFor="scanner-camera" className="mb-1 block text-sm font-medium text-ink">
+                  Caméra utilisée
+                </label>
+                <select
+                  id="scanner-camera"
+                  value={activeCameraId ?? ""}
+                  onChange={(event) => changeCamera(event.target.value)}
+                  className="min-h-11 w-full rounded-md border border-line-strong bg-card px-3 py-2 text-sm text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                >
+                  {cameras.map((camera, index) => (
+                    <option key={camera.deviceId} value={camera.deviceId}>
+                      {cameraLabel(camera, index, activeCameraId)}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-sm text-muted">
+                  Choisis l’objectif net à courte distance : ce choix restera mémorisé sur cet appareil.
+                </p>
+              </div>
+            )}
+            {cameraReady && (
+              <div className={`mt-3 grid gap-3 ${canRefocus ? "sm:grid-cols-2 lg:grid-cols-1" : ""}`}>
+                {canRefocus && (
+                  <button
+                    type="button"
+                    onClick={() => void refocus()}
+                    className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                  >
+                    Refaire la mise au point
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => void refocus()}
+                  onClick={() => void toggleTorch()}
+                  aria-pressed={torchOn}
                   className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
-                  Refaire la mise au point
+                  {torchOn ? "Éteindre le flash" : "Activer le flash"}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => void toggleTorch()}
-                aria-pressed={torchOn}
-                className="min-h-11 rounded-md border border-line-strong bg-card px-3 py-2 text-sm font-medium text-ink hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-              >
-                {torchOn ? "Éteindre le flash" : "Activer le flash"}
-              </button>
-            </div>
-          )}
-          {cameraStatus && (
-            <p role="status" className="mt-2 text-center text-sm text-muted">
-              {cameraStatus}
-            </p>
-          )}
-        </>
-      )}
+              </div>
+            )}
+            {cameraStatus && (
+              <p role="status" className="mt-2 text-sm text-muted">
+                {cameraStatus}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

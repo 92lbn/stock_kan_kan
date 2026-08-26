@@ -8,11 +8,13 @@ export function Sheet({
   open,
   onClose,
   title,
+  size = "default",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
+  size?: "default" | "wide";
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -30,14 +32,20 @@ export function Sheet({
       onClose={onClose}
       onCancel={onClose}
       aria-label={title}
-      className="fixed inset-x-0 bottom-0 top-auto m-0 mx-auto w-full max-w-lg bg-transparent p-0 backdrop:bg-black/50"
+      className={`fixed inset-x-0 bottom-0 top-auto m-0 mx-auto w-full max-w-lg bg-transparent p-0 backdrop:bg-black/50 ${
+        size === "wide"
+          ? "lg:bottom-auto lg:top-1/2 lg:w-[min(94vw,72rem)] lg:max-w-none lg:-translate-y-1/2"
+          : ""
+      }`}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
       {open && (
         <div
-          className="max-h-[86vh] overflow-y-auto rounded-t-2xl border-t border-line bg-card px-4 pt-3 text-ink shadow-lg"
+          className={`max-h-[86vh] overflow-y-auto rounded-t-2xl border-t border-line bg-card px-4 pt-3 text-ink shadow-lg ${
+            size === "wide" ? "lg:max-h-[90vh] lg:rounded-2xl lg:border" : ""
+          }`}
           style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
         >
           <div className="sticky top-0 -mx-4 mb-2 bg-card px-4 pb-2 pt-1">
@@ -49,7 +57,7 @@ export function Sheet({
                   type="button"
                   onClick={onClose}
                   aria-label="Fermer"
-                  className="grid h-8 w-8 place-items-center rounded-md text-muted hover:bg-card-2"
+                  className="grid h-11 w-11 place-items-center rounded-md text-muted hover:bg-card-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                   ✕
                 </button>

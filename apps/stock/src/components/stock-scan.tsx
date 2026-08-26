@@ -156,8 +156,11 @@ export function StockScan({ items }: { items: QuickStockItem[] }) {
       : OPERATION_LABELS[operation].title;
 
   return (
-    <section aria-labelledby="stock-actions-title" className="rounded-xl border border-line bg-card p-3 shadow-sm">
-      <div className="mb-3">
+    <section
+      aria-labelledby="stock-actions-title"
+      className="rounded-xl border border-line bg-card p-3 shadow-sm lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-center lg:gap-4 lg:p-4"
+    >
+      <div className="mb-3 lg:mb-0">
         <h2 id="stock-actions-title" className="font-semibold text-ink">Que veux-tu faire ?</h2>
         <p className="text-sm text-muted">Une action, un produit, une quantité.</p>
       </div>
@@ -168,7 +171,7 @@ export function StockScan({ items }: { items: QuickStockItem[] }) {
               key={value}
               type="button"
               onClick={() => openOperation(value)}
-              className="min-h-20 rounded-lg border border-line-strong bg-card-2 px-2 py-3 text-center text-ink transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              className="min-h-20 rounded-lg border border-line-strong bg-card-2 px-2 py-3 text-center text-ink transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent lg:min-h-16 lg:py-2"
             >
               <span aria-hidden="true" className="mx-auto mb-1 grid h-8 w-8 place-items-center rounded-full bg-accent text-lg font-bold text-accent-ink">
                 {details.symbol}
@@ -180,7 +183,7 @@ export function StockScan({ items }: { items: QuickStockItem[] }) {
         )}
       </div>
 
-      <Sheet open={open} onClose={close} title={sheetTitle}>
+      <Sheet open={open} onClose={close} title={sheetTitle} size={step === "scan" ? "wide" : "default"}>
         <div className="pb-2">
           {status && <p role="status" className="mb-3 rounded-lg border border-line bg-card-2 px-3 py-2 text-sm text-ink">✓ {status}</p>}
 

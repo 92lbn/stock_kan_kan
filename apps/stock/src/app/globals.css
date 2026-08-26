@@ -31,6 +31,33 @@
   top: -10rem;
 }
 
+.stock-scanner-preview {
+  aspect-ratio: 16 / 9;
+}
+
+.stock-scanner-help {
+  margin-top: 0.75rem;
+}
+
+@media (min-width: 900px) and (orientation: landscape) {
+  .stock-scanner-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+    align-items: start;
+    gap: 1rem;
+  }
+
+  .stock-scanner-preview {
+    width: min(100%, calc(90vh - 7rem));
+    aspect-ratio: 1;
+    justify-self: center;
+  }
+
+  .stock-scanner-help {
+    margin-top: 0;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden !important;
