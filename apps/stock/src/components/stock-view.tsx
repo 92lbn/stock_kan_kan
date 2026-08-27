@@ -172,7 +172,7 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
         +
       </button>
 
-      <Sheet open={!!openItem} onClose={() => setOpenId(null)} title={openItem?.name}>
+      <Sheet open={!!openItem} onClose={() => setOpenId(null)} title={openItem?.name} size="compact">
         {openItem && (
           <ItemActions
             item={openItem}
@@ -336,20 +336,76 @@ function ItemActions({
     wasEditing.current = editPending;
   }, [editPending, editState]);
 
+  if (editing) {
+    return (
+      <div className="space-y-3 pb-2">
+        <form action={editAction} className="space-y-3">
+          <div>
+            <Label htmlFor={`e-name-${item.id}`}>Nom</Label>
+            <Input id={`e-name-${item.id}`} name="name" defaultValue={item.name} required />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label htmlFor={`e-cat-${item.id}`}>Catégorie</Label>
+              <Select id={`e-cat-${item.id}`} name="category" defaultValue={item.category}>
+                {CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor={`e-unit-${item.id}`}>Unité</Label>
+              <Input id={`e-unit-${item.id}`} name="unit" defaultValue={item.unit} required />
+            </div>
+            <div>
+              <Label htmlFor={`e-thr-${item.id}`}>Seuil</Label>
+              <Input id={`e-thr-${item.id}`} name="minThreshold" type="number" step="any" min="0" defaultValue={item.minThreshold} required />
+            </div>
+            <div>
+              <Label htmlFor={`e-alg-${item.id}`}>Allergènes</Label>
+              <Input id={`e-alg-${item.id}`} name="allergens" defaultValue={item.allergens} placeholder="gluten…" />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor={`e-bc-${item.id}`}>Code-barres</Label>
+              <BarcodeField id={`e-bc-${item.id}`} name="barcode" defaultValue={item.barcode} />
+            </div>
+          </div>
+          <ProductPhotoField existingSrc={item.hasImage ? imageSrc(item) : undefined} />
+          {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={editPending} className="min-h-11 flex-1">
+              {editPending ? "…" : "Enregistrer"}
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)} className="min-h-11">
+              Annuler
+            </Button>
+          </div>
+        </form>
+        {(!item.barcode || item.barcode.startsWith("KAN-")) && (
+          <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 pb-2">
-      {item.hasImage && (
-        <div className="overflow-hidden rounded-xl border border-line bg-card-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={imageSrc(item)} alt={`Photo de ${item.name}`} className="max-h-56 w-full object-contain" />
+    <div className="space-y-3 pb-1">
+      <div className="flex items-center gap-3 rounded-xl bg-card-2 p-2">
+        <div className="grid h-16 w-16 flex-none place-items-center overflow-hidden rounded-lg border border-line bg-card text-muted">
+          {item.hasImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageSrc(item)} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-2xl" aria-hidden="true">◇</span>
+          )}
         </div>
-      )}
-      {/* Quantité courante */}
-      <div className="flex items-end justify-between rounded-lg bg-card-2 px-4 py-3">
-        <span className="kpi-label">En stock</span>
-        <span className="num text-3xl font-bold text-ink">
-          {fr(item.quantity)} <span className="text-base font-normal text-muted">{item.unit}</span>
-        </span>
+        <div className="min-w-0 flex-1">
+          <span className="kpi-label">En stock</span>
+          <p className="num text-2xl font-bold text-ink">
+            {fr(item.quantity)} <span className="text-sm font-normal text-muted">{item.unit}</span>
+          </p>
+          <p className="truncate text-xs text-muted">{catLabel(item.category)}</p>
+        </div>
       </div>
 
       {/* Mouvement rapide */}
@@ -405,84 +461,40 @@ function ItemActions({
         </Button>
       </form>
 
-      <div className="space-y-2 border-t border-line pt-4">
-        <h3 className="text-sm font-semibold text-ink">Lots par DLC</h3>
-        {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
-          <ul className="divide-y divide-line rounded-md border border-line">
-            {item.lots.map((lot) => {
-              const days = daysUntilExpiry(lot.expiryDate, today);
-              const group = classifyExpiry(lot.expiryDate, today);
-              const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
-              return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
-                <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
-                <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
-              </li>;
-            })}
-          </ul>
-        )}
-      </div>
-
-      {(!item.barcode || item.barcode.startsWith("KAN-")) && (
-        <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
-      )}
-
-      {/* Édition de la fiche */}
-      {editing ? (
-        <form action={editAction} className="space-y-3 rounded-lg bg-card-2 p-3">
-          <div>
-            <Label htmlFor={`e-name-${item.id}`}>Nom</Label>
-            <Input id={`e-name-${item.id}`} name="name" defaultValue={item.name} required />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label htmlFor={`e-cat-${item.id}`}>Catégorie</Label>
-              <Select id={`e-cat-${item.id}`} name="category" defaultValue={item.category}>
-                {CATEGORIES.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor={`e-unit-${item.id}`}>Unité</Label>
-              <Input id={`e-unit-${item.id}`} name="unit" defaultValue={item.unit} required />
-            </div>
-            <div>
-              <Label htmlFor={`e-thr-${item.id}`}>Seuil</Label>
-              <Input id={`e-thr-${item.id}`} name="minThreshold" type="number" step="any" min="0" defaultValue={item.minThreshold} required />
-            </div>
-            <div>
-              <Label htmlFor={`e-alg-${item.id}`}>Allergènes</Label>
-              <Input id={`e-alg-${item.id}`} name="allergens" defaultValue={item.allergens} placeholder="gluten…" />
-            </div>
-            <div className="col-span-2">
-              <Label htmlFor={`e-bc-${item.id}`}>Code-barres</Label>
-              <BarcodeField id={`e-bc-${item.id}`} name="barcode" defaultValue={item.barcode} />
-            </div>
-          </div>
-          <ProductPhotoField existingSrc={item.hasImage ? imageSrc(item) : undefined} />
-          {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
-          <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={editPending} className="min-h-11">
-              {editPending ? "…" : "Enregistrer"}
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)} className="min-h-11">
-              Annuler
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <div className="flex items-center justify-between border-t border-line pt-3">
-          <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)} className="min-h-11">
-            Modifier la fiche
-          </Button>
-          <ConfirmAction
-            action={deleteStockItem.bind(null, item.id)}
-            message={`« ${item.name} » sera masqué (suppression réversible).`}
-          />
+      <details className="rounded-lg border border-line bg-card-2">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          Voir les lots et les détails
+          <span aria-hidden="true">⌄</span>
+        </summary>
+        <div className="space-y-3 border-t border-line p-3">
+          {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
+            <ul className="divide-y divide-line rounded-md border border-line bg-card">
+              {item.lots.map((lot) => {
+                const days = daysUntilExpiry(lot.expiryDate, today);
+                const group = classifyExpiry(lot.expiryDate, today);
+                const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
+                return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
+                  <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
+                  <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
+                </li>;
+              })}
+            </ul>
+          )}
+          {(!item.barcode || item.barcode.startsWith("KAN-")) && (
+            <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
+          )}
         </div>
-      )}
+      </details>
+
+      <div className="flex items-center justify-between border-t border-line pt-3">
+        <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)} className="min-h-11">
+          Modifier la fiche
+        </Button>
+        <ConfirmAction
+          action={deleteStockItem.bind(null, item.id)}
+          message={`« ${item.name} » sera masqué (suppression réversible).`}
+        />
+      </div>
     </div>
   );
 }

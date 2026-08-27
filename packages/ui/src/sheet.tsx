@@ -14,7 +14,7 @@ export function Sheet({
   open: boolean;
   onClose: () => void;
   title?: string;
-  size?: "default" | "wide";
+  size?: "default" | "compact" | "wide";
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -35,6 +35,8 @@ export function Sheet({
       className={`fixed inset-x-0 bottom-0 top-auto m-0 mx-auto w-full max-w-lg bg-transparent p-0 backdrop:bg-black/50 ${
         size === "wide"
           ? "lg:bottom-auto lg:top-1/2 lg:w-[min(94vw,72rem)] lg:max-w-none lg:-translate-y-1/2"
+          : size === "compact"
+            ? "sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,30rem)] sm:-translate-y-1/2"
           : ""
       }`}
       onClick={(e) => {
@@ -44,7 +46,11 @@ export function Sheet({
       {open && (
         <div
           className={`max-h-[86vh] overflow-y-auto rounded-t-2xl border-t border-line bg-card px-4 pt-3 text-ink shadow-lg ${
-            size === "wide" ? "lg:max-h-[90vh] lg:rounded-2xl lg:border" : ""
+            size === "wide"
+              ? "lg:max-h-[90vh] lg:rounded-2xl lg:border"
+              : size === "compact"
+                ? "sm:max-h-[82vh] sm:rounded-2xl sm:border"
+                : ""
           }`}
           style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
         >
