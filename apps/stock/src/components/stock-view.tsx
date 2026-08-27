@@ -59,6 +59,7 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
   const [sort, setSort] = useState("name");
   const [expiry, setExpiry] = useState<"" | ExpiryGroup>("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openInEditMode, setOpenInEditMode] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
   const presentCats = useMemo(
@@ -142,9 +143,21 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
       {filtered.length === 0 ? (
         <p className="py-16 text-center text-sm text-muted">Aucun article ne correspond.</p>
       ) : (
-        <ul className="mt-2 grid gap-px overflow-hidden rounded-xl border border-line bg-line shadow-sm lg:grid-cols-2 lg:gap-2 lg:overflow-visible lg:border-0 lg:bg-transparent lg:shadow-none 2xl:grid-cols-3">
+        <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((item) => (
-            <StockLine key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
+            <StockCard
+              key={item.id}
+              item={item}
+              today={today}
+              onOpen={() => {
+                setOpenInEditMode(false);
+                setOpenId(item.id);
+              }}
+              onEdit={() => {
+                setOpenInEditMode(true);
+                setOpenId(item.id);
+              }}
+            />
           ))}
         </ul>
       )}
@@ -160,7 +173,14 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
       </button>
 
       <Sheet open={!!openItem} onClose={() => setOpenId(null)} title={openItem?.name}>
-        {openItem && <ItemActions item={openItem} today={today} onClose={() => setOpenId(null)} />}
+        {openItem && (
+          <ItemActions
+            item={openItem}
+            today={today}
+            initiallyEditing={openInEditMode}
+            onClose={() => setOpenId(null)}
+          />
+        )}
       </Sheet>
 
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Nouvel article">
@@ -183,8 +203,9 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "min-h-11 whitespace-nowrap rounded-full border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         active
           ? "border-accent bg-accent text-accent-ink"
           : "border-line bg-card text-muted hover:bg-card-2"
@@ -195,49 +216,85 @@ function Chip({
   );
 }
 
-function StockLine({ item, onOpen }: { item: StockItem; onOpen: () => void }) {
+function StockCard({
+  item,
+  today,
+  onOpen,
+  onEdit,
+}: {
+  item: StockItem;
+  today: string;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
   const status = statusOf(item);
+  const closestLot = [...item.lots]
+    .filter((lot) => Number(lot.quantity) > 0)
+    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))[0];
+  const closestDays = closestLot ? daysUntilExpiry(closestLot.expiryDate, today) : null;
+
   return (
-    <li className="bg-card lg:overflow-hidden lg:rounded-lg lg:border lg:border-line lg:shadow-sm">
+    <li className="group relative overflow-hidden rounded-xl border border-line bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
       <button
         type="button"
         onClick={onOpen}
-        className="flex min-h-16 w-full items-center gap-3 border-l-2 px-3 py-2 text-left transition-colors hover:bg-card-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-        style={{
-          borderLeftColor:
-            status === "out"
-              ? "var(--danger)"
-              : status === "low"
-                ? "var(--warning)"
-                : "transparent",
-        }}
+        className="block w-full text-left focus-visible:outline-none"
+        aria-label={`${item.name}, ${fr(item.quantity)} ${item.unit}. Ajouter ou retirer du stock`}
       >
-        <div className="grid h-12 w-12 flex-none place-items-center overflow-hidden rounded-lg border border-line bg-card-2 text-muted">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-card-2 text-muted">
           {item.hasImage ? (
-            // Miniature authentifiée, chargée uniquement lorsque la ligne devient visible.
+            // Miniature authentifiée, chargée uniquement lorsque la carte devient visible.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageSrc(item)} alt="" loading="lazy" width="48" height="48" className="h-full w-full object-cover" />
+            <img
+              src={imageSrc(item)}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            />
           ) : (
-            <span aria-hidden="true">◇</span>
+            <div className="grid h-full place-items-center bg-card-2">
+              <span className="text-4xl" aria-hidden="true">◇</span>
+              <span className="sr-only">Aucune photo</span>
+            </div>
+          )}
+          <span
+            className={cn(
+              "absolute left-2 top-2 rounded-full px-2 py-1 text-xs font-semibold shadow-sm",
+              status === "out"
+                ? "bg-danger text-white"
+                : status === "low"
+                  ? "bg-warning text-black"
+                  : "bg-card/95 text-ink"
+            )}
+          >
+            {status === "out" ? "Rupture" : status === "low" ? "Stock bas" : "En stock"}
+          </span>
+        </div>
+        <div className="min-h-28 p-3 pr-14">
+          <p className="line-clamp-2 text-base font-semibold leading-tight text-ink">{item.name}</p>
+          <p className="mt-1 text-xs text-muted">{catLabel(item.category)}</p>
+          <p className="num mt-2 text-lg font-bold text-ink">
+            {fr(item.quantity)} <span className="text-sm font-normal text-muted">{item.unit}</span>
+          </p>
+          {closestLot && closestDays !== null && closestDays <= 7 && (
+            <p className={cn("mt-1 text-xs font-semibold", closestDays < 0 ? "text-danger" : "text-warning") }>
+              {closestDays < 0
+                ? `DLC dépassée · ${closestLot.expiryDate}`
+                : closestDays === 0
+                  ? "DLC aujourd’hui"
+                  : `DLC dans ${closestDays} jour${closestDays > 1 ? "s" : ""}`}
+            </p>
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium text-ink">{item.name}</p>
-          <p className="text-xs text-muted">{catLabel(item.category)}</p>
-        </div>
-        <div className="text-right">
-          <p className="num font-semibold text-ink">
-            {fr(item.quantity)} <span className="text-xs font-normal text-muted">{item.unit}</span>
-          </p>
-          {status === "out" ? (
-            <span className="text-[11px] font-semibold text-danger">Rupture</span>
-          ) : status === "low" ? (
-            <span className="text-[11px] font-semibold text-warning">Bas · seuil {fr(item.minThreshold)}</span>
-          ) : null}
-        </div>
-        <span className="text-faint" aria-hidden>
-          ›
-        </span>
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="absolute bottom-3 right-3 grid h-11 w-11 place-items-center rounded-full border border-line bg-card text-lg text-muted shadow-sm hover:bg-card-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        aria-label={`Modifier la fiche de ${item.name}`}
+        title="Modifier la fiche"
+      >
+        <span aria-hidden="true">✎</span>
       </button>
     </li>
   );
@@ -249,9 +306,19 @@ const MOVEMENTS = [
   { value: "ADJUSTMENT", label: "Correction" },
 ];
 
-function ItemActions({ item, today, onClose }: { item: StockItem; today: string; onClose: () => void }) {
+function ItemActions({
+  item,
+  today,
+  initiallyEditing,
+  onClose,
+}: {
+  item: StockItem;
+  today: string;
+  initiallyEditing: boolean;
+  onClose: () => void;
+}) {
   const [type, setType] = useState("IN");
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(initiallyEditing);
 
   const boundMove = recordStockMovement.bind(null, item.id);
   const [moveState, moveAction, movePending] = useActionState(boundMove, undefined);
@@ -285,37 +352,18 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
         </span>
       </div>
 
-      {(!item.barcode || item.barcode.startsWith("KAN-")) && (
-        <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
-      )}
-
-      <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-ink">Lots par DLC</h3>
-        {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
-          <ul className="divide-y divide-line rounded-md border border-line">
-            {item.lots.map((lot) => {
-              const days = daysUntilExpiry(lot.expiryDate, today);
-              const group = classifyExpiry(lot.expiryDate, today);
-              const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
-              return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
-                <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
-                <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
-              </li>;
-            })}
-          </ul>
-        )}
-      </div>
-
       {/* Mouvement rapide */}
       <form action={moveAction} className="space-y-2">
+        <h3 className="text-sm font-semibold text-ink">Ajouter ou retirer</h3>
         <div className="grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
           {MOVEMENTS.map((m) => (
             <button
               key={m.value}
               type="button"
               onClick={() => setType(m.value)}
+              aria-pressed={type === m.value}
               className={cn(
-                "rounded-md py-2 text-sm font-medium",
+                "min-h-11 rounded-md px-2 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 type === m.value ? "bg-accent text-accent-ink" : "text-muted"
               )}
             >
@@ -357,6 +405,27 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
         </Button>
       </form>
 
+      <div className="space-y-2 border-t border-line pt-4">
+        <h3 className="text-sm font-semibold text-ink">Lots par DLC</h3>
+        {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
+          <ul className="divide-y divide-line rounded-md border border-line">
+            {item.lots.map((lot) => {
+              const days = daysUntilExpiry(lot.expiryDate, today);
+              const group = classifyExpiry(lot.expiryDate, today);
+              const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
+              return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
+                <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
+                <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
+              </li>;
+            })}
+          </ul>
+        )}
+      </div>
+
+      {(!item.barcode || item.barcode.startsWith("KAN-")) && (
+        <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
+      )}
+
       {/* Édition de la fiche */}
       {editing ? (
         <form action={editAction} className="space-y-3 rounded-lg bg-card-2 p-3">
@@ -395,17 +464,17 @@ function ItemActions({ item, today, onClose }: { item: StockItem; today: string;
           <ProductPhotoField existingSrc={item.hasImage ? imageSrc(item) : undefined} />
           {editState?.error && <p className="text-sm text-danger">{editState.error}</p>}
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={editPending}>
+            <Button type="submit" size="sm" disabled={editPending} className="min-h-11">
               {editPending ? "…" : "Enregistrer"}
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)} className="min-h-11">
               Annuler
             </Button>
           </div>
         </form>
       ) : (
         <div className="flex items-center justify-between border-t border-line pt-3">
-          <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)}>
+          <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)} className="min-h-11">
             Modifier la fiche
           </Button>
           <ConfirmAction
