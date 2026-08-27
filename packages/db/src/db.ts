@@ -6,10 +6,16 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createClient() {
-  const adapter = new PrismaPg(process.env.DATABASE_URL!);
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+    max: 5,
+    idleTimeoutMillis: 10_000,
+    connectionTimeoutMillis: 5_000,
+  });
   return new PrismaClient({ adapter });
 }
 
-export const db = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+// Fluid Compute réutilise le processus : un client global évite de créer un nouveau
+// pool PostgreSQL à chaque bundle de route, y compris en production.
+globalForPrisma.prisma ??= createClient();
+export const db = globalForPrisma.prisma;
