@@ -366,7 +366,7 @@ function MovementForm({ item, operation, onDone }: { item: QuickStockItem; opera
       )}
       {needsExpiry && (
         <div className="grid grid-cols-2 gap-2">
-          <div><Label htmlFor={`quick-expiry-${item.id}`}>DLC</Label><Input id={`quick-expiry-${item.id}`} name="expiryDate" type="date" required /></div>
+          <div><Label htmlFor={`quick-expiry-${item.id}`}>DLC ou DDM (facultatif)</Label><Input id={`quick-expiry-${item.id}`} name="expiryDate" type="date" /></div>
           <div><Label htmlFor={`quick-lot-${item.id}`}>N° de lot</Label><Input id={`quick-lot-${item.id}`} name="lotNumber" /></div>
         </div>
       )}

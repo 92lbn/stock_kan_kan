@@ -28,4 +28,14 @@ describe("FEFO", () => {
     const result = planFefo([{ id: "one", expiryDate: "2026-08-12", quantity: "1.5" }], "2");
     expect(result.missing.toString()).toBe("0.5");
   });
+
+  it("consomme les lots datés avant les produits sans date", () => {
+    const result = planFefo([
+      { id: "sans-date", expiryDate: null, quantity: "5" },
+      { id: "date", expiryDate: "2026-08-12", quantity: "2" },
+    ], "3");
+    expect(result.allocations.map((a) => [a.lotId, a.quantity.toString()])).toEqual([
+      ["date", "2"], ["sans-date", "1"],
+    ]);
+  });
 });

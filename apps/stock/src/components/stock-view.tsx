@@ -4,14 +4,12 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   createStockItem,
   updateStockItem,
-  deleteStockItem,
   recordStockMovement,
 } from "@/lib/actions/stock";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 import { Sheet } from "@stock-kan-kan/ui/sheet";
-import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@stock-kan-kan/lib/utils";
 import { classifyExpiry, daysUntilExpiry, type ExpiryGroup } from "@stock-kan-kan/lib/expiry";
@@ -72,7 +70,7 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
     let r = items.filter((i) =>
       (!cat || i.category === cat) &&
       (!needle || i.name.toLowerCase().includes(needle)) &&
-      (!expiry || i.lots.some((lot) => classifyExpiry(lot.expiryDate, today) === expiry))
+      (!expiry || i.lots.some((lot) => lot.expiryDate && classifyExpiry(lot.expiryDate, today) === expiry))
     );
     r = [...r].sort((a, b) => {
       if (sort === "low") {
@@ -176,7 +174,6 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
         {openItem && (
           <ItemActions
             item={openItem}
-            today={today}
             initiallyEditing={openInEditMode}
             onClose={() => setOpenId(null)}
           />
@@ -229,7 +226,7 @@ function StockCard({
 }) {
   const status = statusOf(item);
   const closestLot = [...item.lots]
-    .filter((lot) => Number(lot.quantity) > 0)
+    .filter((lot) => Number(lot.quantity) > 0 && lot.expiryDate)
     .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))[0];
   const closestDays = closestLot ? daysUntilExpiry(closestLot.expiryDate, today) : null;
 
@@ -301,24 +298,22 @@ function StockCard({
 }
 
 const MOVEMENTS = [
-  { value: "IN", label: "Entrée" },
-  { value: "OUT", label: "Sortie" },
-  { value: "ADJUSTMENT", label: "Correction" },
-];
+  { value: "OUT", label: "− Sortie" },
+  { value: "IN", label: "+ Entrée" },
+] as const;
 
 function ItemActions({
   item,
-  today,
   initiallyEditing,
   onClose,
 }: {
   item: StockItem;
-  today: string;
   initiallyEditing: boolean;
   onClose: () => void;
 }) {
   const [type, setType] = useState("IN");
   const [editing, setEditing] = useState(initiallyEditing);
+  const [showExpiry, setShowExpiry] = useState(false);
 
   const boundMove = recordStockMovement.bind(null, item.id);
   const [moveState, moveAction, movePending] = useActionState(boundMove, undefined);
@@ -389,29 +384,11 @@ function ItemActions({
   }
 
   return (
-    <div className="space-y-3 pb-1">
-      <div className="flex items-center gap-3 rounded-xl bg-card-2 p-2">
-        <div className="grid h-16 w-16 flex-none place-items-center overflow-hidden rounded-lg border border-line bg-card text-muted">
-          {item.hasImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageSrc(item)} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <span className="text-2xl" aria-hidden="true">◇</span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="kpi-label">En stock</span>
-          <p className="num text-2xl font-bold text-ink">
-            {fr(item.quantity)} <span className="text-sm font-normal text-muted">{item.unit}</span>
-          </p>
-          <p className="truncate text-xs text-muted">{catLabel(item.category)}</p>
-        </div>
-      </div>
-
-      {/* Mouvement rapide */}
-      <form action={moveAction} className="space-y-2">
-        <h3 className="text-sm font-semibold text-ink">Ajouter ou retirer</h3>
-        <div className="grid grid-cols-3 gap-1 rounded-lg border border-line p-1">
+    <form action={moveAction} className="space-y-3 pb-1">
+        <p className="text-sm text-muted">
+          Stock : <span className="num font-semibold text-ink">{fr(item.quantity)} {item.unit}</span>
+        </p>
+        <div className="grid grid-cols-2 gap-2">
           {MOVEMENTS.map((m) => (
             <button
               key={m.value}
@@ -419,7 +396,7 @@ function ItemActions({
               onClick={() => setType(m.value)}
               aria-pressed={type === m.value}
               className={cn(
-                "min-h-11 rounded-md px-2 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "min-h-12 rounded-lg border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 type === m.value ? "bg-accent text-accent-ink" : "text-muted"
               )}
             >
@@ -428,74 +405,50 @@ function ItemActions({
           ))}
         </div>
         <input type="hidden" name="type" value={type} />
-        <div className="flex gap-2">
+        <div>
+          <Label htmlFor={`quantity-${item.id}`}>Quantité ({item.unit})</Label>
           <Input
+            id={`quantity-${item.id}`}
             name="quantity"
             type="number"
             inputMode="decimal"
             step="any"
             min="0"
-            placeholder={type === "ADJUSTMENT" ? `Nouvelle quantité (${item.unit})` : `Quantité (${item.unit})`}
+            placeholder="0"
             required
-            className="h-12 flex-1 text-base"
+            autoFocus
+            className="h-12 text-lg"
           />
-          {type === "IN" && (
-            <Input
-              name="unitCost"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              placeholder="Coût €"
-              className="h-12 w-24 text-base"
-            />
-          )}
         </div>
-        {type !== "OUT" && <div className="grid grid-cols-2 gap-2">
-          <div><Label htmlFor={`expiry-${item.id}`}>DLC</Label><Input id={`expiry-${item.id}`} name="expiryDate" type="date" required /></div>
-          <div><Label htmlFor={`lot-${item.id}`}>N° de lot</Label><Input id={`lot-${item.id}`} name="lotNumber" /></div>
-        </div>}
+        {type === "IN" && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowExpiry((value) => !value)}
+              aria-expanded={showExpiry}
+              className="min-h-11 w-full rounded-lg border border-line bg-card-2 px-3 text-left text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {showExpiry ? "− Retirer la date" : "+ Ajouter une date (facultatif)"}
+            </button>
+            {showExpiry && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor={`expiry-${item.id}`}>DLC ou DDM</Label>
+                  <Input id={`expiry-${item.id}`} name="expiryDate" type="date" />
+                </div>
+                <div>
+                  <Label htmlFor={`lot-${item.id}`}>N° de lot</Label>
+                  <Input id={`lot-${item.id}`} name="lotNumber" />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {moveState?.error && <p className="text-sm text-danger">{moveState.error}</p>}
         <Button type="submit" disabled={movePending} className="w-full">
-          {movePending ? "…" : "Valider le mouvement"}
+          {movePending ? "Enregistrement…" : type === "IN" ? "Ajouter" : "Retirer"}
         </Button>
-      </form>
-
-      <details className="rounded-lg border border-line bg-card-2">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          Voir les lots et les détails
-          <span aria-hidden="true">⌄</span>
-        </summary>
-        <div className="space-y-3 border-t border-line p-3">
-          {item.lots.length === 0 ? <p className="text-sm text-muted">Aucun lot disponible.</p> : (
-            <ul className="divide-y divide-line rounded-md border border-line bg-card">
-              {item.lots.map((lot) => {
-                const days = daysUntilExpiry(lot.expiryDate, today);
-                const group = classifyExpiry(lot.expiryDate, today);
-                const label = group === "expired" ? "Périmé" : group === "urgent" ? "À consommer vite" : group === "soon" ? "Sous 7 jours" : "DLC OK";
-                return <li key={lot.id} className="flex min-h-11 items-center justify-between px-3 text-sm">
-                  <span><span className="num">{lot.expiryDate}</span>{lot.lotNumber ? ` · ${lot.lotNumber}` : ""}<span className="block text-xs text-muted">{label}</span></span>
-                  <span className={cn("num font-medium", days < 0 ? "text-danger" : days <= 3 ? "text-warning" : "text-ink")}>{fr(lot.quantity)} {item.unit}</span>
-                </li>;
-              })}
-            </ul>
-          )}
-          {(!item.barcode || item.barcode.startsWith("KAN-")) && (
-            <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
-          )}
-        </div>
-      </details>
-
-      <div className="flex items-center justify-between border-t border-line pt-3">
-        <Button type="button" variant="secondary" size="sm" onClick={() => setEditing(true)} className="min-h-11">
-          Modifier la fiche
-        </Button>
-        <ConfirmAction
-          action={deleteStockItem.bind(null, item.id)}
-          message={`« ${item.name} » sera masqué (suppression réversible).`}
-        />
-      </div>
-    </div>
+    </form>
   );
 }
 

@@ -36,7 +36,7 @@ export function Sheet({
         size === "wide"
           ? "lg:bottom-auto lg:top-1/2 lg:w-[min(94vw,72rem)] lg:max-w-none lg:-translate-y-1/2"
           : size === "compact"
-            ? "sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,30rem)] sm:-translate-y-1/2"
+            ? "sm:bottom-auto sm:top-1/2 sm:w-[min(90vw,22rem)] sm:-translate-y-1/2"
           : ""
       }`}
       onClick={(e) => {

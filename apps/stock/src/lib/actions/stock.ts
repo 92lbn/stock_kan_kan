@@ -129,7 +129,6 @@ export async function createStockItem(_state: ActionState, formData: FormData): 
     return { error: reason instanceof Error ? reason.message : "Photo invalide." };
   }
   const quantity = new Prisma.Decimal(parsed.data.quantity);
-  if (quantity.gt(0) && !parsed.data.expiryDate) return { error: "La DLC du stock initial est requise." };
   const created = await db.$transaction(async (tx) => {
     const item = await tx.stockItem.create({ data: {
       name: parsed.data.name, category: parsed.data.category, unit: parsed.data.unit,
@@ -138,7 +137,7 @@ export async function createStockItem(_state: ActionState, formData: FormData): 
       imageData: image?.bytes, imageMimeType: image?.mimeType,
     }, select: { id: true, name: true, category: true, unit: true, quantity: true, minThreshold: true, costPrice: true, allergens: true, barcode: true, imageMimeType: true, createdAt: true, updatedAt: true }});
     if (quantity.gt(0)) {
-      await tx.stockLot.create({ data: { stockItemId: item.id, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
+      await tx.stockLot.create({ data: { stockItemId: item.id, quantity, expiryDate: parsed.data.expiryDate ? asDateOnly(parsed.data.expiryDate) : null, lotNumber: parsed.data.lotNumber } });
       await tx.stockMovement.create({ data: { stockItemId: item.id, type: "IN", quantity, unitCost: parsed.data.costPrice, note: "Stock initial", createdById: actor.id } });
     }
     return item;
@@ -209,15 +208,12 @@ export async function recordStockMovement(stockItemId: string, _state: ActionSta
   if (!parsed.success) return { error: "Quantité ou DLC invalide." };
   const quantity = new Prisma.Decimal(parsed.data.quantity);
   if (parsed.data.type !== "ADJUSTMENT" && quantity.eq(0)) return { error: "La quantité doit être positive." };
-  if ((parsed.data.type === "IN" || (parsed.data.type === "ADJUSTMENT" && quantity.gt(0))) && !parsed.data.expiryDate) {
-    return { error: "La DLC est requise pour une entrée ou une correction." };
-  }
   try {
     await db.$transaction(async (tx) => {
       const item = await tx.stockItem.findFirst({ where: { id: parsedId.data, deletedAt: null }, select: { name: true, unit: true, quantity: true, costPrice: true } });
       if (!item) throw new MovementError("Article introuvable.");
       if (parsed.data.type === "OUT") {
-        const lots = await tx.stockLot.findMany({ where: { stockItemId: parsedId.data, quantity: { gt: 0 } }, orderBy: [{ expiryDate: "asc" }, { createdAt: "asc" }] });
+        const lots = await tx.stockLot.findMany({ where: { stockItemId: parsedId.data, quantity: { gt: 0 } }, orderBy: [{ expiryDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }] });
         const plan = planFefo(lots, quantity);
         if (plan.missing.gt(0)) {
           const available = quantity.minus(plan.missing);
@@ -230,7 +226,7 @@ export async function recordStockMovement(stockItemId: string, _state: ActionSta
           if (updated.count !== 1) throw new MovementError("Le stock vient d’être modifié. Réessaie.");
         }
       } else if (parsed.data.type === "IN") {
-        await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
+        await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: parsed.data.expiryDate ? asDateOnly(parsed.data.expiryDate) : null, lotNumber: parsed.data.lotNumber } });
         const data: Prisma.StockItemUpdateManyMutationInput = { quantity: { increment: quantity } };
         if (parsed.data.unitCost) {
           const newQty = item.quantity.plus(quantity);
@@ -240,7 +236,7 @@ export async function recordStockMovement(stockItemId: string, _state: ActionSta
         if (updated.count !== 1) throw new MovementError("Article introuvable.");
       } else {
         await tx.stockLot.updateMany({ where: { stockItemId: parsedId.data }, data: { quantity: new Prisma.Decimal(0) } });
-        if (quantity.gt(0)) await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: asDateOnly(parsed.data.expiryDate!), lotNumber: parsed.data.lotNumber } });
+        if (quantity.gt(0)) await tx.stockLot.create({ data: { stockItemId: parsedId.data, quantity, expiryDate: parsed.data.expiryDate ? asDateOnly(parsed.data.expiryDate) : null, lotNumber: parsed.data.lotNumber } });
         await tx.stockItem.update({ where: { id: parsedId.data }, data: { quantity } });
       }
       await tx.stockMovement.create({ data: { stockItemId: parsedId.data, type: parsed.data.type, quantity, unitCost: parsed.data.unitCost, note: parsed.data.note, createdById: actor.id } });

@@ -149,7 +149,7 @@ model StockLot {
   stockItem   StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
   stockItemId String
   lotNumber   String?
-  expiryDate  DateTime  @db.Date
+  expiryDate  DateTime? @db.Date
   quantity    Decimal   @db.Decimal(12, 3)
   createdAt   DateTime  @default(now())
 

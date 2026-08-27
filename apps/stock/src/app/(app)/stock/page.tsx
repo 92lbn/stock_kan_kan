@@ -60,7 +60,7 @@ async function StockContent() {
         barcode: true,
         imageMimeType: true,
         updatedAt: true,
-        lots: { where: { quantity: { gt: 0 } }, orderBy: { expiryDate: "asc" } },
+        lots: { where: { quantity: { gt: 0 } }, orderBy: { expiryDate: { sort: "asc", nulls: "last" } } },
       },
     }),
     // Valorisation du stock (quantité × PMP) en SQL.
@@ -88,7 +88,7 @@ async function StockContent() {
     lots: item.lots.map((lot) => ({
       id: lot.id,
       lotNumber: lot.lotNumber ?? "",
-      expiryDate: lot.expiryDate.toISOString().slice(0, 10),
+      expiryDate: lot.expiryDate?.toISOString().slice(0, 10) ?? "",
       quantity: lot.quantity.toString(),
     })),
   }));
