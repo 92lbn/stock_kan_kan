@@ -39,6 +39,16 @@ export function Sheet({
             ? "sm:bottom-auto sm:top-1/2 sm:w-[min(90vw,22rem)] sm:-translate-y-1/2"
           : ""
       }`}
+      style={size === "compact" ? {
+        bottom: "auto",
+        left: "50%",
+        right: "auto",
+        top: "50%",
+        width: "min(22rem, calc(100vw - 2rem))",
+        maxWidth: "22rem",
+        margin: 0,
+        transform: "translate(-50%, -50%)",
+      } : undefined}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
@@ -52,7 +62,14 @@ export function Sheet({
                 ? "sm:max-h-[82vh] sm:rounded-2xl sm:border"
                 : ""
           }`}
-          style={{ paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
+          style={{
+            paddingBottom: "calc(1.25rem + env(safe-area-inset-bottom))",
+            ...(size === "compact" ? {
+              maxHeight: "min(82vh, 34rem)",
+              borderRadius: "0.875rem",
+              borderWidth: "1px",
+            } : {}),
+          }}
         >
           <div className="sticky top-0 -mx-4 mb-2 bg-card px-4 pb-2 pt-1">
             <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-line-strong" aria-hidden />
