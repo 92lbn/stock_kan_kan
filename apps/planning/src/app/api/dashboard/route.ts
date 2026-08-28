@@ -76,6 +76,7 @@ export async function GET(request: Request) {
             costPrice: true,
             allergens: true,
             barcode: true,
+            imageMimeType: true,
             updatedAt: true,
             lots: {
               where: { quantity: { gt: 0 } },
@@ -109,6 +110,8 @@ export async function GET(request: Request) {
           costPrice: item.costPrice.toString(),
           allergens: item.allergens ?? "",
           barcode: item.barcode ?? "",
+          hasImage: Boolean(item.imageMimeType),
+          imageVersion: item.updatedAt.getTime().toString(),
           lotCount: item.lots.length,
           updatedAt: item.updatedAt.toISOString(),
           ...stockAlertState(alertSource, today),
