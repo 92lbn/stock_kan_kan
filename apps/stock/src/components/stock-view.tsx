@@ -3,11 +3,13 @@
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   createStockItem,
+  deleteStockItem,
   updateStockItem,
   recordStockMovement,
 } from "@/lib/actions/stock";
 import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Button } from "@stock-kan-kan/ui/button";
+import { ConfirmAction } from "@stock-kan-kan/ui/confirm-action";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";
 import { Sheet, type SheetAnchor } from "@stock-kan-kan/ui/sheet";
 import { BarcodeField } from "@/components/barcode-field";
@@ -357,6 +359,7 @@ function ItemActions({
   }, [movePending, moveState, onClose]);
 
   const boundEdit = updateStockItem.bind(null, item.id);
+  const boundDelete = deleteStockItem.bind(null, item.id);
   const [editState, editAction, editPending] = useActionState(boundEdit, undefined);
   const wasEditing = useRef(false);
   useEffect(() => {
@@ -412,6 +415,17 @@ function ItemActions({
         {(!item.barcode || item.barcode.startsWith("KAN-")) && (
           <InternalBarcodeLabel itemId={item.id} itemName={item.name} barcode={item.barcode} />
         )}
+        <div className="border-t border-line pt-3">
+          <ConfirmAction
+            action={boundDelete}
+            title={`Supprimer ${item.name} ?`}
+            message="Le produit sera retiré du stock, mais son historique restera conservé."
+            confirmLabel="Supprimer le produit"
+            triggerLabel="Supprimer le produit"
+            triggerVariant="danger"
+            triggerClassName="min-h-11 w-full"
+          />
+        </div>
       </div>
     );
   }
