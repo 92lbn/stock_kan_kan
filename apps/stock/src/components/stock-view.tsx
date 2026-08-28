@@ -9,7 +9,7 @@ import {
 import type { ActionState } from "@stock-kan-kan/lib/action";
 import { Button } from "@stock-kan-kan/ui/button";
 import { Input, Label, Select } from "@stock-kan-kan/ui/input";
-import { Sheet } from "@stock-kan-kan/ui/sheet";
+import { Sheet, type SheetAnchor } from "@stock-kan-kan/ui/sheet";
 import { BarcodeField } from "@/components/barcode-field";
 import { cn } from "@stock-kan-kan/lib/utils";
 import { classifyExpiry, daysUntilExpiry, type ExpiryGroup } from "@stock-kan-kan/lib/expiry";
@@ -58,6 +58,7 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
   const [expiry, setExpiry] = useState<"" | ExpiryGroup>("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [openInEditMode, setOpenInEditMode] = useState(false);
+  const [movementAnchor, setMovementAnchor] = useState<SheetAnchor>();
   const [addOpen, setAddOpen] = useState(false);
 
   const presentCats = useMemo(
@@ -147,12 +148,14 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
               key={item.id}
               item={item}
               today={today}
-              onOpen={() => {
+              onOpen={(anchor) => {
                 setOpenInEditMode(false);
+                setMovementAnchor(anchor);
                 setOpenId(item.id);
               }}
               onEdit={() => {
                 setOpenInEditMode(true);
+                setMovementAnchor(undefined);
                 setOpenId(item.id);
               }}
             />
@@ -170,7 +173,13 @@ export function StockView({ items, today }: { items: StockItem[]; today: string 
         +
       </button>
 
-      <Sheet open={!!openItem} onClose={() => setOpenId(null)} title={openItem?.name} size="compact">
+      <Sheet
+        open={!!openItem}
+        onClose={() => setOpenId(null)}
+        title={openItem?.name}
+        size="compact"
+        anchor={openInEditMode ? undefined : movementAnchor}
+      >
         {openItem && (
           <ItemActions
             item={openItem}
@@ -221,7 +230,7 @@ function StockCard({
 }: {
   item: StockItem;
   today: string;
-  onOpen: () => void;
+  onOpen: (anchor: SheetAnchor) => void;
   onEdit: () => void;
 }) {
   const status = statusOf(item);
@@ -234,7 +243,31 @@ function StockCard({
     <li className="group relative overflow-hidden rounded-xl border border-line bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-within:ring-2 focus-within:ring-primary">
       <button
         type="button"
-        onClick={onOpen}
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          const bubbleWidth = Math.min(352, viewportWidth - 32);
+          const keyboardClick = event.detail === 0;
+          const clickX = keyboardClick ? rect.left + rect.width / 2 : event.clientX;
+          const clickY = keyboardClick ? rect.top + rect.height / 2 : event.clientY;
+          const left = Math.min(
+            Math.max(clickX - bubbleWidth / 2, 16),
+            viewportWidth - bubbleWidth - 16
+          );
+          const gap = 12;
+          const preferredHeight = Math.min(360, viewportHeight - 32);
+          const roomBelow = viewportHeight - clickY - gap;
+          const roomAbove = clickY - gap;
+
+          if (roomBelow >= preferredHeight) {
+            onOpen({ left, top: clickY + gap });
+          } else if (roomAbove >= preferredHeight) {
+            onOpen({ left, bottom: viewportHeight - clickY + gap });
+          } else {
+            onOpen({ left, top: 16 });
+          }
+        }}
         className="block w-full text-left focus-visible:outline-none"
         aria-label={`${item.name}, ${fr(item.quantity)} ${item.unit}. Ajouter ou retirer du stock`}
       >

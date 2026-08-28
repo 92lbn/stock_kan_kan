@@ -2,6 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
+export type SheetAnchor = {
+  left: number;
+  top?: number;
+  bottom?: number;
+};
+
 // Feuille d'action ancrée en bas d'écran (bottom sheet), pattern des apps mobiles.
 // S'appuie sur <dialog> natif : focus trap + fermeture par Échap gratuits.
 export function Sheet({
@@ -9,12 +15,14 @@ export function Sheet({
   onClose,
   title,
   size = "default",
+  anchor,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
   size?: "default" | "compact" | "wide";
+  anchor?: SheetAnchor;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -41,13 +49,14 @@ export function Sheet({
       }`}
       style={size === "compact" ? {
         bottom: "auto",
-        left: "50%",
+        left: anchor ? `${anchor.left}px` : "50%",
         right: "auto",
-        top: "50%",
+        top: anchor?.top !== undefined ? `${anchor.top}px` : anchor?.bottom !== undefined ? "auto" : "50%",
+        ...(anchor?.bottom !== undefined ? { bottom: `${anchor.bottom}px` } : {}),
         width: "min(22rem, calc(100vw - 2rem))",
         maxWidth: "22rem",
         margin: 0,
-        transform: "translate(-50%, -50%)",
+        transform: anchor ? "none" : "translate(-50%, -50%)",
       } : undefined}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
