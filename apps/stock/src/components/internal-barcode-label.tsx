@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createInternalBarcode, type BarcodeActionState } from "@/lib/actions/stock";
-import { encodeCode128B } from "@/lib/code128";
+import { Code128Barcode } from "@/components/code128-barcode";
 import { Button } from "@stock-kan-kan/ui/button";
 
 export function InternalBarcodeLabel({ itemId, itemName, barcode }: { itemId: string; itemName: string; barcode: string }) {
@@ -45,28 +45,5 @@ export function InternalBarcodeLabel({ itemId, itemName, barcode }: { itemId: st
         Imprimer l’étiquette
       </Button>
     </div>
-  );
-}
-
-function Code128Barcode({ value }: { value: string }) {
-  const barcode = useMemo(() => {
-    const { patterns } = encodeCode128B(value);
-    let x = 10;
-    const bars: { x: number; width: number }[] = [];
-    for (const pattern of patterns) {
-      [...pattern].forEach((digit, index) => {
-        const width = Number(digit);
-        if (index % 2 === 0) bars.push({ x, width });
-        x += width;
-      });
-    }
-    return { bars, width: x + 10 };
-  }, [value]);
-
-  return (
-    <svg role="img" aria-label={`Code-barres interne ${value}`} viewBox={`0 0 ${barcode.width} 64`} className="mt-2 h-20 w-full" preserveAspectRatio="none">
-      <rect width={barcode.width} height="64" fill="white" />
-      {barcode.bars.map((bar, index) => <rect key={`${bar.x}-${index}`} x={bar.x} y="0" width={bar.width} height="64" fill="black" />)}
-    </svg>
   );
 }

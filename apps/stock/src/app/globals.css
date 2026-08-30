@@ -64,7 +64,9 @@
   }
 
   .barcode-print-area,
-  .barcode-print-area * {
+  .barcode-print-area *,
+  .label-print-card,
+  .label-print-card * {
     visibility: visible !important;
   }
 
@@ -76,6 +78,15 @@
     margin: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
+  }
+
+  /* Impression groupée (page Étiquettes) : une étiquette par page. */
+  .label-print-card {
+    break-after: page;
+  }
+
+  .label-print-card:last-child {
+    break-after: auto;
   }
 
   @page {

@@ -16,6 +16,9 @@ export default function StockPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ink">Stock</h1>
         <div className="flex items-center gap-3 text-sm">
+          <Link href="/stock/etiquettes" className="font-medium text-accent hover:underline">
+            Étiquettes
+          </Link>
           <Link href="/stock/mouvements" className="font-medium text-accent hover:underline">
             Historique
           </Link>
