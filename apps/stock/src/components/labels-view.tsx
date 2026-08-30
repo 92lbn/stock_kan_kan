@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { ensureInternalBarcodes } from "@/lib/actions/stock";
-import { Code128Barcode } from "@/components/code128-barcode";
-import { Button } from "@stock-kan-kan/ui/button";
+import { useMemo, useState } from "react";
 import { Input, Select } from "@stock-kan-kan/ui/input";
+import { Button } from "@stock-kan-kan/ui/button";
 
-export type LabelItem = { id: string; name: string; category: string; barcode: string };
+export type LabelItem = { id: string; name: string; category: string; hasImage: boolean; imageVersion: string };
 
 const CATEGORIES = [
   { value: "EPICERIE", label: "Épicerie / Secs" },
@@ -17,14 +15,12 @@ const CATEGORIES = [
   { value: "CONSOMMABLES_EMBALLAGES", label: "Consommables / Emballages" },
 ];
 const catLabel = (v: string) => CATEGORIES.find((c) => c.value === v)?.label ?? v;
+const imageSrc = (item: LabelItem) => `/api/stock-images/${item.id}?v=${item.imageVersion}`;
 
-export function LabelsView({ items: initialItems }: { items: LabelItem[] }) {
-  const [items, setItems] = useState(initialItems);
+export function LabelsView({ items }: { items: LabelItem[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(initialItems.map((item) => item.id)));
-  const [error, setError] = useState("");
-  const [pending, startTransition] = useTransition();
+  const [selected, setSelected] = useState<Set<string>>(() => new Set(items.map((item) => item.id)));
 
   const filtered = useMemo(
     () =>
@@ -36,9 +32,7 @@ export function LabelsView({ items: initialItems }: { items: LabelItem[] }) {
     [items, q, cat],
   );
 
-  const selectedItems = items.filter((item) => selected.has(item.id));
-  const missing = selectedItems.filter((item) => !item.barcode);
-  const printable = selectedItems.filter((item) => item.barcode);
+  const printable = items.filter((item) => selected.has(item.id));
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -60,28 +54,12 @@ export function LabelsView({ items: initialItems }: { items: LabelItem[] }) {
     });
   }
 
-  function prepareMissing() {
-    if (missing.length === 0) return;
-    setError("");
-    const ids = missing.map((item) => item.id);
-    startTransition(async () => {
-      const result = await ensureInternalBarcodes(ids);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setItems((prev) =>
-        prev.map((item) => (result.barcodes?.[item.id] ? { ...item, barcode: result.barcodes[item.id] } : item)),
-      );
-    });
-  }
-
   return (
     <div className="space-y-3">
       <div className="space-y-3 print:hidden">
         <p className="text-sm text-muted">
-          Sélectionne les produits à étiqueter, prépare les codes-barres manquants puis imprime la sélection sur
-          l’imprimante d’étiquettes (format 80 × 40 mm).
+          Sélectionne les produits à étiqueter puis imprime : chaque étiquette affiche la photo et le nom du
+          produit (format 80 × 40 mm, une étiquette par page).
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -128,7 +106,7 @@ export function LabelsView({ items: initialItems }: { items: LabelItem[] }) {
                   <span className="block truncate text-sm font-medium text-ink">{item.name}</span>
                   <span className="block text-xs text-muted">
                     {catLabel(item.category)}
-                    {item.barcode ? "" : " · sans code-barres"}
+                    {item.hasImage ? "" : " · sans photo"}
                   </span>
                 </span>
               </label>
@@ -137,30 +115,24 @@ export function LabelsView({ items: initialItems }: { items: LabelItem[] }) {
           {filtered.length === 0 && <li className="p-3 text-sm text-muted">Aucun produit.</li>}
         </ul>
 
-        {error && (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          {missing.length > 0 && (
-            <Button type="button" variant="secondary" disabled={pending} onClick={prepareMissing} className="min-h-11">
-              {pending ? "Préparation…" : `Préparer ${missing.length} étiquette(s) manquante(s)`}
-            </Button>
-          )}
-          <Button type="button" disabled={printable.length === 0} onClick={() => window.print()} className="min-h-11">
-            Imprimer {printable.length} étiquette(s)
-          </Button>
-        </div>
+        <Button type="button" disabled={printable.length === 0} onClick={() => window.print()} className="min-h-11">
+          Imprimer {printable.length} étiquette(s)
+        </Button>
       </div>
 
       <div aria-hidden className="hidden print:block">
         {printable.map((item) => (
-          <div key={item.id} className="label-print-card w-[80mm] bg-white p-4 text-center text-black">
-            <p className="truncate text-base font-bold">kan·kan · {item.name}</p>
-            <Code128Barcode value={item.barcode} />
-            <p className="mt-1 font-mono text-xs tracking-wider">{item.barcode}</p>
+          <div key={item.id} className="label-print-card flex w-[80mm] flex-col items-center gap-2 bg-white p-3 text-center text-black">
+            {item.hasImage ? (
+              // Miniature authentifiée, spécifique à l'impression — pas d'équivalent statique optimisable.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageSrc(item)} alt="" className="h-[24mm] w-[24mm] rounded object-cover" />
+            ) : (
+              <div className="grid h-[24mm] w-[24mm] place-items-center rounded border border-black/20 text-2xl" aria-hidden="true">
+                ◇
+              </div>
+            )}
+            <p className="text-base font-bold leading-tight">{item.name}</p>
           </div>
         ))}
       </div>

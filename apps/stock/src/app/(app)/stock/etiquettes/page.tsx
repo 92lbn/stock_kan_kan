@@ -32,13 +32,14 @@ async function EtiquettesContent() {
   const rawItems = await db.stockItem.findMany({
     where: { deletedAt: null },
     orderBy: { name: "asc" },
-    select: { id: true, name: true, category: true, barcode: true },
+    select: { id: true, name: true, category: true, imageMimeType: true, updatedAt: true },
   });
   const items: LabelItem[] = rawItems.map((item) => ({
     id: item.id,
     name: item.name,
     category: item.category,
-    barcode: item.barcode ?? "",
+    hasImage: Boolean(item.imageMimeType),
+    imageVersion: item.updatedAt.getTime().toString(),
   }));
 
   return <LabelsView items={items} />;

@@ -112,52 +112,6 @@ export async function createInternalBarcode(
   }
 }
 
-export type BulkBarcodeState = { error?: string; barcodes?: Record<string, string> };
-
-export async function ensureInternalBarcodes(itemIds: string[]): Promise<BulkBarcodeState> {
-  const actor = await requireStockAccess();
-  const parsed = z.array(IdSchema).min(1).max(200).safeParse(itemIds);
-  if (!parsed.success) return { error: "Sélection invalide." };
-
-  try {
-    const barcodes = await db.$transaction(async (tx) => {
-      const targets = await tx.stockItem.findMany({
-        where: { id: { in: parsed.data }, deletedAt: null },
-        select: { id: true, name: true, barcode: true },
-      });
-      const result: Record<string, string> = {};
-      for (const before of targets) {
-        if (before.barcode) {
-          result[before.id] = before.barcode;
-          continue;
-        }
-        const barcode = internalBarcodeForItemId(before.id);
-        const updated = await tx.stockItem.updateMany({
-          where: { id: before.id, deletedAt: null, barcode: null },
-          data: { barcode },
-        });
-        if (updated.count !== 1) continue; // modifié entre-temps : l'appelant relira l'état à jour
-        await tx.auditLog.create({
-          data: auditData({
-            userId: actor.id,
-            action: "stock.internal_barcode.create",
-            entity: "StockItem",
-            entityId: before.id,
-            before,
-            after: { ...before, barcode },
-          }),
-        });
-        result[before.id] = barcode;
-      }
-      return result;
-    });
-    revalidateStock();
-    return { barcodes };
-  } catch (error) {
-    console.error("stock_ensure_barcodes_failed", error);
-    return { error: "Les étiquettes n’ont pas pu être préparées. Réessaie." };
-  }
-}
 
 export async function createStockItem(_state: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireStockAccess();
