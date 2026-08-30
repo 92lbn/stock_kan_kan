@@ -122,17 +122,20 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
 
       <div aria-hidden className="hidden print:block">
         {printable.map((item) => (
-          <div key={item.id} className="label-print-card flex w-[80mm] flex-col items-center gap-2 bg-white p-3 text-center text-black">
+          <div
+            key={item.id}
+            className="label-print-card flex w-[80mm] items-center gap-3 rounded-2xl border border-black/15 bg-white p-3 text-left text-black"
+          >
             {item.hasImage ? (
               // Miniature authentifiée, spécifique à l'impression — pas d'équivalent statique optimisable.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageSrc(item)} alt="" className="h-[24mm] w-[24mm] rounded object-cover" />
+              <img src={imageSrc(item)} alt="" className="h-[26mm] w-[26mm] shrink-0 rounded-xl object-cover" />
             ) : (
-              <div className="grid h-[24mm] w-[24mm] place-items-center rounded border border-black/20 text-2xl" aria-hidden="true">
+              <div className="grid h-[26mm] w-[26mm] shrink-0 place-items-center rounded-xl border border-black/20 text-2xl" aria-hidden="true">
                 ◇
               </div>
             )}
-            <p className="text-base font-bold leading-tight">{item.name}</p>
+            <p className="min-w-0 flex-1 text-lg font-bold leading-tight break-words">{item.name}</p>
           </div>
         ))}
       </div>
