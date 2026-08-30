@@ -70,13 +70,12 @@ export function ProductPhotoField({ existingSrc }: { existingSrc?: string }) {
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
           <label htmlFor={id} className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-line-strong bg-card px-3 text-sm font-medium text-ink hover:bg-card-2">
-            {busy ? "Préparation…" : preview ? "Changer la photo" : "Prendre une photo"}
+            {busy ? "Préparation…" : preview ? "Changer la photo" : "Ajouter une photo"}
           </label>
           <input
             id={id}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/*"
-            capture="environment"
             disabled={busy}
             onChange={(event) => handleFile(event.target.files?.[0])}
             className="sr-only"
