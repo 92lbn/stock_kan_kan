@@ -113,6 +113,8 @@
     overflow: hidden;
     break-inside: avoid;
     page-break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
   @page barcode-label {

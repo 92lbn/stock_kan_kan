@@ -137,19 +137,20 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
         {printable.map((item) => (
           <div
             key={item.id}
-            className="label-print-card flex w-[80mm] items-center rounded-2xl border border-black/15 bg-white p-[3mm] text-left text-black"
+            className="label-print-card relative isolate flex w-[80mm] items-center rounded-2xl border border-black/15 bg-white p-[3mm] text-left text-black"
           >
+            <AfroLabelBackground />
             {item.hasImage ? (
               // Miniature authentifiée, spécifique à l'impression — pas d'équivalent statique optimisable.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageSrc(item)} alt="" className="h-[26mm] w-[26mm] shrink-0 rounded-lg object-cover" />
+              <img src={imageSrc(item)} alt="" className="relative z-10 h-[26mm] w-[26mm] shrink-0 rounded-lg object-cover" />
             ) : (
-              <div className="grid h-[26mm] w-[26mm] shrink-0 place-items-center rounded-lg border border-black/20 text-2xl" aria-hidden="true">
+              <div className="relative z-10 grid h-[26mm] w-[26mm] shrink-0 place-items-center rounded-lg border border-black/20 bg-white/80 text-2xl" aria-hidden="true">
                 ◇
               </div>
             )}
-            <div className="ml-[3mm] h-[26mm] w-[0.7mm] shrink-0 rounded-full bg-[#E8532A]" />
-            <div className="ml-[3mm] flex h-[26mm] min-w-0 flex-1 flex-col">
+            <div className="relative z-10 ml-[3mm] h-[26mm] w-[0.7mm] shrink-0 rounded-full bg-[#E8532A]" />
+            <div className="relative z-10 ml-[3mm] flex h-[26mm] min-w-0 flex-1 flex-col rounded-md bg-white/75 p-[1.5mm]">
               <p className="text-[7pt] font-bold uppercase leading-none tracking-[0.16em] text-black/55">
                 Kan·Kan — Stock
               </p>
@@ -164,5 +165,26 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function AfroLabelBackground() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      viewBox="0 0 800 400"
+      preserveAspectRatio="none"
+    >
+      <path d="M0 0h315L230 400H0Z" fill="#17843B" opacity="0.14" />
+      <path d="M315 0h270L485 400H230Z" fill="#F2C230" opacity="0.17" />
+      <path d="M585 0h215v400H485Z" fill="#D92727" opacity="0.13" />
+      <g fill="none" stroke="#151512" strokeWidth="6" opacity="0.08">
+        <path d="M18 330l30-30 30 30 30-30 30 30 30-30 30 30 30-30 30 30" />
+        <path d="M18 365l30-30 30 30 30-30 30 30 30-30 30 30 30-30 30 30" />
+        <path d="M650 38l25 25-25 25-25-25 25-25Zm75 0 25 25-25 25-25-25 25-25Z" />
+        <path d="M688 82l25 25-25 25-25-25 25-25Z" />
+      </g>
+    </svg>
   );
 }
