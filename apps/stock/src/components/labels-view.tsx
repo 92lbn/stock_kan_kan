@@ -137,18 +137,29 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
         {printable.map((item) => (
           <div
             key={item.id}
-            className="label-print-card flex w-[80mm] items-center gap-3 rounded-2xl border border-black/15 bg-white p-3 text-left text-black"
+            className="label-print-card flex w-[80mm] items-center rounded-2xl border border-black/15 bg-white p-[3mm] text-left text-black"
           >
             {item.hasImage ? (
               // Miniature authentifiée, spécifique à l'impression — pas d'équivalent statique optimisable.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageSrc(item)} alt="" className="h-[26mm] w-[26mm] shrink-0 rounded-xl object-cover" />
+              <img src={imageSrc(item)} alt="" className="h-[26mm] w-[26mm] shrink-0 rounded-lg object-cover" />
             ) : (
-              <div className="grid h-[26mm] w-[26mm] shrink-0 place-items-center rounded-xl border border-black/20 text-2xl" aria-hidden="true">
+              <div className="grid h-[26mm] w-[26mm] shrink-0 place-items-center rounded-lg border border-black/20 text-2xl" aria-hidden="true">
                 ◇
               </div>
             )}
-            <p className="min-w-0 flex-1 text-lg font-bold leading-tight break-words">{item.name}</p>
+            <div className="ml-[3mm] h-[26mm] w-[0.7mm] shrink-0 rounded-full bg-[#E8532A]" />
+            <div className="ml-[3mm] flex h-[26mm] min-w-0 flex-1 flex-col">
+              <p className="text-[7pt] font-bold uppercase leading-none tracking-[0.16em] text-black/55">
+                Kan·Kan — Stock
+              </p>
+              <p className="my-auto line-clamp-2 text-[15pt] font-extrabold uppercase leading-[1.02] tracking-[-0.02em] break-words">
+                {item.name}
+              </p>
+              <p className="truncate text-[7pt] font-semibold uppercase leading-none tracking-[0.12em] text-black/60">
+                {catLabel(item.category)}
+              </p>
+            </div>
           </div>
         ))}
       </div>
