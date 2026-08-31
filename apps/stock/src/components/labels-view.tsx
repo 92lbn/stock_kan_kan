@@ -54,12 +54,25 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
     });
   }
 
+  function printLabels() {
+    const cleanup = () => document.body.classList.remove("printing-label-sheet");
+    document.body.classList.add("printing-label-sheet");
+    window.addEventListener("afterprint", cleanup, { once: true });
+
+    try {
+      window.print();
+    } catch (error) {
+      cleanup();
+      throw error;
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="space-y-3 print:hidden">
         <p className="text-sm text-muted">
           Sélectionne les produits à étiqueter puis imprime : chaque étiquette affiche la photo et le nom du
-          produit (format 80 × 40 mm, une étiquette par page).
+          produit (format 80 × 40 mm, jusqu’à 12 étiquettes par feuille A4).
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -115,12 +128,12 @@ export function LabelsView({ items }: { items: LabelItem[] }) {
           {filtered.length === 0 && <li className="p-3 text-sm text-muted">Aucun produit.</li>}
         </ul>
 
-        <Button type="button" disabled={printable.length === 0} onClick={() => window.print()} className="min-h-11">
+        <Button type="button" disabled={printable.length === 0} onClick={printLabels} className="min-h-11">
           Imprimer {printable.length} étiquette(s)
         </Button>
       </div>
 
-      <div aria-hidden className="hidden print:block">
+      <div aria-hidden className="label-print-sheet hidden print:grid">
         {printable.map((item) => (
           <div
             key={item.id}

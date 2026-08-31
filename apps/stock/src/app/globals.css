@@ -59,12 +59,25 @@
 }
 
 @media print {
+  body.printing-label-sheet > div > :not(main) {
+    display: none !important;
+  }
+
+  body.printing-label-sheet main {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   body * {
     visibility: hidden !important;
   }
 
   .barcode-print-area,
   .barcode-print-area *,
+  .label-print-sheet,
+  .label-print-sheet *,
   .label-print-card,
   .label-print-card * {
     visibility: visible !important;
@@ -78,19 +91,37 @@
     margin: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
+    page: barcode-label;
   }
 
-  /* Impression groupée (page Étiquettes) : une étiquette par page. */
+  /* Impression groupée : 2 colonnes × 6 lignes sur une feuille A4. */
+  .label-print-sheet {
+    display: grid !important;
+    grid-template-columns: repeat(2, 80mm);
+    grid-auto-rows: 40mm;
+    justify-content: center;
+    gap: 5mm 8mm;
+    width: 100% !important;
+    page: label-sheet;
+  }
+
   .label-print-card {
-    break-after: page;
+    box-sizing: border-box;
+    width: 80mm !important;
+    height: 40mm !important;
+    margin: 0 !important;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 
-  .label-print-card:last-child {
-    break-after: auto;
-  }
-
-  @page {
+  @page barcode-label {
     size: 80mm 40mm;
     margin: 3mm;
+  }
+
+  @page label-sheet {
+    size: A4 portrait;
+    margin: 10mm;
   }
 }

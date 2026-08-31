@@ -8,7 +8,7 @@ import { Skeleton, ListSkeleton } from "@stock-kan-kan/ui/skeleton";
 export default function EtiquettesPage() {
   return (
     <div className="space-y-3">
-      <h1 className="text-2xl font-semibold text-ink">Étiquettes</h1>
+      <h1 className="text-2xl font-semibold text-ink print:hidden">Étiquettes</h1>
       <Suspense fallback={<EtiquettesSkeleton />}>
         <EtiquettesContent />
       </Suspense>
