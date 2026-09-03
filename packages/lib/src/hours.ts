@@ -73,6 +73,48 @@ export type TimeSession = {
   isOpen: boolean;
 };
 
+export type TimeSessionWithIds = TimeSession & {
+  clockInId: string;
+  clockOutId: string | null;
+};
+
+export function buildTimeSessionsWithIds(
+  entries: Pick<TimeEntryModel, "id" | "type" | "timestamp">[],
+  now: Date = new Date()
+): TimeSessionWithIds[] {
+  const sessions: TimeSessionWithIds[] = [];
+  let clockIn: Pick<TimeEntryModel, "id" | "timestamp"> | null = null;
+
+  for (const entry of [...entries].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())) {
+    if (entry.type === "CLOCK_IN") {
+      clockIn = entry;
+    } else if (clockIn) {
+      sessions.push({
+        clockInId: clockIn.id,
+        clockOutId: entry.id,
+        clockIn: clockIn.timestamp,
+        clockOut: entry.timestamp,
+        durationHours: Math.max(0, entry.timestamp.getTime() - clockIn.timestamp.getTime()) / 3_600_000,
+        isOpen: false,
+      });
+      clockIn = null;
+    }
+  }
+
+  if (clockIn) {
+    sessions.push({
+      clockInId: clockIn.id,
+      clockOutId: null,
+      clockIn: clockIn.timestamp,
+      clockOut: null,
+      durationHours: Math.max(0, now.getTime() - clockIn.timestamp.getTime()) / 3_600_000,
+      isOpen: true,
+    });
+  }
+
+  return sessions;
+}
+
 // Transforme le journal de pointage en services lisibles. Les entrées sont
 // triées ici pour que l'affichage reste correct quel que soit l'ordre reçu.
 export function buildTimeSessions(

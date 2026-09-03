@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildTimeSessions,
+  buildTimeSessionsWithIds,
   computeTotalHoursIncludingOpen,
   datedShiftsOverlap,
   expectedClockAction,
@@ -106,5 +107,13 @@ describe("pointage kiosk", () => {
     expect(sessions).toHaveLength(2);
     expect(sessions[0]).toMatchObject({ durationHours: 4, isOpen: false });
     expect(sessions[1]).toMatchObject({ durationHours: 2.5, isOpen: true, clockOut: null });
+  });
+
+  it("conserve les identifiants des pointages pour une correction auditée", () => {
+    const sessions = buildTimeSessionsWithIds([
+      { id: "in-1", type: "CLOCK_IN", timestamp: new Date("2026-08-11T08:00:00Z") },
+      { id: "out-1", type: "CLOCK_OUT", timestamp: new Date("2026-08-11T12:00:00Z") },
+    ]);
+    expect(sessions[0]).toMatchObject({ clockInId: "in-1", clockOutId: "out-1", durationHours: 4 });
   });
 });

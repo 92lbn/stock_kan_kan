@@ -196,6 +196,7 @@ model Shift {
 
   @@unique([employeeId, date, startTime]) // pas deux fois le même créneau
   @@index([employeeId, date])
+  @@index([date, startTime])
   @@map("shifts")
 }
 

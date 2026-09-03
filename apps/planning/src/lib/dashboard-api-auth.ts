@@ -20,7 +20,7 @@ function configuredManagers() {
 
 export function dashboardCorsHeaders(origin: string | null) {
   const headers = new Headers({
-    "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Cache-Control": "private, no-store",
     Vary: "Origin",
