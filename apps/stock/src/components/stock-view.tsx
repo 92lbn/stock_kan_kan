@@ -333,8 +333,8 @@ function StockCard({
 }
 
 const MOVEMENTS = [
-  { value: "OUT", label: "− Sortie" },
   { value: "IN", label: "+ Entrée" },
+  { value: "OUT", label: "− Sortie" },
 ] as const;
 
 function ItemActions({
@@ -347,8 +347,14 @@ function ItemActions({
   onClose: () => void;
 }) {
   const [type, setType] = useState("IN");
+  const [quantity, setQuantity] = useState("1");
   const [editing, setEditing] = useState(initiallyEditing);
   const [showExpiry, setShowExpiry] = useState(false);
+
+  function adjustQuantity(delta: number) {
+    const current = Number(quantity.replace(",", ".")) || 0;
+    setQuantity(String(Math.max(0, current + delta)));
+  }
 
   const boundMove = recordStockMovement.bind(null, item.id);
   const [moveState, moveAction, movePending] = useActionState(boundMove, undefined);
@@ -454,18 +460,37 @@ function ItemActions({
         <input type="hidden" name="type" value={type} />
         <div>
           <Label htmlFor={`quantity-${item.id}`}>Quantité ({item.unit})</Label>
-          <Input
-            id={`quantity-${item.id}`}
-            name="quantity"
-            type="number"
-            inputMode="decimal"
-            step="any"
-            min="0"
-            placeholder="0"
-            required
-            autoFocus
-            className="h-12 text-lg"
-          />
+          <div className="grid grid-cols-[3.5rem_minmax(0,1fr)_3.5rem] gap-2">
+            <button
+              type="button"
+              onClick={() => adjustQuantity(-1)}
+              aria-label={`Retirer une ${item.unit} à la quantité`}
+              className="grid min-h-12 place-items-center rounded-lg border border-line-strong bg-card-2 text-2xl font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              −
+            </button>
+            <Input
+              id={`quantity-${item.id}`}
+              name="quantity"
+              type="number"
+              inputMode="decimal"
+              step="any"
+              min="0"
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              required
+              className="h-12 text-center text-xl font-bold"
+            />
+            <button
+              type="button"
+              onClick={() => adjustQuantity(1)}
+              aria-label={`Ajouter une ${item.unit} à la quantité`}
+              className="grid min-h-12 place-items-center rounded-lg border border-line-strong bg-card-2 text-2xl font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              +
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-muted">Touchez le nombre uniquement pour saisir une quantité précise.</p>
         </div>
         {type === "IN" && (
           <div>
