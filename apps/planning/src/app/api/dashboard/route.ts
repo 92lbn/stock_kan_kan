@@ -4,10 +4,11 @@ import { StockCategory } from "@stock-kan-kan/db/enums";
 import { auditData } from "@stock-kan-kan/lib/audit";
 import { addDays, dayRange, parseDateInput, weekRangeOf, weekStart, toYmd, wallTimeParisToUtc, toYearMonth } from "@stock-kan-kan/lib/date";
 import { buildTimeSessionsWithIds, datedShiftsOverlap, sumShiftHours } from "@stock-kan-kan/lib/hours";
+import { planFefo } from "@stock-kan-kan/lib/stock-lots";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { authenticateDashboardManager, dashboardCorsHeaders } from "@/lib/dashboard-api-auth";
-import { stockAlertState, summarizeStockItems } from "@/lib/dashboard-stock";
+import { stockAlertState, stockQuantityAfterMovement, summarizeStockItems } from "@/lib/dashboard-stock";
 
 export const runtime = "nodejs";
 export const preferredRegion = "dub1";
@@ -37,6 +38,21 @@ const stockUpdateSchema = z.object({
   costPrice: decimal2,
   allergens: z.string().trim().max(500).optional(),
   barcode: z.string().trim().max(64).optional(),
+});
+const stockMovementSchema = z.object({
+  resource: z.literal("stockMovement"),
+  operationId: z.string().uuid(),
+  id: z.string().trim().min(1),
+  type: z.enum(["IN", "OUT"]),
+  quantity: decimal3.refine((value) => new Prisma.Decimal(value).gt(0)),
+  unitCost: decimal2.optional(),
+  expiryDate: z.iso.date().optional(),
+  lotNumber: z.string().trim().max(80).optional(),
+  note: z.string().trim().max(500).optional(),
+}).superRefine((value, context) => {
+  if (value.type === "OUT" && (value.unitCost || value.expiryDate || value.lotNumber)) {
+    context.addIssue({ code: "custom", message: "Les informations de lot concernent uniquement une entrée." });
+  }
 });
 const employeeCreateSchema = z.object({
   resource: z.literal("employee"),
@@ -97,6 +113,10 @@ function parseTimeSession(input: z.infer<typeof timeSessionInputSchema>) {
   if (durationMs <= 0 || durationMs > 36 * 60 * 60 * 1000) return null;
   return { clockIn, clockOut };
 }
+
+class DashboardStockMovementError extends Error {}
+
+const asDateOnly = (ymd: string) => new Date(`${ymd}T00:00:00.000Z`);
 
 async function timeSessionConflicts(
   tx: Prisma.TransactionClient,
@@ -380,6 +400,148 @@ export async function POST(request: Request) {
       }
       console.error("dashboard_employee_create_failed", error);
       return json({ error: "Impossible de créer cet employé." }, 500, manager.origin);
+    }
+  }
+
+  const stockMovement = stockMovementSchema.safeParse(body);
+  if (stockMovement.success) {
+    const input = stockMovement.data;
+    const quantity = new Prisma.Decimal(input.quantity);
+    try {
+      const result = await db.$transaction(async (tx) => {
+        const duplicate = await tx.stockMovement.findUnique({
+          where: { operationId: input.operationId },
+          select: { id: true, stockItem: { select: { id: true, quantity: true } } },
+        });
+        if (duplicate) {
+          return {
+            movementId: duplicate.id,
+            itemId: duplicate.stockItem.id,
+            quantity: duplicate.stockItem.quantity.toString(),
+            replayed: true,
+          };
+        }
+
+        const item = await tx.stockItem.findFirst({
+          where: { id: input.id, deletedAt: null },
+          select: { id: true, name: true, unit: true, quantity: true, costPrice: true },
+        });
+        if (!item) throw new DashboardStockMovementError("Article introuvable.");
+
+        let nextQuantity: Prisma.Decimal;
+        try {
+          nextQuantity = stockQuantityAfterMovement(item.quantity, input.type, quantity);
+        } catch (error) {
+          if (error instanceof Error && error.message === "Stock insuffisant.") {
+            throw new DashboardStockMovementError(
+              `Stock insuffisant : ${item.quantity.toString()} ${item.unit} disponible(s).`
+            );
+          }
+          throw error;
+        }
+
+        const movement = await tx.stockMovement.create({
+          data: {
+            operationId: input.operationId,
+            stockItemId: item.id,
+            type: input.type,
+            quantity,
+            unitCost: input.unitCost,
+            note: input.note || null,
+          },
+          select: { id: true },
+        });
+
+        if (input.type === "OUT") {
+          const lots = await tx.stockLot.findMany({
+            where: { stockItemId: item.id, quantity: { gt: 0 } },
+            orderBy: [{ expiryDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
+          });
+          const plan = planFefo(lots, quantity);
+          if (plan.missing.gt(0)) {
+            const available = quantity.minus(plan.missing);
+            throw new DashboardStockMovementError(
+              `Stock insuffisant : ${available.toString()} ${item.unit} disponible(s).`
+            );
+          }
+          const updated = await tx.stockItem.updateMany({
+            where: { id: item.id, deletedAt: null, quantity: { gte: quantity } },
+            data: { quantity: { decrement: quantity } },
+          });
+          if (updated.count !== 1) {
+            throw new DashboardStockMovementError("Le stock vient d’être modifié. Réessayez.");
+          }
+          for (const allocation of plan.allocations) {
+            const lot = await tx.stockLot.updateMany({
+              where: { id: allocation.lotId, quantity: { gte: allocation.quantity } },
+              data: { quantity: { decrement: allocation.quantity } },
+            });
+            if (lot.count !== 1) {
+              throw new DashboardStockMovementError("Le stock vient d’être modifié. Réessayez.");
+            }
+          }
+        } else {
+          await tx.stockLot.create({
+            data: {
+              stockItemId: item.id,
+              quantity,
+              expiryDate: input.expiryDate ? asDateOnly(input.expiryDate) : null,
+              lotNumber: input.lotNumber || null,
+            },
+          });
+          const data: Prisma.StockItemUpdateManyMutationInput = { quantity: { increment: quantity } };
+          if (input.unitCost) {
+            data.costPrice = item.quantity.times(item.costPrice)
+              .plus(quantity.times(input.unitCost))
+              .div(nextQuantity)
+              .toDecimalPlaces(2);
+          }
+          const updated = await tx.stockItem.updateMany({
+            where: { id: item.id, deletedAt: null },
+            data,
+          });
+          if (updated.count !== 1) throw new DashboardStockMovementError("Article introuvable.");
+        }
+
+        await tx.auditLog.create({
+          data: auditData({
+            action: `stock.movement.${input.type.toLowerCase()}.dashboard`,
+            entity: "StockItem",
+            entityId: item.id,
+            before: { quantity: item.quantity.toString() },
+            after: {
+              quantity: nextQuantity.toString(),
+              movementId: movement.id,
+              movementQuantity: quantity.toString(),
+              managerEmail: manager.email,
+            },
+          }),
+        });
+        return { movementId: movement.id, itemId: item.id, quantity: nextQuantity.toString(), replayed: false };
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
+      return json({ movement: result }, result.replayed ? 200 : 201, manager.origin);
+    } catch (error) {
+      if (error instanceof DashboardStockMovementError) {
+        const status = error.message === "Article introuvable." ? 404 : 409;
+        return json({ error: error.message }, status, manager.origin);
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        const duplicate = await db.stockMovement.findUnique({
+          where: { operationId: input.operationId },
+          select: { id: true, stockItem: { select: { id: true, quantity: true } } },
+        });
+        if (duplicate) {
+          return json({ movement: {
+            movementId: duplicate.id,
+            itemId: duplicate.stockItem.id,
+            quantity: duplicate.stockItem.quantity.toString(),
+            replayed: true,
+          } }, 200, manager.origin);
+        }
+      }
+      console.error("dashboard_stock_movement_failed", error);
+      return json({ error: "Le mouvement n’a pas pu être enregistré. Réessayez." }, 500, manager.origin);
     }
   }
 

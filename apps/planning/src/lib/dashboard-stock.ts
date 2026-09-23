@@ -1,4 +1,5 @@
 import { classifyExpiry } from "@stock-kan-kan/lib/expiry";
+import { Prisma } from "@stock-kan-kan/db/client";
 
 export type DashboardStockAlertSource = {
   quantity: string;
@@ -26,4 +27,19 @@ export function summarizeStockItems(items: DashboardStockAlertSource[], today: s
     },
     { total: items.length, out: 0, low: 0, expiring: 0 }
   );
+}
+
+export function stockQuantityAfterMovement(
+  current: Prisma.Decimal | string,
+  type: "IN" | "OUT",
+  requested: Prisma.Decimal | string
+) {
+  const currentQuantity = new Prisma.Decimal(current);
+  const movementQuantity = new Prisma.Decimal(requested);
+  if (movementQuantity.lte(0)) throw new Error("La quantité doit être positive.");
+  const next = type === "IN"
+    ? currentQuantity.plus(movementQuantity)
+    : currentQuantity.minus(movementQuantity);
+  if (next.lt(0)) throw new Error("Stock insuffisant.");
+  return next;
 }

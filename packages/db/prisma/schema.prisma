@@ -166,6 +166,7 @@ enum StockMovementType {
 
 model StockMovement {
   id          String            @id @default(cuid())
+  operationId String?           @unique // anti-doublon pour les écritures réseau rejouables
   stockItem   StockItem         @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
   stockItemId String
   type        StockMovementType

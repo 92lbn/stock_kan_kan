@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stockAlertState, summarizeStockItems } from "./dashboard-stock";
+import { stockAlertState, stockQuantityAfterMovement, summarizeStockItems } from "./dashboard-stock";
 
 describe("stockAlertState", () => {
   it("distingue rupture, seuil bas et stock normal", () => {
@@ -25,5 +25,17 @@ describe("summarizeStockItems", () => {
     ], "2026-08-28");
 
     expect(summary).toEqual({ total: 4, out: 1, low: 1, expiring: 2 });
+  });
+});
+
+describe("stockQuantityAfterMovement", () => {
+  it("ajoute et retire des quantités décimales sans passer par un Float", () => {
+    expect(stockQuantityAfterMovement("1.250", "IN", "0.750").toString()).toBe("2");
+    expect(stockQuantityAfterMovement("2", "OUT", "0.125").toString()).toBe("1.875");
+  });
+
+  it("refuse une sortie supérieure au stock et les quantités nulles", () => {
+    expect(() => stockQuantityAfterMovement("1", "OUT", "1.001")).toThrow("Stock insuffisant.");
+    expect(() => stockQuantityAfterMovement("1", "IN", "0")).toThrow("La quantité doit être positive.");
   });
 });
